@@ -28,6 +28,8 @@ import {
   type ViewUpdate
 } from '@codemirror/view'
 import { minimalSetup } from 'codemirror'
+import { getCM, vim } from '@replit/codemirror-vim'
+import type { VimMode } from '@/store/vim'
 import './index.css'
 
 export interface SourcePosition {
@@ -50,6 +52,8 @@ export interface SourceEditorConfig {
   direction?: string
   lineWrapping?: boolean
   theme?: string
+  vimMode?: boolean
+  onVimModeChange?: (mode: VimMode) => void
 }
 
 export interface SourceEditor {
@@ -164,9 +168,12 @@ class CodeMirror6Adapter implements SourceEditor {
   private readonly listeners = new Map<SourceEditorEvent, Set<SourceEditorListener>>()
   private readonly extensions
   private readonly view: EditorView
+  private readonly config: SourceEditorConfig
 
   constructor(parent: HTMLElement, config: SourceEditorConfig) {
+    this.config = config
     this.extensions = [
+      ...(config.vimMode ? [vim()] : []),
       minimalSetup,
       lineNumbers({
         formatNumber: line => (line === 1 || line % 10 === 0 ? String(line) : '')
@@ -202,11 +209,26 @@ class CodeMirror6Adapter implements SourceEditor {
 
     const state = this.createState(config.value ?? '')
     this.view = new EditorView({ state, parent })
+    this.attachVimModeListener(config)
     const root = this.view.dom as SourceEditorElement
     root.CodeMirror = this
     root.addEventListener('contextmenu', this.handleContextMenu)
 
     if (config.autofocus) queueMicrotask(() => this.focus())
+  }
+
+  private attachVimModeListener(config: SourceEditorConfig) {
+    if (!config.vimMode) return
+    const cm = getCM(this.view)
+    config.onVimModeChange?.('normal')
+    cm?.on('vim-mode-change', (event: { mode?: string; subMode?: string }) => {
+      const mode = event.mode === 'insert'
+        ? 'insert'
+        : event.mode === 'visual'
+          ? event.subMode === 'linewise' ? 'visual-line' : 'visual'
+          : 'normal'
+      config.onVimModeChange?.(mode)
+    })
   }
 
   private createState(doc: string) {
@@ -379,6 +401,7 @@ class CodeMirror6Adapter implements SourceEditor {
     // A file reload is a new undo boundary. Recreating immutable CM6 state is
     // both cheaper and safer than retaining history that points into old text.
     this.view.setState(this.createState(value))
+    this.attachVimModeListener(this.config)
     this.emit('cursorActivity')
   }
 

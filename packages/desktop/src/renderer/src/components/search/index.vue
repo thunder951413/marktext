@@ -292,6 +292,7 @@ const emptySearch = (selectHighlight = false) => {
   searchValue.value = ''
   replaceValue.value = ''
   bus.emit('searchValue', { value: searchValue.value, opt: { selectHighlight } })
+  bus.emit('vim-search-finished')
 }
 
 const toggleSearchType = () => {

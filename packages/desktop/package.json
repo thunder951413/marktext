@@ -1,6 +1,6 @@
 {
   "name": "marktext",
-  "version": "0.20.0-rc.2",
+  "version": "0.20.0-rc.3",
   "description": "MarkText",
   "main": "./out/main/index.js",
   "author": {
@@ -69,6 +69,7 @@
     "@marktext/muyajs": "workspace:*",
     "@muyajs/core": "workspace:*",
     "@popperjs/core": "^2.11.8",
+    "@replit/codemirror-vim": "^6.3.0",
     "@vscode/ripgrep": "^1.18.0",
     "arg": "^5.0.2",
     "axios": "^1.18.0",

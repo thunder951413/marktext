@@ -59,6 +59,9 @@ export interface LaunchOptions {
   // should opt in — otherwise existing specs would silently ignore renderer
   // exceptions that previously surfaced as a dialog (a hidden regression risk).
   suppressErrorDialog?: boolean
+  // Production defaults to Vim mode enabled. Most historical E2E tests predate
+  // modal editing and exercise direct typing, so dedicated Vim specs opt in.
+  vimMode?: boolean
 }
 
 export const launchElectron = async(
@@ -74,6 +77,7 @@ export const launchElectron = async(
   const env: Record<string, string> = {}
   for (const [k, v] of Object.entries(process.env)) if (v !== undefined) env[k] = v
   env.PERF_TESTING = 'true'
+  if (options.vimMode) env.MARKTEXT_VIM_TESTING = 'true'
   if (options.suppressErrorDialog) env.MARKTEXT_ERROR_INTERACTION = '1'
   const app = await _electron.launch({
     executablePath,

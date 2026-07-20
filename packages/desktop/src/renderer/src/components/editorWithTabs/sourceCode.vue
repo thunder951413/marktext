@@ -17,6 +17,7 @@ import { getWordCount } from '@/util/wordCountWorker'
 import { adjustCursor } from '../../util'
 import bus from '../../bus'
 import { oneDarkThemes, railscastsThemes } from '@/config'
+import { isVimModeEnabled } from '@/util/vim/enabled'
 
 type CMInstance = SourceEditor
 type CMCursor = SourcePosition
@@ -132,6 +133,7 @@ interface FileChangePayloadLike {
 const handleFileChange = (payload: unknown) => {
   const { id, markdown: newMarkdown, muyaIndexCursor } = payload as FileChangePayloadLike
   if (!editor.value) return
+  bus.emit('vim-mode-change', 'normal')
 
   // On same-tab reload (external file change), preserve scroll across
   // setValue. Snapshot every plausible scroll element (the outer
@@ -350,7 +352,9 @@ onMounted(() => {
     value: markdown,
     autofocus: true,
     lineWrapping: true,
-    direction: textDirection
+    direction: textDirection,
+    vimMode: isVimModeEnabled(),
+    onVimModeChange: mode => bus.emit('vim-mode-change', mode)
   }
 
   if (railscastsThemes.includes(theme.value)) {
@@ -397,6 +401,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   viewDestroyed.value = true
+  bus.emit('vim-mode-change', 'normal')
   if (commitTimer.value) clearTimeout(commitTimer.value)
 
   bus.off('file-loaded', handleFileChange)

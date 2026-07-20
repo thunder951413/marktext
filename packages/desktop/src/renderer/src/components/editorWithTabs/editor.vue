@@ -1,7 +1,10 @@
 <template>
   <div
     class="editor-wrapper"
-    :class="[{ typewriter: typewriter, focus: focus, source: sourceCode }]"
+    :class="[
+      { typewriter: typewriter, focus: focus, source: sourceCode },
+      `vim-${vimMode}`
+    ]"
     :dir="textDirection"
   >
     <div
@@ -128,6 +131,7 @@ import { resolveTocHeadingElement } from '@/util/tocNavigation'
 import { addCommonStyle, setEditorWidth } from '@/util/theme'
 import { usePreferencesStore } from '@/store/preferences'
 import { useEditorStore } from '@/store/editor'
+import { useVimStore } from '@/store/vim'
 import { useProjectStore } from '@/store/project'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
@@ -141,6 +145,9 @@ import '@muyajs/core'
 import '@/assets/themes/codemirror/one-dark.css'
 import { Close as CloseIcon } from '@element-plus/icons-vue'
 import { type InputNumberInstance } from 'element-plus'
+import { VimController } from '@/util/vim/controller'
+import { MuyaVimAdapter } from '@/util/vim/muyaAdapter'
+import { isVimModeEnabled } from '@/util/vim/enabled'
 
 const { t } = useI18n()
 const STANDAR_Y = 320
@@ -204,6 +211,7 @@ const props = defineProps<{
 const preferencesStore = usePreferencesStore()
 const editorStore = useEditorStore()
 const projectStore = useProjectStore()
+const vimStore = useVimStore()
 
 // Use storeToRefs to extract reactive properties from the stores
 const {
@@ -254,6 +262,7 @@ const {
 
 // Editor store refs
 const { currentFile, tabs } = storeToRefs(editorStore)
+const { mode: vimMode } = storeToRefs(vimStore)
 
 // Project store refs
 const { projectTree } = storeToRefs(projectStore)
@@ -287,6 +296,45 @@ let imageViewer: SimpleImageViewer | null = null
 let scrollHandler: ((e: Event) => void) | null = null
 let wordCountRevision = 0
 let componentDestroyed = false
+let vimController: VimController | null = null
+let vimDomNode: HTMLElement | null = null
+
+const handleVimKeydown = (event: KeyboardEvent) => {
+  if (!vimController?.handle(event)) return
+  event.preventDefault()
+  event.stopPropagation()
+  event.stopImmediatePropagation()
+}
+
+const guardVimMutation = (event: Event) => {
+  if (!vimController || vimMode.value === 'insert') return
+  event.preventDefault()
+  event.stopPropagation()
+  event.stopImmediatePropagation()
+}
+
+const finishVimSearch = () => vimController?.finishSearch()
+
+const vimKeydownListener = (event: Event) => handleVimKeydown(event as KeyboardEvent)
+const vimMutationListener = (event: Event) => guardVimMutation(event)
+const VIM_MUTATION_EVENTS = ['beforeinput', 'compositionstart', 'paste', 'cut', 'drop'] as const
+
+const attachVimDomListeners = (domNode: HTMLElement) => {
+  vimDomNode = domNode
+  domNode.addEventListener('keydown', vimKeydownListener, true)
+  for (const event of VIM_MUTATION_EVENTS) {
+    domNode.addEventListener(event, vimMutationListener, true)
+  }
+}
+
+const detachVimDomListeners = () => {
+  if (!vimDomNode) return
+  vimDomNode.removeEventListener('keydown', vimKeydownListener, true)
+  for (const event of VIM_MUTATION_EVENTS) {
+    vimDomNode.removeEventListener(event, vimMutationListener, true)
+  }
+  vimDomNode = null
+}
 
 // The engine's undo/redo history (`getHistory()`) has a different shape than
 // the desktop store's `tab.history` (which drives the save/dirty tracking and
@@ -1464,6 +1512,7 @@ interface FileLoadedPayload {
 const setMarkdownToEditor = (payload: unknown) => {
   const { id, markdown: newMarkdown, cursor: newCursor } = (payload ?? {}) as FileLoadedPayload
   if (editor.value) {
+    vimController?.reset()
     // `setContent` resets the document and clears the undo history; only set a
     // cursor afterwards (a freshly-opened file has no history to restore).
     editor.value.setContent(newMarkdown ?? '')
@@ -1517,6 +1566,7 @@ const handleFileChange = (payload: unknown) => {
     isReload
   } = (payload ?? {}) as FileChangePayload
   if (!editor.value) return
+  vimController?.reset()
   const container = getScrollContainer()
   if (!container) return
 
@@ -1797,6 +1847,14 @@ onMounted(() => {
   // the document tree and instantiates the registered UI plugins).
   muya.init()
   editor.value = muya
+  if (isVimModeEnabled()) {
+    vimController = new VimController({
+      adapter: new MuyaVimAdapter(muya),
+      onModeChange: mode => vimStore.SET_MODE(mode),
+      onPendingChange: pending => vimStore.SET_PENDING(pending)
+    })
+    attachVimDomListeners(muya.domNode)
+  }
   // The first document's content is set via constructor options, so no
   // `file-loaded` / `setMarkdownToEditor` runs for it — seed its TOC here.
   editorStore.UPDATE_TOC(muya.getTOC())
@@ -1828,6 +1886,7 @@ onMounted(() => {
 
   // listen for bus events.
   bus.on('file-loaded', setMarkdownToEditor)
+  bus.on('vim-search-finished', finishVimSearch)
   bus.on('invalidate-image-cache', handleInvalidateImageCache)
   bus.on('undo', handleUndo)
   bus.on('redo', handleRedo)
@@ -1985,7 +2044,10 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   componentDestroyed = true
+  detachVimDomListeners()
+  vimController = null
   bus.off('file-loaded', setMarkdownToEditor)
+  bus.off('vim-search-finished', finishVimSearch)
   bus.off('invalidate-image-cache', handleInvalidateImageCache)
   bus.off('undo', handleUndo)
   bus.off('redo', handleRedo)
