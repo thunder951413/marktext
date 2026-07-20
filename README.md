@@ -15,8 +15,8 @@
 | 当前版本 | `0.20.0-rc.5` |
 | 开发分支 | `codex/desktop-performance-foundation` |
 | 桌面平台 | macOS、Windows、Linux（不包含 Android/iOS） |
-| macOS 本地构建 | Apple Silicon (`arm64`) 已构建、校验并安装运行 |
-| GitHub Release | `rc.4` 多平台构建中；块光标修复将由 `rc.5` 发布 |
+| macOS 本地应用 | GitHub Release 的 Apple Silicon (`arm64`) 产物已校验、安装并运行 |
+| GitHub Release | [`v0.20.0-rc.5`](https://github.com/thunder951413/marktext/releases/tag/v0.20.0-rc.5) 已发布，含 macOS、Windows、Linux 产物与 SHA-256 |
 | 合并请求 | [thunder951413/marktext#1](https://github.com/thunder951413/marktext/pull/1) |
 
 ## 本分支修改
@@ -93,12 +93,12 @@
 - 生产构建通过。
 - macOS `arm64` 的 DMG、ZIP 和应用包已生成；应用版本、CPU 架构、签名完整性及启动运行均已校验。
 
-## 发布计划
+## 发布结果
 
-1. 推送 `0.20.0-rc.5` 代码并运行 macOS、Windows、Linux 构建矩阵。
-2. 核对各平台包名、架构、版本号和 SHA-256。
-3. 创建 `v0.20.0-rc.5` GitHub Release 并上传完整产物。
-4. 使用正式 Release 产物再次更新和验证本地应用。
+1. `0.20.0-rc.5` 代码和标签已推送，macOS、Windows、Linux 五组构建均成功。
+2. GitHub Release 已发布 24 个资产，其中 23 个发行文件均列入 `SHA256SUMS.txt`。
+3. macOS `arm64` ZIP 与发布校验和一致，本地应用已由该正式产物更新到 `0.20.0-rc.5`。
+4. 本地应用已验证 arm64 架构、签名完整性、正常启动以及 Normal/Insert 光标切换。
 
 ## 许可证
 
