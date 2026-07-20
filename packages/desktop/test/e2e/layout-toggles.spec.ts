@@ -2,6 +2,24 @@ import { expect, test } from '@playwright/test'
 import type { ElectronApplication, Page } from 'playwright'
 import { launchWithMarkdown, clickMenuById } from './helpers'
 
+const getWindowZoom = (app: ElectronApplication): Promise<number> =>
+  app.evaluate(({ BrowserWindow }) => {
+    const win = BrowserWindow.getAllWindows()[0]
+    if (!win) throw new Error('Editor window is unavailable')
+    return win.webContents.getZoomFactor()
+  })
+
+const getCurrentMarkdown = (page: Page): Promise<string> =>
+  page.evaluate(() => {
+    const root = document.querySelector('#app') as
+      | (Element & { __vue_app__?: { config?: { globalProperties?: Record<string, unknown> } } })
+      | null
+    const pinia = root?.__vue_app__?.config?.globalProperties?.$pinia as
+      | { _s?: Map<string, { currentFile?: { markdown?: string } }> }
+      | undefined
+    return pinia?._s?.get('editor')?.currentFile?.markdown ?? ''
+  })
+
 // Wait until a `v-show`-toggled element's visibility differs from `wasVisible`.
 // A missing element counts as "not visible", so the change-detection logic
 // stays consistent whether v-show clears the inline style or unmounts the node.
@@ -48,6 +66,20 @@ test.describe('Layout panel toggles', () => {
     const afterToggle = await tabBar.isVisible()
     expect(afterToggle).not.toBe(initial)
     await clickMenuById(app, 'tabBarMenuItem')
+  })
+
+  test('Display zoom changes window scale without changing Markdown', async() => {
+    const markdown = await getCurrentMarkdown(page)
+
+    await page.getByTestId('zoom-in').click()
+    await expect.poll(() => getWindowZoom(app)).toBe(1.125)
+    expect(await getCurrentMarkdown(page)).toBe(markdown)
+    await expect(page.getByTestId('zoom-reset')).toHaveText('113%')
+
+    await page.getByTestId('zoom-reset').click()
+    await expect.poll(() => getWindowZoom(app)).toBe(1)
+    expect(await getCurrentMarkdown(page)).toBe(markdown)
+    await expect(page.getByTestId('zoom-reset')).toHaveText('100%')
   })
 
   test('TOC menu toggles ToC panel without throwing', async() => {

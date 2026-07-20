@@ -7,7 +7,7 @@
     },
     "file": {
       "file": "Dosya",
-      "newTab": "Yeni Sekme",
+      "newTab": "Yeni Belge",
       "newWindow": "Yeni Pencere",
       "openFile": "Dosya Aç...",
       "openFolder": "Klasör Aç...",
@@ -339,7 +339,7 @@
   },
   "recent": {
     "noTabsOpen": "Açık sekmeniz yok.",
-    "newFile": "Yeni Dosya"
+    "newFile": "Yeni Belge"
   },
   "import": {
     "title": "İçe Aktar veya Aç",
@@ -738,7 +738,7 @@
     },
     "file": {
       "newWindow": "Yeni Pencere",
-      "newTab": "Yeni Sekme",
+      "newTab": "Yeni Belge",
       "openFile": "Dosya Aç",
       "openFolder": "Klasör Aç",
       "save": "Kaydet",

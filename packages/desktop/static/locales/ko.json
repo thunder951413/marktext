@@ -7,7 +7,7 @@
     },
     "file": {
       "file": "파일",
-      "newTab": "새 탭",
+      "newTab": "새 문서",
       "newWindow": "새 창",
       "openFile": "파일 열기...",
       "openFolder": "폴더 열기...",
@@ -339,7 +339,7 @@
   },
   "recent": {
     "noTabsOpen": "열린 탭이 없습니다.",
-    "newFile": "새 파일"
+    "newFile": "새 문서"
   },
   "import": {
     "title": "가져오기 또는 열기",
@@ -738,7 +738,7 @@
     },
     "file": {
       "newWindow": "새 창",
-      "newTab": "새 탭",
+      "newTab": "새 문서",
       "openFile": "파일 열기",
       "openFolder": "폴더 열기",
       "save": "저장",

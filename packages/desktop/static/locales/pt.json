@@ -7,7 +7,7 @@
     },
     "file": {
       "file": "Arquivo",
-      "newTab": "Nova Aba",
+      "newTab": "Novo documento",
       "newWindow": "Nova Janela",
       "openFile": "Abrir Arquivo...",
       "openFolder": "Abrir Pasta...",
@@ -339,7 +339,7 @@
   },
   "recent": {
     "noTabsOpen": "Você não tem abas abertas.",
-    "newFile": "Novo Arquivo"
+    "newFile": "Novo documento"
   },
   "import": {
     "title": "Importar ou Abrir",
@@ -738,7 +738,7 @@
     },
     "file": {
       "newWindow": "Nova Janela",
-      "newTab": "Nova Aba",
+      "newTab": "Novo documento",
       "openFile": "Abrir Arquivo",
       "openFolder": "Abrir Pasta",
       "save": "Salvar",

@@ -471,6 +471,11 @@ const commands: CommandDescriptor[] = [
     shortcut: [isOsx ? 'Cmd' : 'Ctrl', 'Scroll'],
     subcommands: [
       {
+        id: 'file.zoom-min',
+        description: '50%',
+        value: 0.5
+      },
+      {
         id: 'file.zoom-0',
         description: '62.5%',
         value: 0.625

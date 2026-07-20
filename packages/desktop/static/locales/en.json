@@ -7,7 +7,7 @@
     },
     "file": {
       "file": "File",
-      "newTab": "New Tab",
+      "newTab": "New Document",
       "newWindow": "New Window",
       "openFile": "Open File...",
       "openFolder": "Open Folder...",
@@ -339,7 +339,7 @@
   },
   "recent": {
     "noTabsOpen": "You have no tabs open.",
-    "newFile": "New File"
+    "newFile": "New Document"
   },
   "import": {
     "title": "Import or Open",
@@ -738,7 +738,7 @@
     },
     "file": {
       "newWindow": "New Window",
-      "newTab": "New Tab",
+      "newTab": "New Document",
       "openFile": "Open File",
       "openFolder": "Open Folder",
       "save": "Save",

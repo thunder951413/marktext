@@ -7,7 +7,7 @@
     },
     "file": {
       "file": "Fichier",
-      "newTab": "Nouvel onglet",
+      "newTab": "Nouveau document",
       "newWindow": "Nouvelle fenêtre",
       "openFile": "Ouvrir un fichier...",
       "openFolder": "Ouvrir un dossier...",
@@ -339,7 +339,7 @@
   },
   "recent": {
     "noTabsOpen": "Vous n'avez aucun onglet ouvert.",
-    "newFile": "Nouveau fichier"
+    "newFile": "Nouveau document"
   },
   "import": {
     "title": "Importer ou ouvrir",
@@ -738,7 +738,7 @@
     },
     "file": {
       "newWindow": "Nouvelle fenêtre",
-      "newTab": "Nouvel onglet",
+      "newTab": "Nouveau document",
       "openFile": "Ouvrir un fichier",
       "openFolder": "Ouvrir un dossier",
       "save": "Enregistrer",
