@@ -12,11 +12,11 @@
 
 | 项目 | 状态 |
 | --- | --- |
-| 当前版本 | `0.20.0-rc.3` |
+| 当前版本 | `0.20.0-rc.4` |
 | 开发分支 | `codex/desktop-performance-foundation` |
 | 桌面平台 | macOS、Windows、Linux（不包含 Android/iOS） |
 | macOS 本地构建 | Apple Silicon (`arm64`) 已构建、校验并安装运行 |
-| GitHub Release | `rc.3` 待 GitHub Actions 启用并完成多平台构建后发布 |
+| GitHub Release | `rc.4` 待 GitHub Actions 完成多平台构建后发布 |
 | 合并请求 | [thunder951413/marktext#1](https://github.com/thunder951413/marktext/pull/1) |
 
 ## 本分支修改
@@ -54,6 +54,12 @@
 - 源代码模式使用维护中的 CodeMirror 6 Vim 扩展；WYSIWYG 通过 Muya 的 selection、history、clipboard 和 search 接口实现结构化语义。
 - 暂不实现寄存器、marks、宏、vimrc 和完整 Ex 命令体系。
 
+### 应用图标
+
+- 采用原创的浅色文档页与深色 Markdown `M` 折线，辅以少量青蓝折面，替换原黑底青色几何图标。
+- 图标外部使用透明背景，并为小尺寸保留清晰的单一轮廓。
+- 同步生成 macOS 多分辨率 ICNS、Windows 多尺寸 ICO、Linux PNG、应用内图标及 README 标识。
+
 ### 编辑器与性能
 
 - 源代码模式迁移到 CodeMirror 6，利用视口渲染改善大文档滚动和编辑性能。
@@ -71,7 +77,7 @@
 
 ## 验证结果
 
-`0.20.0-rc.3` 当前已完成以下验证：
+`0.20.0-rc.4` 当前已完成以下验证：
 
 - 桌面端类型检查通过。
 - ESLint 通过，无新增错误。
@@ -82,14 +88,15 @@
 - 显示缩放与 Markdown 内容不变端到端断言通过。
 - Vim 键序列状态机 7 项单元测试通过。
 - Vim WYSIWYG/源码模式 7 项端到端场景通过，包括模式切换、输入防护、`hjkl` 导航、计数、撤销、搜索、operator、Visual、字符查找、剪贴板粘贴、换行插入和列表项删除。
+- 新图标的 PNG alpha、16–1024 像素缩放、7 层 ICO 和 10 层 ICNS 资源已校验。
 - 生产构建通过。
 - macOS `arm64` 的 DMG、ZIP 和应用包已生成；应用版本、CPU 架构、签名完整性及启动运行均已校验。
 
 ## 发布计划
 
-1. 推送 `0.20.0-rc.3` 代码并运行 macOS、Windows、Linux 构建矩阵。
+1. 推送 `0.20.0-rc.4` 代码并运行 macOS、Windows、Linux 构建矩阵。
 2. 核对各平台包名、架构、版本号和 SHA-256。
-3. 创建 `v0.20.0-rc.3` GitHub Release 并上传完整产物。
+3. 创建 `v0.20.0-rc.4` GitHub Release 并上传完整产物。
 4. 使用正式 Release 产物再次更新和验证本地应用。
 
 ## 许可证
