@@ -12,11 +12,11 @@
 
 | 项目 | 状态 |
 | --- | --- |
-| 当前版本 | `0.20.0-rc.4` |
+| 当前版本 | `0.20.0-rc.5` |
 | 开发分支 | `codex/desktop-performance-foundation` |
 | 桌面平台 | macOS、Windows、Linux（不包含 Android/iOS） |
 | macOS 本地构建 | Apple Silicon (`arm64`) 已构建、校验并安装运行 |
-| GitHub Release | `rc.4` 待 GitHub Actions 完成多平台构建后发布 |
+| GitHub Release | `rc.4` 多平台构建中；块光标修复将由 `rc.5` 发布 |
 | 合并请求 | [thunder951413/marktext#1](https://github.com/thunder951413/marktext/pull/1) |
 
 ## 本分支修改
@@ -42,6 +42,7 @@
 ### Vim 模式
 
 - WYSIWYG 和源代码模式均默认以 `NORMAL` 打开，`i` 进入现有编辑体验，`Esc` 返回 Normal。
+- WYSIWYG 的 Normal 模式使用随字符宽度变化的蓝色块状光标，Insert 模式恢复原生细竖线；空白新文档、滚动、缩放和窗口尺寸变化时均会重新定位。
 - 状态栏持续显示 `NORMAL`、`INSERT`、`VISUAL`、`VISUAL LINE` 或 `SEARCH`，并显示尚未完成的计数/命令。
 - 标准移动：`h/j/k/l`、`w/b/e`、`0/^/$`、`gg/G`，支持 `5j`、`3w` 等数字前缀。
 - 插入位置：`i/I/a/A/o/O`。
@@ -77,26 +78,26 @@
 
 ## 验证结果
 
-`0.20.0-rc.4` 当前已完成以下验证：
+`0.20.0-rc.5` 当前已完成以下验证：
 
 - 桌面端类型检查通过。
 - ESLint 通过，无新增错误。
 - 桌面端单元测试通过：53 个测试文件、747 项测试。
 - Muya 编辑器单元测试通过：213 个测试文件、1441 项测试。
-- 桌面端完整端到端测试通过：225 项通过、4 项按既有条件跳过。
+- 桌面端完整端到端测试通过：226 项通过、4 项按既有条件跳过。
 - 新建文档端到端功能断言通过。
 - 显示缩放与 Markdown 内容不变端到端断言通过。
 - Vim 键序列状态机 7 项单元测试通过。
-- Vim WYSIWYG/源码模式 7 项端到端场景通过，包括模式切换、输入防护、`hjkl` 导航、计数、撤销、搜索、operator、Visual、字符查找、剪贴板粘贴、换行插入和列表项删除。
+- Vim WYSIWYG/源码模式 8 项端到端场景通过，包括块光标尺寸与显隐、空白新文档定位、模式切换、输入防护、`hjkl` 导航、计数、撤销、搜索、operator、Visual、字符查找、剪贴板粘贴、换行插入和列表项删除。
 - 新图标的 PNG alpha、16–1024 像素缩放、7 层 ICO 和 10 层 ICNS 资源已校验。
 - 生产构建通过。
 - macOS `arm64` 的 DMG、ZIP 和应用包已生成；应用版本、CPU 架构、签名完整性及启动运行均已校验。
 
 ## 发布计划
 
-1. 推送 `0.20.0-rc.4` 代码并运行 macOS、Windows、Linux 构建矩阵。
+1. 推送 `0.20.0-rc.5` 代码并运行 macOS、Windows、Linux 构建矩阵。
 2. 核对各平台包名、架构、版本号和 SHA-256。
-3. 创建 `v0.20.0-rc.4` GitHub Release 并上传完整产物。
+3. 创建 `v0.20.0-rc.5` GitHub Release 并上传完整产物。
 4. 使用正式 Release 产物再次更新和验证本地应用。
 
 ## 许可证

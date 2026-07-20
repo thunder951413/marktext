@@ -45,8 +45,18 @@ test.describe('Vim mode', () => {
 
   test('WYSIWYG starts in Normal, blocks typing, and i/Escape toggles Insert', async() => {
     const status = page.getByTestId('vim-status')
+    const blockCursor = page.locator('.vim-block-cursor')
     await expect(status).toContainText('NORMAL')
     await placeCaretInEditor(page)
+    await expect(blockCursor).toBeVisible()
+    const normalCursorBox = await blockCursor.boundingBox()
+    expect(normalCursorBox?.width ?? 0).toBeGreaterThan(3)
+    expect(normalCursorBox?.height ?? 0).toBeGreaterThan(8)
+    expect(
+      await page
+        .locator('.editor-component')
+        .evaluate((element) => getComputedStyle(element).caretColor)
+    ).toMatch(/transparent|rgba\([^)]*,\s*0\)/)
 
     const initial = await getMarkdownContent(page, app)
     initialMarkdown = initial
@@ -60,9 +70,11 @@ test.describe('Vim mode', () => {
     await placeCaretInEditor(page)
     await page.keyboard.press('i')
     await expect(status).toContainText('INSERT')
+    await expect(blockCursor).toBeHidden()
     await page.keyboard.type('!')
     await page.keyboard.press('Escape')
     await expect(status).toContainText('NORMAL')
+    await expect(blockCursor).toBeVisible()
     await expect.poll(() => getMarkdownContent(page, app)).toContain('!')
   })
 
@@ -174,17 +186,42 @@ test.describe('Vim mode', () => {
 
     await page.keyboard.press('y')
     await page.keyboard.press('y')
-    await expect.poll(() => page.evaluate(() => window.electron.clipboard.readText()))
+    await expect
+      .poll(() => page.evaluate(() => window.electron.clipboard.readText()))
       .toContain('a x a x a')
     // The test-only IPC clipboard read can move focus away from the content in
     // Electron. Restore the caret before exercising the actual Vim commands.
     expect(await placeCaretAtFirstCharacter(page)).toBe(true)
     await page.keyboard.press('j')
     await page.keyboard.press('p')
-    await expect.poll(async() => (await page.locator('.editor-component').innerText())
-      .match(/a x a x a/g)?.length ?? 0)
+    await expect
+      .poll(
+        async() =>
+          (await page.locator('.editor-component').innerText()).match(/a x a x a/g)?.length ?? 0
+      )
       .toBeGreaterThanOrEqual(2)
-    expect((await getMarkdownContent(page, app)).match(/a x a x a/g)?.length ?? 0)
-      .toBeGreaterThanOrEqual(2)
+    expect(
+      (await getMarkdownContent(page, app)).match(/a x a x a/g)?.length ?? 0
+    ).toBeGreaterThanOrEqual(2)
+  })
+
+  test('a new empty document shows the Normal block cursor and accepts Insert input', async() => {
+    await setSourceMarkdown(page, app, '')
+    await placeCaretInEditor(page)
+    const blockCursor = page.locator('.vim-block-cursor')
+    await expect(page.getByTestId('vim-status')).toContainText('NORMAL')
+    await expect(blockCursor).toBeVisible()
+    const cursorBox = await blockCursor.boundingBox()
+    const editorBox = await page.locator('.editor-component').boundingBox()
+    expect(cursorBox).not.toBeNull()
+    expect(editorBox).not.toBeNull()
+    if (!cursorBox || !editorBox) throw new Error('cursor/editor geometry is unavailable')
+    expect(cursorBox.x).toBeGreaterThanOrEqual(editorBox.x)
+    expect(cursorBox.y).toBeGreaterThanOrEqual(editorBox.y)
+
+    await page.keyboard.press('i')
+    await expect(blockCursor).toBeHidden()
+    await page.keyboard.type('new document')
+    await expect.poll(() => getMarkdownContent(page, app)).toContain('new document')
   })
 })

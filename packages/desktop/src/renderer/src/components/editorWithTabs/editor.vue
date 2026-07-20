@@ -298,12 +298,103 @@ let wordCountRevision = 0
 let componentDestroyed = false
 let vimController: VimController | null = null
 let vimDomNode: HTMLElement | null = null
+let vimBlockCursor: HTMLDivElement | null = null
+let vimCursorFrame = 0
+
+const hideVimBlockCursor = () => {
+  if (vimBlockCursor) vimBlockCursor.hidden = true
+}
+
+const updateVimBlockCursor = () => {
+  vimCursorFrame = 0
+  if (!vimBlockCursor || !vimDomNode || vimMode.value !== 'normal' || sourceCode.value) {
+    hideVimBlockCursor()
+    return
+  }
+
+  const selection = document.getSelection()
+  const focusNode = selection?.focusNode
+  if (
+    !selection?.isCollapsed ||
+    !focusNode ||
+    !vimDomNode.contains(focusNode) ||
+    !selection.rangeCount
+  ) {
+    hideVimBlockCursor()
+    return
+  }
+
+  const caretRange = selection.getRangeAt(0).cloneRange()
+  const caretRect = caretRange.getClientRects()[0] ?? caretRange.getBoundingClientRect()
+  const focusElement =
+    focusNode.nodeType === Node.ELEMENT_NODE ? (focusNode as Element) : focusNode.parentElement
+  if (!focusElement) {
+    hideVimBlockCursor()
+    return
+  }
+
+  const style = window.getComputedStyle(focusElement)
+  const focusRect = focusElement.getBoundingClientRect()
+  const fontSize = Number.parseFloat(style.fontSize) || 16
+  const lineHeight = Number.parseFloat(style.lineHeight) || fontSize * 1.4
+  let left = caretRect.left
+  let top = caretRect.top
+  let width = Math.max(2, fontSize * 0.62)
+  let height = caretRect.height || lineHeight
+
+  // Empty Muya paragraphs can expose a collapsed range with a completely
+  // empty rectangle. Anchor the block cursor to the editable element in that
+  // case so a brand-new document still has an immediately visible cursor.
+  if (caretRect.height <= 0 && focusRect.height > 0) {
+    left = focusRect.left
+    top = focusRect.top
+    height = Math.min(focusRect.height, lineHeight)
+  }
+
+  // A collapsed range is zero-width. Probe the character under the caret so
+  // the Normal-mode cursor has the same cell width as Vim. At end-of-line the
+  // font-derived fallback above represents Vim's virtual trailing cell.
+  if (
+    focusNode.nodeType === Node.TEXT_NODE &&
+    selection.focusOffset < (focusNode.textContent?.length ?? 0)
+  ) {
+    const characterRange = document.createRange()
+    characterRange.setStart(focusNode, selection.focusOffset)
+    characterRange.setEnd(focusNode, selection.focusOffset + 1)
+    const characterRect =
+      characterRange.getClientRects()[0] ?? characterRange.getBoundingClientRect()
+    if (characterRect.width > 0 && characterRect.height > 0) {
+      left = characterRect.left
+      top = characterRect.top
+      width = characterRect.width
+      height = characterRect.height
+    }
+  }
+
+  if (![left, top, width, height].every(Number.isFinite) || height <= 0) {
+    hideVimBlockCursor()
+    return
+  }
+
+  Object.assign(vimBlockCursor.style, {
+    transform: `translate3d(${left}px, ${top}px, 0)`,
+    width: `${Math.max(2, width)}px`,
+    height: `${height}px`
+  })
+  vimBlockCursor.hidden = false
+}
+
+const scheduleVimBlockCursor = () => {
+  if (vimCursorFrame) cancelAnimationFrame(vimCursorFrame)
+  vimCursorFrame = requestAnimationFrame(updateVimBlockCursor)
+}
 
 const handleVimKeydown = (event: KeyboardEvent) => {
   if (!vimController?.handle(event)) return
   event.preventDefault()
   event.stopPropagation()
   event.stopImmediatePropagation()
+  scheduleVimBlockCursor()
 }
 
 const guardVimMutation = (event: Event) => {
@@ -321,20 +412,37 @@ const VIM_MUTATION_EVENTS = ['beforeinput', 'compositionstart', 'paste', 'cut', 
 
 const attachVimDomListeners = (domNode: HTMLElement) => {
   vimDomNode = domNode
+  vimBlockCursor = document.createElement('div')
+  vimBlockCursor.className = 'vim-block-cursor'
+  vimBlockCursor.hidden = true
+  document.body.appendChild(vimBlockCursor)
   domNode.addEventListener('keydown', vimKeydownListener, true)
+  domNode.addEventListener('scroll', scheduleVimBlockCursor, { passive: true })
+  document.addEventListener('selectionchange', scheduleVimBlockCursor)
+  window.addEventListener('resize', scheduleVimBlockCursor)
   for (const event of VIM_MUTATION_EVENTS) {
     domNode.addEventListener(event, vimMutationListener, true)
   }
+  scheduleVimBlockCursor()
 }
 
 const detachVimDomListeners = () => {
   if (!vimDomNode) return
   vimDomNode.removeEventListener('keydown', vimKeydownListener, true)
+  vimDomNode.removeEventListener('scroll', scheduleVimBlockCursor)
+  document.removeEventListener('selectionchange', scheduleVimBlockCursor)
+  window.removeEventListener('resize', scheduleVimBlockCursor)
   for (const event of VIM_MUTATION_EVENTS) {
     vimDomNode.removeEventListener(event, vimMutationListener, true)
   }
+  if (vimCursorFrame) cancelAnimationFrame(vimCursorFrame)
+  vimCursorFrame = 0
+  vimBlockCursor?.remove()
+  vimBlockCursor = null
   vimDomNode = null
 }
+
+watch([vimMode, sourceCode], () => nextTick(scheduleVimBlockCursor), { flush: 'post' })
 
 // The engine's undo/redo history (`getHistory()`) has a different shape than
 // the desktop store's `tab.history` (which drives the save/dirty tracking and
@@ -2157,6 +2265,34 @@ onBeforeUnmount(() => {
   box-sizing: border-box;
   cursor: default;
   overflow-anchor: none !important;
+}
+
+/* Match Vim's primary mode cue: Normal mode uses a block cursor while Insert
+   mode keeps Muya's native thin caret. The overlay is attached to <body> so it
+   is not clipped by the editor's scrolling container. */
+.vim-normal .editor-component {
+  caret-color: transparent;
+}
+
+.vim-block-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 10;
+  box-sizing: border-box;
+  pointer-events: none;
+  border: 1px solid rgba(47, 130, 230, 0.95);
+  border-radius: 1px;
+  background: rgba(47, 130, 230, 0.48);
+  transform-origin: top left;
+  will-change: transform, width, height, opacity;
+  animation: vim-block-cursor-blink 1.1s steps(1, end) infinite;
+}
+
+@keyframes vim-block-cursor-blink {
+  50% {
+    opacity: 0.28;
+  }
 }
 
 .editor-component .mu-container {
