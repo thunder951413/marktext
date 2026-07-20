@@ -98,7 +98,6 @@ import {
   TableColumnToolbar,
   TableDragBar,
   TableRowColumMenu,
-  wordCount as muyaWordCount,
   en,
   de,
   es,
@@ -112,6 +111,7 @@ import {
   type ILocale
 } from '@muyajs/core'
 import { exportStyledHTML, type HeaderFooterPart } from '@/util/exportHtml'
+import { getWordCount } from '@/util/wordCountWorker'
 import { applyCursor, isIndexCursor } from '@/util/cursor'
 import EditorSearch from '../search/index.vue'
 import bus from '@/bus'
@@ -285,6 +285,8 @@ let switchLanguageCommand: SpellcheckerLanguageCommand | null = null
 let imageViewer: SimpleImageViewer | null = null
 // The engine has no `scroll` event; we listen on the scroll container directly.
 let scrollHandler: ((e: Event) => void) | null = null
+let wordCountRevision = 0
+let componentDestroyed = false
 
 // The engine's undo/redo history (`getHistory()`) has a different shape than
 // the desktop store's `tab.history` (which drives the save/dirty tracking and
@@ -817,6 +819,10 @@ watch(
   (value, oldValue) => {
     if (value && value !== oldValue) {
       if (editor.value) {
+        // SourceCode is loaded asynchronously. Flush Muya's pending input
+        // batch before the child reads the tab snapshot; otherwise a rapid
+        // type-then-toggle can hand off only a prefix of the latest keystrokes.
+        editor.value.flush()
         editor.value.hideAllFloatTools()
         // Compute the WYSIWYG caret as a source-markdown `{ line, ch }` index
         // cursor JUST-IN-TIME, only when entering source mode (Phase G — G7),
@@ -1876,13 +1882,17 @@ onMounted(() => {
     editorStore.LISTEN_FOR_CONTENT_CHANGE({
       id,
       markdown,
-      wordCount: muyaWordCount(markdown),
       cursor: serializeCursor(editor.value.getSelection()),
       // Synthetic, desktop-shaped history so the store's save/dirty tracking
       // keeps working (the engine history shape is incompatible).
       history: makeSyntheticHistory(id, markdown),
       toc: editor.value.getTOC(),
       blocks: editor.value.getState()
+    })
+    const revision = ++wordCountRevision
+    getWordCount(markdown).then((wordCount) => {
+      if (componentDestroyed || revision !== wordCountRevision) return
+      editorStore.UPDATE_WORD_COUNT({ id, markdown, wordCount })
     })
   })
 
@@ -1974,6 +1984,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  componentDestroyed = true
   bus.off('file-loaded', setMarkdownToEditor)
   bus.off('invalidate-image-cache', handleInvalidateImageCache)
   bus.off('undo', handleUndo)

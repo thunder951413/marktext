@@ -96,3 +96,14 @@ declare module '@muyajs/core' {
     all: number
   }
 }
+
+declare module '@muyajs/core/utils/wordCount' {
+  export interface IWordCount {
+    word: number
+    paragraph: number
+    character: number
+    all: number
+  }
+
+  export function wordCount(markdown: string): IWordCount
+}

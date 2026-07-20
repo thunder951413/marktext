@@ -6,21 +6,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { ref, shallowRef, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useEditorStore } from '@/store/editor'
 import { usePreferencesStore } from '@/store/preferences'
 import { findMarkdownHeadingLine, scrollSourceEditorToLine } from '@/util/sourceModeToc'
 import { storeToRefs } from 'pinia'
 import codeMirror, { setCursorAtFirstLine, setTextDirection } from '../../codeMirror'
-import { wordCount as getWordCount } from '@muyajs/core'
+import type { SourceEditor, SourceEditorConfig, SourcePosition } from '../../codeMirror'
+import { getWordCount } from '@/util/wordCountWorker'
 import { adjustCursor } from '../../util'
 import bus from '../../bus'
 import { oneDarkThemes, railscastsThemes } from '@/config'
 
-// CodeMirror 5 ships no first-party types; the wrapper in src/renderer/src/
-// codeMirror/index.ts also keeps the surface intentionally loose.
-type CMInstance = any
-type CMCursor = any
+type CMInstance = SourceEditor
+type CMCursor = SourcePosition
 
 interface MuyaIndexCursorLike {
   anchor: CMCursor
@@ -38,10 +37,13 @@ const preferencesStore = usePreferencesStore()
 
 const sourceCodeContainer = ref<HTMLDivElement | null>(null)
 
-const editor = ref<CMInstance>(null)
+// EditorView is a stateful class with identity-sensitive fields. A deep Vue
+// proxy breaks command dispatch (notably undo/redo), so retain it verbatim.
+const editor = shallowRef<CMInstance | null>(null)
 const commitTimer = ref<ReturnType<typeof setTimeout> | null>(null)
 const viewDestroyed = ref(false)
 const tabId = ref<string | null>(null)
+let wordCountRevision = 0
 
 const { theme, sourceCode } = storeToRefs(preferencesStore)
 const { currentFile: currentTab } = storeToRefs(editorStore)
@@ -59,6 +61,16 @@ watch(
     }
   }
 )
+
+watch(theme, (value) => {
+  if (!editor.value) return
+  const sourceTheme = railscastsThemes.includes(value)
+    ? 'railscasts'
+    : oneDarkThemes.includes(value)
+      ? 'one-dark'
+      : 'default'
+  editor.value.setOption('theme', sourceTheme)
+})
 
 const getMarkdownAndCursor = (cm: CMInstance) => {
   let focus = cm.getCursor('head')
@@ -100,7 +112,7 @@ const getMarkdownAndCursor = (cm: CMInstance) => {
  */
 const prepareTabSwitch = () => {
   if (commitTimer.value) clearTimeout(commitTimer.value)
-  if (tabId.value) {
+  if (tabId.value && editor.value) {
     const { cursor, markdown: newMarkdown } = getMarkdownAndCursor(editor.value)
     editorStore.LISTEN_FOR_CONTENT_CHANGE({
       id: tabId.value,
@@ -180,11 +192,7 @@ const handleFileChange = (payload: unknown) => {
   }
 }
 
-const handleInvalidateImageCache = () => {
-  if (editor.value) {
-    editor.value.invalidateImageCache()
-  }
-}
+const handleInvalidateImageCache = () => editor.value?.invalidateImageCache()
 
 const handleSelectAll = () => {
   if (!sourceCode.value) {
@@ -232,6 +240,7 @@ interface ImageActionPayload {
 }
 
 const handleImageAction = (payload: unknown) => {
+  if (!editor.value) return
   const { id, result, alt } = payload as ImageActionPayload
   const value: string = editor.value.getValue()
   const focus = editor.value.getCursor('focus')
@@ -283,16 +292,19 @@ const handleImageAction = (payload: unknown) => {
 
 const saveContent = (cm: CMInstance) => {
   const { cursor, markdown: newMarkdown } = getMarkdownAndCursor(cm)
-  // Attention: the cursor may be `{focus: null, anchor: null}` when press `backspace`
-  const wordCount = getWordCount(newMarkdown)
+  const revision = ++wordCountRevision
   // See "beforeDestroy" note
   if (!viewDestroyed.value) {
     if (tabId.value) {
+      const id = tabId.value
       editorStore.LISTEN_FOR_CONTENT_CHANGE({
-        id: tabId.value,
+        id,
         markdown: newMarkdown,
-        wordCount,
         muyaIndexCursor: cursor
+      })
+      getWordCount(newMarkdown).then((wordCount) => {
+        if (viewDestroyed.value || revision !== wordCountRevision) return
+        editorStore.UPDATE_WORD_COUNT({ id, markdown: newMarkdown, wordCount })
       })
     } else {
       // This may occur during tab switching but should not occur otherwise.
@@ -301,9 +313,10 @@ const saveContent = (cm: CMInstance) => {
   }
 }
 
-const listenChange = () => {
-  editor.value.on('cursorActivity', (cm: CMInstance) => {
-    saveContent(cm)
+const listenChange = (sourceEditor: CMInstance) => {
+  sourceEditor.on('cursorActivity', (cm: CMInstance) => {
+    if (commitTimer.value) clearTimeout(commitTimer.value)
+    commitTimer.value = setTimeout(() => saveContent(cm), 100)
   })
 }
 
@@ -316,8 +329,7 @@ const handleScrollToHeader = (slug: unknown) => {
   if (index < 0) return
   const line = findMarkdownHeadingLine(editor.value.getValue(), index)
   if (line < 0) return
-  // `.source-code` is the scroll container (CodeMirror renders full-height with
-  // viewportMargin: Infinity, so its own scroller never scrolls).
+  // CodeMirror 6 owns the scroll viewport and only renders the visible lines.
   scrollSourceEditorToLine(editor.value, line, sourceCodeContainer.value)
 }
 
@@ -333,21 +345,12 @@ onMounted(() => {
 
   const { markdown, muyaIndexCursor, textDirection } = props
   const container = sourceCodeContainer.value
-  const codeMirrorConfig: Record<string, unknown> = {
+  if (!container) return
+  const codeMirrorConfig: SourceEditorConfig = {
     value: markdown,
-    lineNumbers: true,
     autofocus: true,
     lineWrapping: true,
-    styleActiveLine: true,
-    direction: textDirection,
-    viewportMargin: Infinity,
-    lineNumberFormatter (line: number) {
-      if (line % 10 === 0 || line === 1) {
-        return line
-      } else {
-        return ''
-      }
-    }
+    direction: textDirection
   }
 
   if (railscastsThemes.includes(theme.value)) {
@@ -389,7 +392,7 @@ onMounted(() => {
   editor.value = codeMirrorInstance
   tabId.value = id
 
-  listenChange()
+  listenChange(codeMirrorInstance)
 })
 
 onBeforeUnmount(() => {
@@ -405,6 +408,7 @@ onBeforeUnmount(() => {
   bus.off('image-action', handleImageAction)
   bus.off('scroll-to-header', handleScrollToHeader)
 
+  if (!editor.value) return
   const { cursor, markdown: newMarkdown } = getMarkdownAndCursor(editor.value)
   bus.emit('file-changed', {
     id: tabId.value,
@@ -412,6 +416,7 @@ onBeforeUnmount(() => {
     muyaIndexCursor: cursor,
     renderCursor: true
   })
+  editor.value.destroy()
 })
 </script>
 
@@ -419,20 +424,20 @@ onBeforeUnmount(() => {
 .source-code {
   height: calc(100vh - var(--titleBarHeight));
   box-sizing: border-box;
-  overflow: auto;
+  overflow: hidden;
 }
 .source-code .CodeMirror {
-  height: auto;
+  height: calc(100% - 100px);
   margin: 50px auto;
   max-width: var(--editorAreaWidth);
   background: transparent;
 }
-.source-code .CodeMirror-gutters {
+.source-code .cm-gutters {
   border-right: none;
   background-color: transparent;
 }
-.source-code .CodeMirror-activeline-background,
-.source-code .CodeMirror-activeline-gutter {
+.source-code .cm-activeLine,
+.source-code .cm-activeLineGutter {
   background: var(--floatHoverColor);
 }
 </style>

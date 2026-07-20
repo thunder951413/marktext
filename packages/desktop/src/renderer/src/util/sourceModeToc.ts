@@ -1,4 +1,4 @@
-/** Minimal CodeMirror surface `scrollSourceEditorToLine` needs. */
+/** Minimal source-editor surface `scrollSourceEditorToLine` needs. */
 interface ISourceEditor {
   setCursor: (
     pos: { line: number, ch: number },
@@ -6,21 +6,16 @@ interface ISourceEditor {
     options?: { scroll?: boolean }
   ) => void
   heightAtLine: (line: number, mode: 'local' | 'page' | 'div') => number
+  scrollTo?: (x: number | null, y: number | null) => void
 }
 
 /**
  * Scroll the Source Code editor so `line` sits at the TOP of the viewport,
  * animated.
  *
- * The editor runs CodeMirror with `viewportMargin: Infinity`, so CodeMirror
- * renders the whole document at full height and its own `.CodeMirror-scroll`
- * never scrolls — the OUTER `.source-code` container (`scrollContainer`) is the
- * scrollable element. So neither `cm.scrollTo` nor `cm.scrollIntoView` moves
- * anything; we scroll the container directly to the line's local Y, which puts
- * the line at the top (CodeMirror's `scrollIntoView` only scrolled minimally,
- * leaving the heading at the bottom edge with no animation). `setCursor` gets
- * `scroll: false` so its native caret-into-view scroll doesn't fight the
- * animation.
+ * CodeMirror 6 owns the scroll viewport so it can virtualize large documents.
+ * The optional outer-container fallback keeps this utility usable with the
+ * legacy test double and any older embedded source editor.
  */
 export function scrollSourceEditorToLine(
   editor: ISourceEditor,
@@ -29,9 +24,9 @@ export function scrollSourceEditorToLine(
 ): void {
   editor.setCursor({ line, ch: 0 }, null, { scroll: false })
 
-  if (!scrollContainer) return
   const top = editor.heightAtLine(line, 'local')
-  scrollContainer.scrollTo({ top, behavior: 'smooth' })
+  if (editor.scrollTo) editor.scrollTo(null, top)
+  else scrollContainer?.scrollTo({ top, behavior: 'smooth' })
 }
 
 /**

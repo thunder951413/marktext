@@ -1,17 +1,24 @@
-.CodeMirror {
+.source-code .CodeMirror {
   background: transparent;
-  height: auto;
 }
-.CodeMirror-line::selection,
-.CodeMirror-line > span::selection,
-.CodeMirror-line > span > span::selection {
-  background: rgb(178, 215, 254);
+
+.source-code .CodeMirror .cm-scroller {
+  font-family: inherit;
+  overflow: auto;
 }
-/* #2372 — make the source-mode selection use the same visible colour as the
-   WYSIWYG editor. The bundled railscasts theme paints the selection at #272935,
-   almost identical to its #2b2b2b background, so it was invisible on dark
-   themes. The higher specificity (+ !important) beats both railscasts' own
-   !important rule and the one-dark theme. */
-.source-code .CodeMirror div.CodeMirror-selected {
+
+.source-code .CodeMirror .cm-content {
+  min-height: 100%;
+}
+
+/* Keep source selection visible across every application theme. */
+.source-code .CodeMirror .cm-selectionBackground,
+.source-code .CodeMirror.cm-focused .cm-selectionBackground,
+.source-code .CodeMirror .cm-content ::selection {
   background: var(--selection-color, rgb(45 170 219 / 30%)) !important;
+}
+
+.source-code .CodeMirror.cm-s-one-dark,
+.source-code .CodeMirror.cm-s-railscasts {
+  color: var(--editorColor);
 }

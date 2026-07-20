@@ -25,10 +25,14 @@
 <script setup lang="ts">
 import { useLayoutStore } from '@/store/layout'
 import { storeToRefs } from 'pinia'
+import { defineAsyncComponent } from 'vue'
 import Tabs from './tabs.vue'
 import Editor from './editor.vue'
-import SourceCode from './sourceCode.vue'
 import TabNotifications from './notifications.vue'
+
+// Source mode carries CodeMirror and its language descriptions. Most sessions
+// never open it, so keep that work out of the WYSIWYG startup path.
+const SourceCode = defineAsyncComponent(() => import('./sourceCode.vue'))
 
 defineProps<{
   markdown: string

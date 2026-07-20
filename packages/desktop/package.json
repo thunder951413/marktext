@@ -1,6 +1,6 @@
 {
   "name": "marktext",
-  "version": "0.20.0-dev",
+  "version": "0.20.0-rc.1",
   "description": "MarkText",
   "main": "./out/main/index.js",
   "author": {
@@ -53,11 +53,18 @@
     "typecheck:watch": "vue-tsc --noEmit -p tsconfig.json --watch"
   },
   "dependencies": {
+    "@codemirror/autocomplete": "^6.20.3",
+    "@codemirror/commands": "^6.10.4",
+    "@codemirror/lang-markdown": "^6.5.1",
+    "@codemirror/language": "^6.12.4",
+    "@codemirror/language-data": "^6.5.2",
+    "@codemirror/state": "^6.7.1",
+    "@codemirror/view": "^6.43.6",
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
-    "@intlify/core-base": "^11.4.6",
     "@element-plus/icons-vue": "^2.3.2",
     "@hfelix/electron-localshortcut": "^4.0.1",
+    "@intlify/core-base": "^11.4.6",
     "@marktext/file-icons": "^1.0.6",
     "@marktext/muyajs": "workspace:*",
     "@muyajs/core": "workspace:*",
@@ -67,7 +74,7 @@
     "axios": "^1.18.0",
     "ced": "^2.0.0",
     "chokidar": "^5.0.0",
-    "codemirror": "^5.65.21",
+    "codemirror": "^6.0.2",
     "command-exists": "^1.2.9",
     "deep-equal": "^2.2.3",
     "dom-autoscroller": "^2.3.4",
@@ -116,7 +123,6 @@
   "devDependencies": {
     "@electron/rebuild": "^4.0.4",
     "@playwright/test": "^1.61.0",
-    "@types/codemirror": "^5.60.17",
     "@types/deep-equal": "^1.0.4",
     "@types/dragula": "^3.7.5",
     "@types/element-resize-detector": "^1.1.6",

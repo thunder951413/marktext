@@ -15,6 +15,8 @@ class InlineRenderer {
     public labels: Labels = new Map();
     public renderer: Renderer;
 
+    private _documentRenderDepth = 0;
+
     constructor(public muya: Muya) {
         this.renderer = new Renderer(muya, this);
     }
@@ -53,14 +55,21 @@ class InlineRenderer {
         if (!scrollPage)
             return;
 
-        scrollPage.breadthFirstTraverse((node) => {
-            if (node.isContent())
-                node.update();
+        const state = this.muya.editor.jsonState.getState();
+        this.renderDocument(state, () => {
+            scrollPage.breadthFirstTraverse((node) => {
+                if (node.isContent())
+                    node.update();
+            });
         });
     }
 
     patch(block: Format, cursor?: IRenderCursor, highlights: IHighlight[] = []) {
-        this._collectReferenceDefinitions();
+        // A full document render prepares the label map once before creating
+        // any blocks. Interactive single-block updates still refresh here so
+        // editing a reference definition takes effect immediately.
+        if (this._documentRenderDepth === 0)
+            this._collectReferenceDefinitions();
         const { domNode } = block;
         if (block.isParent())
             debug.error('Patch can only handle content block');
@@ -74,8 +83,24 @@ class InlineRenderer {
         domNode!.innerHTML = html;
     }
 
-    private _collectReferenceDefinitions() {
-        const state = this.muya.editor.jsonState.getState();
+    /**
+     * Render a complete document against one reference-definition snapshot.
+     * Without this boundary every content block cloned and scanned the whole
+     * state from patch(), making setContent quadratic in the block count.
+     */
+    renderDocument<T>(state: TState[], render: () => T): T {
+        if (this._documentRenderDepth === 0)
+            this._collectReferenceDefinitions(state);
+        this._documentRenderDepth += 1;
+        try {
+            return render();
+        }
+        finally {
+            this._documentRenderDepth -= 1;
+        }
+    }
+
+    private _collectReferenceDefinitions(state = this.muya.editor.jsonState.getState()) {
         const labels = new Map();
 
         const travel = (sts: TState[]) => {
