@@ -2281,9 +2281,11 @@ onBeforeUnmount(() => {
   z-index: 10;
   box-sizing: border-box;
   pointer-events: none;
-  border: 1px solid rgba(47, 130, 230, 0.95);
+  border: 0;
   border-radius: 1px;
-  background: rgba(47, 130, 230, 0.48);
+  background: var(--editorColor30);
+  box-shadow: inset 0 0 0 1px var(--editorColor10);
+  opacity: 0.55;
   transform-origin: top left;
   will-change: transform, width, height, opacity;
   animation: vim-block-cursor-blink 1.1s steps(1, end) infinite;
@@ -2291,7 +2293,7 @@ onBeforeUnmount(() => {
 
 @keyframes vim-block-cursor-blink {
   50% {
-    opacity: 0.28;
+    opacity: 0.18;
   }
 }
 

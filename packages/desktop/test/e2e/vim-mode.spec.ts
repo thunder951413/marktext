@@ -52,6 +52,15 @@ test.describe('Vim mode', () => {
     const normalCursorBox = await blockCursor.boundingBox()
     expect(normalCursorBox?.width ?? 0).toBeGreaterThan(3)
     expect(normalCursorBox?.height ?? 0).toBeGreaterThan(8)
+    const cursorStyle = await blockCursor.evaluate((element) => {
+      const style = getComputedStyle(element)
+      return { backgroundColor: style.backgroundColor, opacity: Number(style.opacity) }
+    })
+    const cursorRgb = cursorStyle.backgroundColor.match(/\d+(?:\.\d+)?/g)?.slice(0, 3).map(Number)
+    expect(cursorStyle.opacity).toBeLessThanOrEqual(0.55)
+    expect(cursorRgb).toHaveLength(3)
+    if (!cursorRgb) throw new Error('block cursor background color is unavailable')
+    expect(Math.max(...cursorRgb) - Math.min(...cursorRgb)).toBeLessThanOrEqual(5)
     expect(
       await page
         .locator('.editor-component')

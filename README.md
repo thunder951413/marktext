@@ -12,11 +12,11 @@
 
 | 项目 | 状态 |
 | --- | --- |
-| 当前版本 | `0.20.0-rc.5` |
+| 当前版本 | `0.20.0-rc.6` |
 | 开发分支 | `codex/desktop-performance-foundation` |
 | 桌面平台 | macOS、Windows、Linux（不包含 Android/iOS） |
-| macOS 本地应用 | GitHub Release 的 Apple Silicon (`arm64`) 产物已校验、安装并运行 |
-| GitHub Release | [`v0.20.0-rc.5`](https://github.com/thunder951413/marktext/releases/tag/v0.20.0-rc.5) 已发布，含 macOS、Windows、Linux 产物与 SHA-256 |
+| macOS 本地应用 | 当前为 `rc.5`；`rc.6` 发布后更新正式 Apple Silicon (`arm64`) 产物 |
+| GitHub Release | [`v0.20.0-rc.5`](https://github.com/thunder951413/marktext/releases/tag/v0.20.0-rc.5) 已发布；`rc.6` 完成验证后发布 |
 | 合并请求 | [thunder951413/marktext#1](https://github.com/thunder951413/marktext/pull/1) |
 
 ## 本分支修改
@@ -42,7 +42,7 @@
 ### Vim 模式
 
 - WYSIWYG 和源代码模式均默认以 `NORMAL` 打开，`i` 进入现有编辑体验，`Esc` 返回 Normal。
-- WYSIWYG 的 Normal 模式使用随字符宽度变化的蓝色块状光标，Insert 模式恢复原生细竖线；空白新文档、滚动、缩放和窗口尺寸变化时均会重新定位。
+- WYSIWYG 的 Normal 模式使用随字符宽度变化、跟随主题的低对比度中性块状光标，Insert 模式恢复原生细竖线；空白新文档、滚动、缩放和窗口尺寸变化时均会重新定位。
 - 状态栏持续显示 `NORMAL`、`INSERT`、`VISUAL`、`VISUAL LINE` 或 `SEARCH`，并显示尚未完成的计数/命令。
 - 标准移动：`h/j/k/l`、`w/b/e`、`0/^/$`、`gg/G`，支持 `5j`、`3w` 等数字前缀。
 - 插入位置：`i/I/a/A/o/O`。
@@ -78,7 +78,7 @@
 
 ## 验证结果
 
-`0.20.0-rc.5` 当前已完成以下验证：
+`0.20.0-rc.6` 当前已完成以下验证：
 
 - 桌面端类型检查通过。
 - ESLint 通过，无新增错误。
@@ -93,12 +93,12 @@
 - 生产构建通过。
 - macOS `arm64` 的 DMG、ZIP 和应用包已生成；应用版本、CPU 架构、签名完整性及启动运行均已校验。
 
-## 发布结果
+## 发布计划
 
-1. `0.20.0-rc.5` 代码和标签已推送，macOS、Windows、Linux 五组构建均成功。
-2. GitHub Release 已发布 24 个资产，其中 23 个发行文件均列入 `SHA256SUMS.txt`。
-3. macOS `arm64` ZIP 与发布校验和一致，本地应用已由该正式产物更新到 `0.20.0-rc.5`。
-4. 本地应用已验证 arm64 架构、签名完整性、正常启动以及 Normal/Insert 光标切换。
+1. 完成 `0.20.0-rc.6` 完整回归并推送代码与标签。
+2. 运行 macOS、Windows、Linux 五组构建并核对发布资产与 SHA-256。
+3. 使用正式 macOS `arm64` Release 产物更新本地应用。
+4. 验证 arm64 架构、签名完整性、正常启动以及低对比度 Normal/Insert 光标切换。
 
 ## 许可证
 
