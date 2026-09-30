@@ -107,6 +107,12 @@ interface ContentChangePayload {
   blocks?: unknown
 }
 
+interface WordCountPayload {
+  id: string
+  markdown: string
+  wordCount: IFileState['wordCount']
+}
+
 interface AffiliationEntry {
   type: string
   functionType?: string
@@ -1464,6 +1470,20 @@ export const useEditorStore = defineStore('editor', {
         // Check here is to prevent it from overriding a restored .isSaved state
         tab.isSaved = true // An undo can trigger this
       }
+      debouncedSendBufferedState()
+    },
+
+    UPDATE_WORD_COUNT({ id, markdown, wordCount }: WordCountPayload): void {
+      const tab = this.tabs[this.tabIdToIndex[id]!]
+      if (!tab) return
+
+      // Worker responses may arrive after another edit, tab switch, or source
+      // handoff. Never let a statistic for an older snapshot mutate the live
+      // document; update only the derived field when the snapshot still
+      // matches after the tab's trailing-newline normalization.
+      const normalizedMarkdown = adjustTrailingNewlines(markdown, tab.trimTrailingNewline)
+      if (tab.markdown !== normalizedMarkdown) return
+      tab.wordCount = wordCount
       debouncedSendBufferedState()
     },
 

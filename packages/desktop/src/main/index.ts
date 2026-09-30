@@ -13,6 +13,8 @@ import Accessor from './app/accessor'
 import App from './app'
 import { t } from './i18n'
 import { registerSandboxIpcHandlers } from './ipc'
+import { configureFileSystemAccess } from './ipc/fs'
+import { BrowserWindow } from 'electron'
 
 // Set version strings into global and process.versions
 process.env.MARKTEXT_VERSION = MARKTEXT_VERSION
@@ -112,6 +114,15 @@ try {
   process.exit(1)
 }
 const appController = new App(accessor, args as unknown as { _: string[] })
+configureFileSystemAccess(async(senderId) => {
+  const browser = BrowserWindow.getAllWindows().find(win => win.webContents.id === senderId)
+  const windowRoots = browser ? accessor.windowManager.get(browser.id)?.fileSystemRoots ?? [] : []
+  const imageFolder = await accessor.dataCenter.getItem('imageFolderPath')
+  return {
+    read: [app.getAppPath(), process.resourcesPath, path.join(accessor.paths.userDataPath, 'themes')],
+    write: [...windowRoots, path.join(accessor.paths.userDataPath, 'images'), path.join(accessor.paths.userDataPath, 'screenshot'), ...(typeof imageFolder === 'string' ? [imageFolder] : [])]
+  }
+})
 appController.init()
 
 // Quit when all windows are closed (except on macOS)

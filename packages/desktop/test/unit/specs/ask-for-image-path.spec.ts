@@ -15,6 +15,7 @@ const { handlers, showOpenDialog, fromWebContents } = vi.hoisted(() => ({
 }))
 
 vi.mock('electron', () => ({
+  app: { getAppPath: () => '/test/marktext' },
   ipcMain: {
     handle: (channel: string, listener: (...args: unknown[]) => unknown) => {
       handlers.set(channel, listener)
@@ -50,7 +51,8 @@ vi.mock('electron-store', () => ({
 const { default: DataCenter } = await import('main_renderer/dataCenter')
 
 const FAKE_WIN = { id: 1 }
-const fakeEvent = { sender: {} } as never
+const frame = { url: 'file:///test/marktext/out/renderer/index.html' }
+const fakeEvent = { sender: { mainFrame: frame }, senderFrame: frame } as never
 
 function getHandler() {
   // Instantiating DataCenter registers the ipcMain handler (the side effect is the point).

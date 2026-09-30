@@ -10,8 +10,8 @@ const keybindings: Map<string, string> = new Map([
   ['file.preferences', 'Command+,'], // located under MarkText menu in macOS only
 
   // File menu
-  ['file.new-window', 'Command+N'],
-  ['file.new-tab', 'Command+T'],
+  ['file.new-window', 'Command+Option+N'],
+  ['file.new-tab', 'Command+N'],
   ['file.open-file', 'Command+O'],
   ['file.open-folder', 'Command+Shift+O'],
   ['file.save', 'Command+S'],
@@ -37,7 +37,7 @@ const keybindings: Map<string, string> = new Map([
   ['edit.paste-as-plaintext', 'Command+Shift+V'],
   ['edit.select-all', 'Command+A'],
   ['edit.duplicate', 'Command+Option+D'],
-  ['edit.create-paragraph', 'Shift+Command+N'],
+  ['edit.create-paragraph', 'Shift+Command+Enter'],
   ['edit.delete-paragraph', 'Shift+Command+D'],
   ['edit.find', 'Command+F'],
   ['edit.find-next', 'Cmd+G'],
@@ -53,8 +53,8 @@ const keybindings: Map<string, string> = new Map([
   ['paragraph.heading-4', 'Command+4'],
   ['paragraph.heading-5', 'Command+5'],
   ['paragraph.heading-6', 'Command+6'],
-  ['paragraph.upgrade-heading', 'Command+='],
-  ['paragraph.degrade-heading', 'Command+-'],
+  ['paragraph.upgrade-heading', 'Command+Option+Up'],
+  ['paragraph.degrade-heading', 'Command+Option+Down'],
   ['paragraph.table', 'Command+Shift+T'],
   ['paragraph.code-fence', 'Command+Option+C'],
   ['paragraph.quote-block', 'Command+Option+Q'],
@@ -64,7 +64,7 @@ const keybindings: Map<string, string> = new Map([
   ['paragraph.bullet-list', 'Command+Option+U'],
   ['paragraph.task-list', 'Command+Option+X'],
   ['paragraph.loose-list-item', 'Command+Option+L'],
-  ['paragraph.paragraph', 'Command+0'],
+  ['paragraph.paragraph', 'Command+Option+0'],
   ['paragraph.horizontal-line', 'Command+Option+-'],
   ['paragraph.front-matter', 'Command+Option+Y'],
 
@@ -85,8 +85,9 @@ const keybindings: Map<string, string> = new Map([
   // Window menu
   ['window.minimize', 'Command+M'],
   ['window.toggle-always-on-top', ''],
-  ['window.zoomIn', ''],
-  ['window.zoomOut', ''],
+  ['window.zoomIn', 'Command+='],
+  ['window.zoomOut', 'Command+-'],
+  ['window.zoomReset', 'Command+0'],
   ['window.toggle-full-screen', 'Ctrl+Command+F'],
 
   // View menu
@@ -115,7 +116,7 @@ const keybindings: Map<string, string> = new Map([
   ['tabs.switchToSeventh', 'Ctrl+7'],
   ['tabs.switchToEighth', 'Ctrl+8'],
   ['tabs.switchToNinth', 'Ctrl+9'],
-  ['tabs.switchToTenth', 'Ctrl+0'],
+  ['tabs.switchToTenth', ''],
   ['file.quick-open', 'Command+P']
 ])
 

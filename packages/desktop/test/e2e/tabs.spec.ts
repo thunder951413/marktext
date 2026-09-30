@@ -81,6 +81,34 @@ test.describe('Tab management', () => {
     expect(count).toBeGreaterThanOrEqual(1)
   })
 
+  test('New Document menu action creates and focuses a clean untitled document', async() => {
+    const before = await page.locator(tabSelector).count()
+    const originalId = await activeTabId(page)
+    const menuLabel = await app.evaluate(({ Menu }) =>
+      Menu.getApplicationMenu()?.getMenuItemById('newDocumentMenuItem')?.label ?? null
+    )
+    expect(menuLabel).toBe('New Document')
+
+    await app.evaluate(({ BrowserWindow, Menu }) => {
+      const win = BrowserWindow.getAllWindows()[0]
+      const item = Menu.getApplicationMenu()?.getMenuItemById('newDocumentMenuItem')
+      if (!win || !item) throw new Error('New Document menu action is unavailable')
+      item.click(item, win, {} as Electron.KeyboardEvent)
+    })
+
+    await expect(page.locator(tabSelector)).toHaveCount(before + 1)
+    await expect(page.locator(`${tabSelector}.active`)).not.toHaveClass(/unsaved/)
+    await expect(page.locator(`${tabSelector}.active`)).toContainText('Untitled')
+    expect(await getMarkdownContent(page, app)).toBe('')
+
+    const newDocumentId = await activeTabId(page)
+    if (!newDocumentId) throw new Error('New document tab is unavailable')
+    expect(await callEditorStoreAction(page, 'FORCE_CLOSE_TAB', newDocumentId)).toBe(true)
+    await expect(page.locator(tabSelector)).toHaveCount(before)
+    if (!originalId) throw new Error('Original document tab is unavailable')
+    await expect.poll(() => activeTabId(page)).toBe(originalId)
+  })
+
   test('Creating a new untitled tab grows the tab count', async() => {
     const before = await page.locator(tabSelector).count()
     await sendIpcToRenderer(app, 'mt::new-untitled-tab', true, '')

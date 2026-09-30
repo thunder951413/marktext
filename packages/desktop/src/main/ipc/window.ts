@@ -1,11 +1,5 @@
-import {
-  BrowserWindow,
-  Menu,
-  MenuItem,
-  ipcMain,
-  type IpcMainEvent,
-  type WebContents
-} from 'electron'
+import { ipcMain } from '../utils/secureIpc'
+import { BrowserWindow, Menu, MenuItem, type IpcMainEvent, type WebContents } from 'electron'
 import log from 'electron-log'
 import type { MenuTemplate, MenuTemplateItem, MenuPopupPosition } from '@shared/types/menu'
 

@@ -9,7 +9,14 @@ const write = (s: string): boolean => process.stdout.write(s)
 const writeLine = (s: string): boolean => write(s + '\n')
 
 const cli = (): ParsedArgs => {
+  // Electron's default app includes the application entry path before user
+  // arguments. Treating it as an input path opens our own folder at startup.
   let argv = process.argv.slice(1)
+  if (process.defaultApp) {
+    // Debug switches may precede the entry path when Electron is automated.
+    const entryIndex = argv.findIndex((argument) => !argument.startsWith('-'))
+    if (entryIndex !== -1) argv = argv.slice(entryIndex + 1)
+  }
   if (process.env.NODE_ENV === 'development') {
     // Don't pass electron development arguments to MarkText and change user data path.
     argv = ['--user-data-dir', path.join(getPath('appData'), 'marktext-dev')]

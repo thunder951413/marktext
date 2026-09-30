@@ -7,7 +7,7 @@
     },
     "file": {
       "file": "Datei",
-      "newTab": "Neuer Tab",
+      "newTab": "Neues Dokument",
       "newWindow": "Neues Fenster",
       "openFile": "Datei öffnen...",
       "openFolder": "Ordner öffnen...",
@@ -339,7 +339,7 @@
   },
   "recent": {
     "noTabsOpen": "Sie haben keine Tabs geöffnet.",
-    "newFile": "Neue Datei"
+    "newFile": "Neues Dokument"
   },
   "import": {
     "title": "Importieren oder öffnen",
@@ -738,7 +738,7 @@
     },
     "file": {
       "newWindow": "Neues Fenster",
-      "newTab": "Neuer Tab",
+      "newTab": "Neues Dokument",
       "openFile": "Datei öffnen",
       "openFolder": "Ordner öffnen",
       "save": "Speichern",

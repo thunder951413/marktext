@@ -1,8 +1,10 @@
+import { ipcMain } from '../utils/secureIpc'
 import { spawn, type ChildProcess } from 'child_process'
 import path from 'path'
-import { ipcMain, type WebContents } from 'electron'
+import { type WebContents } from 'electron'
 import log from 'electron-log'
 import { rgPath as bundledRgPath } from '@vscode/ripgrep'
+import { checkedPath } from './fs'
 
 const resolveRgPath = (): string => {
   if (process.env.MARKTEXT_RIPGREP_PATH) return process.env.MARKTEXT_RIPGREP_PATH
@@ -430,15 +432,19 @@ interface RipgrepRequest {
 }
 
 export const registerRipgrepHandlers = (): void => {
-  ipcMain.handle('mt::rg::start', (event, req: RipgrepRequest) => {
+  ipcMain.handle('mt::rg::start', async(event, req: RipgrepRequest) => {
     const { searchId, mode, directories, pattern, options } = req
+    if (!Array.isArray(directories) || !directories.length || typeof searchId !== 'string' || !['files', 'text'].includes(mode)) {
+      throw new Error('Invalid search request')
+    }
+    await Promise.all(directories.map(directory => checkedPath(event, directory)))
     cleanupAtSenderDestroy(event.sender)
     if (mode === 'files') startFileSearch(event.sender, searchId, directories, options || {})
     else startTextSearch(event.sender, searchId, directories, pattern, options || {})
     return true
   })
-  ipcMain.on('mt::rg::cancel', (_event, searchId: string) => {
+  ipcMain.on('mt::rg::cancel', (event, searchId: string) => {
     const entry = activeSearches.get(searchId)
-    if (entry) entry.cancel()
+    if (entry?.sender === event.sender) entry.cancel()
   })
 }

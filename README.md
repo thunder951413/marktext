@@ -1,196 +1,113 @@
 <p align="center"><img src="docs/assets/logo-small.png" alt="MarkText" width="100" height="100"></p>
 
-<h1 align="center">MarkText</h1>
+<h1 align="center">MarkText Desktop</h1>
 
-<div align="center">
-  <a href="https://twitter.com/intent/tweet?via=marktextme&url=https://github.com/marktext/marktext/&text=What%20do%20you%20want%20to%20say%20to%20app?&hashtags=happyMarkText">
-    <img src="https://img.shields.io/twitter/url/https/github.com/marktext/marktext.svg?style=for-the-badge" alt="twitter">
-  </a>
-</div>
-<div align="center">
-  <strong>:high_brightness: Next generation markdown editor :crescent_moon:</strong><br>
-  A simple and elegant open-source markdown editor that focused on speed and usability.<br>
-  <sub>Available for Linux, macOS and Windows.</sub>
-</div>
+<p align="center">
+  面向 macOS、Windows 和 Linux 的 Markdown 桌面编辑器维护分支。
+</p>
 
-<br>
+> 本仓库基于 [MarkText 上游项目](https://github.com/marktext/marktext) 继续维护。原项目介绍、完整功能说明、历史安装方式、贡献指南和赞助信息请查看[上游原始 README](https://github.com/marktext/marktext#readme)。
 
-<div align="center">
-  <!-- License -->
-  <a href="LICENSE">
-    <img src="https://img.shields.io/github/license/marktext/marktext.svg" alt="LICENSE">
-  </a>
-  <!-- Downloads total -->
-  <a href="https://github.com/marktext/marktext/releases">
-    <img src="https://img.shields.io/github/downloads/marktext/marktext/total.svg" alt="total download">
-  </a>
-  <!-- Downloads latest release -->
-  <a href="https://github.com/marktext/marktext/releases/latest">
-    <img src="https://img.shields.io/github/downloads/marktext/marktext/latest/total.svg" alt="latest download">
-  </a>
-  <!-- sponsors -->
-  <a href="https://opencollective.com/marktext">
-    <img src="https://opencollective.com/marktext/tiers/silver-sponsors/badge.svg?label=SilverSponsors&color=brightgreen" alt="sponsors">
-  </a>
-</div>
+## 当前状态
 
-<div align="center">
-  <h3>
-    <a href="https://github.com/marktext/marktext">
-      Website
-    </a>
-    <span> | </span>
-    <a href="https://github.com/marktext/marktext#features">
-      Features
-    </a>
-    <span> | </span>
-    <a href="https://github.com/marktext/marktext#download-and-installation">
-      Downloads
-    </a>
-    <span> | </span>
-    <a href="https://github.com/marktext/marktext#development">
-      Development
-    </a>
-    <span> | </span>
-    <a href="https://github.com/marktext/marktext#contribution">
-      Contribution
-    </a>
-  </h3>
-</div>
+| 项目 | 状态 |
+| --- | --- |
+| 当前版本 | `0.20.0-rc.7` |
+| 开发分支 | `codex/desktop-performance-foundation` |
+| 桌面平台 | macOS、Windows、Linux（不包含 Android/iOS） |
+| macOS 本地构建 | Apple Silicon (`arm64`)，通过 `pnpm build:mac:arm64` 生成 DMG、ZIP 和应用包 |
+| 上次 GitHub Release | [`v0.20.0-rc.6`](https://github.com/thunder951413/marktext/releases/tag/v0.20.0-rc.6) 已发布，含 macOS、Windows、Linux 产物与 SHA-256 |
+| 合并请求 | [thunder951413/marktext#1](https://github.com/thunder951413/marktext/pull/1) |
 
-<div align="center">
-  <sub>Translations:</sub>
-  <a href="docs/i18n/README-zh_cn.md#readme">
-    <span>:cn:</span>
-  </a>
-  <a href="docs/i18n/README-zh_tw.md#readme">
-    <span>:taiwan:</span>
-  </a>
-  <a href="docs/i18n/README-jp.md#readme">
-    <span>:jp:</span>
-  </a>
-  <a href="docs/i18n/README-fr.md#readme">
-    <span>:fr:</span>
-  </a>
-  <a href="docs/i18n/README-tr.md#readme">
-    <span>:tr:</span>
-  </a>
-  <a href="docs/i18n/README-es.md#readme">
-    <span>:es:</span>
-  </a>
-  <a href="docs/i18n/README-pt.md#readme">
-    <span>:portugal:</span>
-  </a>
-  <a href="docs/i18n/README-kr.md#readme">
-    <span>:kr:</span>
-  </a>
-  <a href="docs/i18n/README-bn.md#readme">
-    <span>:bangladesh:</span>
-  </a>
-</div>
+## 本轮修复（0.20.0-rc.7）
 
-<div align="center">
-  <sub>This Markdown editor that could. Built with ❤︎ by
-    <a href="https://github.com/Jocs">Jocs</a> and
-    <a href="https://github.com/marktext/marktext/graphs/contributors">
-      contributors
-    </a>
-    .
-  </sub>
-</div>
+- 默认使用经过完整桌面回归的 Muya 编辑器；保留新的 CodeMirror WYSIWYG 引擎作为可选预览，避免尚未接入的浮动工具栏、选择器等功能影响日常使用。
+- 修复预览引擎的 TOC 标签、Vim 状态、HTML 清洗和开关、拼写检查、富文本剪贴板及初始偏好同步；配置改为实例独立，避免窗口间相互覆盖，并复用同一状态的装饰计算结果。
+- 恢复 Electron `webSecurity`；preload 和主进程均检查 IPC 通道，主进程验证请求来自应用主框架。移除未使用的批量删除接口，限制文件读写、移动、删除和搜索路径，并拦截危险外部 URL 和可执行文件打开。
+- Electron 升级到 `42.11.10`，修补 DOMPurify、Mermaid、Next.js 及相关传递依赖；生产依赖安全审计为 0 项已知漏洞。
+- 新编辑器加入工作区依赖、根目录测试和类型检查及 CI。修复 Node 26 测试环境、窗口标题及测试目录隔离；补齐第三方许可正文，修复网站生产构建误启动 Cloudflare 开发模拟器的问题。
 
-<br />
+预览引擎可通过 `MARKTEXT_EDITOR_ENGINE=codemirror pnpm dev` 启动。它仍缺少部分 Muya 上下文浮动界面、表格列宽拖动和矩形选择，完整切换尚未完成；详见 [WYSIWYG 包说明](packages/wysiwyg/README.md)。
 
-<h2 align="center">Sponsors</h2>
+## 本分支修改
 
-MarkText is an open-source Markdown editor powered by the support of its community. If MarkText improves your workflow, please consider [sponsoring the project](https://github.com/sponsors/marktext). Thank you to all the sponsors ❤️
+### 新建文档
 
-**Special Sponsor**
+- 文件菜单新增明确的“新建文档”入口。
+- 标签栏保留可点击的 `+`，并补充键盘操作、标题和无障碍标签。
+- 新文档以干净的 `Untitled` 标签打开；输入内容后才进入未保存状态，继续复用现有保存和关闭确认流程。
+- 标准快捷键：macOS 使用 `Command+N`，Windows/Linux 使用 `Ctrl+N`。
+- 新建窗口调整为 macOS `Command+Option+N`、Windows/Linux `Ctrl+Shift+N`，避免快捷键冲突。
 
-| [<img src="docs/assets/sponsors/serpapi.png" width="150">](https://serpapi.com/?utm_source=marktext) | [Scrape Google and other search engines from our fast, easy, and complete API.](https://serpapi.com/?utm_source=marktext) |
-| ------------- |:-------------|
-| [<img src="docs/assets/sponsors/ukey.png" width="150">](https://www.ukey.com) | [Secure hardware wallet made simple.](https://www.ukey.com) |
+### 整体显示缩放
 
-## Screenshot
+- 标题栏新增 `− / 百分比 / +` 缩放控件；点击百分比可恢复 `100%`。
+- 支持窗口菜单、命令面板和快捷键操作。
+- 放大：macOS `Command+=`，Windows/Linux `Ctrl+=`。
+- 缩小：macOS `Command+-`，Windows/Linux `Ctrl+-`。
+- 恢复实际大小：macOS `Command+0`，Windows/Linux `Ctrl+0`。
+- 缩放范围为 `50%`–`200%`，步长为 `12.5%`。
+- 缩放只改变 Electron 窗口的显示比例，不改写 Markdown 内容、编辑器文本或保存文件。
 
-![](docs/assets/marktext.png?raw=true)
+### Vim 模式
 
-## Features
+- WYSIWYG 和源代码模式均默认以 `NORMAL` 打开，`i` 进入现有编辑体验，`Esc` 返回 Normal。
+- WYSIWYG 的 Normal 模式使用随字符宽度变化、跟随主题的低对比度中性块状光标，Insert 模式恢复原生细竖线；空白新文档、滚动、缩放和窗口尺寸变化时均会重新定位。
+- 状态栏持续显示 `NORMAL`、`INSERT`、`VISUAL`、`VISUAL LINE` 或 `SEARCH`，并显示尚未完成的计数/命令。
+- 标准移动：`h/j/k/l`、`w/b/e`、`0/^/$`、`gg/G`，支持 `5j`、`3w` 等数字前缀。
+- 插入位置：`i/I/a/A/o/O`。
+- 撤销与重做：`u`、`Ctrl+R`。
+- 查找：`/`、`?`、`n/N`；行内字符查找支持 `f/F/t/T` 和 `;/,` 重复。
+- 编辑操作：`x`、`D`、`dd`、`cc`、`yy`、`p/P`，以及 `d/c/y + motion`（例如 `dw`、`c$`、`y2w`）。
+- 选择操作：`v` 和 `V` 进入字符/整行 Visual 模式，可配合移动与 `d/c/y`。
+- Normal/Visual 模式拦截普通输入、粘贴、剪切、拖放和中文输入法组合事件，防止意外改写内容；应用级快捷键仍可正常使用。
+- `dd` 在列表中删除当前列表项，不会误删整个列表。
+- 源代码模式使用维护中的 CodeMirror 6 Vim 扩展；WYSIWYG 通过 Muya 的 selection、history、clipboard 和 search 接口实现结构化语义。
+- 暂不实现寄存器、marks、宏、vimrc 和完整 Ex 命令体系。
 
-- Realtime preview (WYSIWYG) and a clean and simple interface to get a distraction-free writing experience.
-- Support [CommonMark Spec](https://spec.commonmark.org), [GitHub Flavored Markdown Spec](https://github.github.com/gfm/) and selective support [Pandoc markdown](https://pandoc.org/MANUAL.html#pandocs-markdown).
-- Markdown extensions such as math expressions (KaTeX), front matter and emojis.
-- Support paragraphs and inline style shortcuts to improve your writing efficiency.
-- Output **HTML** and **PDF** files.
-- Various [themes](https://marktext.me/docs/themes): **Cadmium Light**, **Material Dark** etc.
-- Various editing modes: **Source Code mode**, **Typewriter mode**, **Focus mode**.
-- Paste images directly from clipboard.
+### 应用图标
 
-## Download and Installation
+- 采用原创的浅色文档页与深色 Markdown `M` 折线，辅以少量青蓝折面，替换原黑底青色几何图标。
+- 图标外部使用透明背景，并为小尺寸保留清晰的单一轮廓。
+- 同步生成 macOS 多分辨率 ICNS、Windows 多尺寸 ICO、Linux PNG、应用内图标及 README 标识。
 
-![platform](https://img.shields.io/static/v1.svg?label=Platform&message=Linux%20x64%20|%20macOS%20x64%2Farm64%20|%20Windows%20x64%2Farm64&style=for-the-badge)
+### 编辑器与性能
 
-| ![](https://raw.githubusercontent.com/wiki/ryanoasis/nerd-fonts/screenshots/v1.0.x/mac-pass-sm.png)                                                                                         | ![](https://raw.githubusercontent.com/wiki/ryanoasis/nerd-fonts/screenshots/v1.0.x/windows-pass-sm.png)                                                                                         | ![](https://raw.githubusercontent.com/wiki/ryanoasis/nerd-fonts/screenshots/v1.0.x/linux-pass-sm.png)                                                                                                       |
-|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
-| [![Download for macOS](https://img.shields.io/badge/macOS-Download-blue)](https://github.com/marktext/marktext/releases/latest) | [![Download for Windows](https://img.shields.io/badge/Windows-Download-blue)](https://github.com/marktext/marktext/releases/latest) | [![Download for Linux](https://img.shields.io/badge/Linux-Download-blue)](https://github.com/marktext/marktext/releases/latest) |
+- 源代码模式迁移到 CodeMirror 6，利用视口渲染改善大文档滚动和编辑性能。
+- 字数统计移至 Web Worker，降低主界面在大文档统计时的阻塞。
+- Muya 文档渲染采用分批调度，减少大批量节点同步插入造成的长任务。
+- 优化块链表、父子节点和行内渲染路径，减少重复遍历与布局读取。
+- 补充大文档、目录滚动、脏状态、渲染批处理及交互回归测试。
 
-Want to see new features of the latest version? Please refer to [CHANGELOG](https://marktext.me/docs/changelog).
+### 桌面平台与构建
 
-#### macOS
+- 当前目标仅为 macOS、Windows 和 Linux，不规划 Android/iOS 客户端。
+- macOS 支持 `arm64` 和 `x64` 独立产物。
+- Windows 支持 `arm64` 和 `x64` 安装包。
+- Linux 保留桌面发行格式，由 GitHub Actions 统一生成发布产物。
 
-Requires macOS 11 (Big Sur) or later. Universal builds aren't published — pick the matching `arm64` or `x64` installer.
+## 验证结果
 
-You can either download the latest `marktext-mac-(arm64|x64)-%version%.dmg` from the [release page](https://github.com/marktext/marktext/releases/latest) or install MarkText using [**homebrew cask**](https://github.com/caskroom/homebrew-cask). To use Homebrew-Cask you just need to have [Homebrew](https://brew.sh/) installed.
+`0.20.0-rc.7` 本地验证：
 
-```bash
-brew install --cask mark-text
-```
+- 桌面、Muya、新 WYSIWYG 引擎和网站类型检查通过。
+- ESLint 无错误，保留 140 条现存警告。
+- 桌面单元测试：54 个文件、751 项通过。
+- Muya 单元测试：213 个文件、1441 项通过。
+- CodeMirror WYSIWYG 单元测试：11 个文件、96 项通过，无未处理异常。
+- 新版 Electron 上的完整桌面端到端回归：232 项通过、4 项按既有条件跳过，无失败。
+- `pnpm audit --prod`：0 项已知漏洞；第三方许可检查通过。
+- 桌面和网站生产构建通过。
 
-#### Windows
+复查命令：`pnpm typecheck`、`pnpm test`、`pnpm lint`、`pnpm test:e2e`、`pnpm audit --prod`。网站独立检查：`pnpm --filter marktext-website build`。
 
-Requires Windows 10 or 11. Both x64 and arm64 installers are published — pick the architecture that matches your machine.
+## 上次跨平台发布（0.20.0-rc.6）
 
-Simply download and install MarkText via the setup wizard (`marktext-win-(x64|arm64)-%version%-setup.exe`) and choose whether to install per-user or machine wide. Alternatively, install MarkText using a package manager such as [Chocolatey](https://chocolatey.org/) or [Winget](https://docs.microsoft.com/en-us/windows/package-manager/winget/).
+1. `0.20.0-rc.6` 完整回归通过，代码和标签已推送。
+2. macOS、Windows、Linux 五组构建均成功，GitHub Release 已发布 24 个资产。
+3. macOS `arm64` ZIP 与发布 SHA-256 一致，本地应用已由正式产物更新到 `0.20.0-rc.6`。
+4. 本地应用已验证 arm64 架构、签名完整性、正常启动以及低对比度 Normal/Insert 光标切换。
 
-To use Chocolatey, you need to have [Chocolatey](https://chocolatey.org/install) installed:
+## 许可证
 
-```bash
-choco install marktext
-```
-
-To use Winget, you need to have [Winget](https://docs.microsoft.com/en-us/windows/package-manager/winget/#install-winget) installed:
-
-```bash
-winget install marktext
-```
-
-#### Linux
-
-Please follow the [Linux installation instructions](https://marktext.me/docs/installation).
-
-#### Other
-
-All binaries for Linux, macOS and Windows can be downloaded from the [release page](https://github.com/marktext/marktext/releases/latest). If a version is unavailable for your system, then please open an [issue](https://github.com/marktext/marktext/issues).
-
-## Development
-
-If you wish to build MarkText yourself, please check out our [build instructions](https://marktext.me/docs/dev/build).
-
-- [User documentation](https://marktext.me/docs/introduction)
-- [Developer documentation](https://marktext.me/docs/dev/overview)
-
-If you have any questions regarding MarkText, you are welcome to write an issue. When doing so please use the default format found when opening an issue. Of course, if you submit a PR directly, it will be greatly appreciated.
-
-## Contribution
-
-MarkText is in development, please make sure to read the [Contributing Guide](.github/CONTRIBUTING.md) before making a pull request. Want to add some features to MarkText? Refer to our [roadmap](https://github.com/marktext/marktext/projects) and open issues.
-
-## Contributors
-
-Thank you to all the people who have already contributed to MarkText[[contributors](https://github.com/marktext/marktext/graphs/contributors)].
-
-<a href="https://github.com/marktext/marktext/graphs/contributors"><img src="https://opencollective.com/marktext/contributors.svg?width=890" /></a>
-
-## License
-
-[**MIT**](LICENSE).
+本项目继续使用 [MIT License](LICENSE)。

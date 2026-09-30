@@ -1,0 +1,153 @@
+.wysiwyg-container {
+  height: 100%;
+  overflow: hidden;
+}
+
+.wysiwyg-container .cm-editor {
+  height: 100%;
+  background: transparent;
+}
+
+.wysiwyg-container .cm-content {
+  font-family: inherit;
+}
+
+.wysiwyg-hide-spelling::spelling-error {
+  text-decoration: none;
+}
+
+/* Inline formatting rendered via Decoration.mark */
+.wysiwyg-strong {
+  font-weight: 600;
+}
+.wysiwyg-em {
+  font-style: italic;
+}
+.wysiwyg-del {
+  text-decoration: line-through;
+}
+.wysiwyg-highlight {
+  background: rgba(255, 213, 0, 0.4);
+}
+.wysiwyg-inline-code {
+  font-family: 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 0.9em;
+  background: var(--editorColor10, rgba(127, 127, 127, 0.12));
+  border-radius: 3px;
+  padding: 0.1em 0.25em;
+}
+.wysiwyg-link {
+  color: #409eff;
+  cursor: pointer;
+}
+.wysiwyg-image-placeholder {
+  opacity: 0.85;
+  background: var(--editorColor10, rgba(127, 127, 127, 0.12));
+  border-radius: 3px;
+  padding: 0.1em 0.4em;
+}
+
+/* Heading sizing applied as line decorations */
+.cm-line.wysiwyg-line-wysiwyg-h1 {
+  font-size: 1.8em;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.cm-line.wysiwyg-line-wysiwyg-h2 {
+  font-size: 1.5em;
+  font-weight: 600;
+  line-height: 1.45;
+}
+.cm-line.wysiwyg-line-wysiwyg-h3 {
+  font-size: 1.3em;
+  font-weight: 600;
+}
+.cm-line.wysiwyg-line-wysiwyg-h4 {
+  font-size: 1.15em;
+  font-weight: 600;
+}
+.cm-line.wysiwyg-line-wysiwyg-h5 {
+  font-size: 1.05em;
+  font-weight: 600;
+}
+.cm-line.wysiwyg-line-wysiwyg-h6 {
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+/* Blockquote and rules */
+.cm-line.wysiwyg-quote-line {
+  border-left: 3px solid var(--editorColor30, rgba(127, 127, 127, 0.35));
+  padding-left: 0.8em;
+}
+hr.wysiwyg-hr {
+  border: none;
+  border-top: 2px solid var(--editorColor30, rgba(127, 127, 127, 0.35));
+  margin: 0.6em 0;
+}
+
+/* Math, diagrams, tasks, front matter and HTML previews */
+.wysiwyg-math-inline {
+  display: inline-block;
+  vertical-align: middle;
+}
+.wysiwyg-math-block {
+  display: block;
+  text-align: center;
+  padding: 0.4em 0;
+}
+.wysiwyg-diagram {
+  display: block;
+  padding: 0.5em 0;
+}
+.wysiwyg-diagram svg {
+  max-width: 100%;
+}
+.wysiwyg-task-checkbox {
+  cursor: pointer;
+  user-select: none;
+  margin-right: 0.35em;
+}
+.wysiwyg-frontmatter {
+  font-family: 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 0.9em;
+  opacity: 0.75;
+  background: var(--editorColor10, rgba(127, 127, 127, 0.08));
+}
+.wysiwyg-html-preview {
+  display: block;
+  padding: 0.25em 0;
+}
+.cm-line.wysiwyg-code-line {
+  position: relative;
+  padding-left: 2.6em;
+}
+.cm-line.wysiwyg-code-line::before {
+  content: attr(data-lineno);
+  position: absolute;
+  left: 0.8em;
+  width: 1.6em;
+  text-align: right;
+  opacity: 0.45;
+  font-family: 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 0.85em;
+}
+
+/* Tables */
+.cm-line.wysiwyg-table-line {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Search highlights (muya-compatible class names for desktop themes) */
+.mu-highlight {
+  background: rgba(255, 145, 0, 0.6);
+}
+.mu-selection {
+  background: rgba(255, 213, 0, 0.45);
+}
+
+/* Focus mode dims every line except the caret's (highlightActiveLine marks it). */
+.wysiwyg-focus-mode:focus-within .cm-content > :not(.cm-activeLine) {
+  opacity: 0.45;
+  transition: opacity 0.15s ease-in;
+}

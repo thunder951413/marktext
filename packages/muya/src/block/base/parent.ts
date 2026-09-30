@@ -111,17 +111,26 @@ class Parent extends TreeNode {
         const source
             = typeof args[args.length - 1] === 'string' ? args.pop() : 'api';
 
-        (args as Parent[]).forEach((node) => {
+        const nodes = args as Parent[];
+        const fragment = nodes.length > 1 ? document.createDocumentFragment() : null;
+
+        nodes.forEach((node) => {
             node.parent = this;
             const { domNode } = node;
-            this.domNode!.appendChild(domNode!);
+            if (fragment)
+                fragment.appendChild(domNode!);
+            else
+                this.domNode!.appendChild(domNode!);
         });
 
-        this.children.append(...(args as Parent[]));
+        if (fragment)
+            this.domNode!.appendChild(fragment);
+
+        this.children.append(...nodes);
 
         // push operations
         if (source === 'user') {
-            (args as Parent[]).forEach((node) => {
+            nodes.forEach((node) => {
                 const path = node._getJsonPath();
                 const state = node.getState();
                 this.jsonState.insertOperation(path, state);
@@ -271,9 +280,10 @@ class Parent extends TreeNode {
 
     breadthFirstTraverse(this: Parent, callback: (node: TreeNode) => void) {
         const queue: TreeNode[] = [this];
+        let index = 0;
 
-        while (queue.length) {
-            const node = queue.shift()!;
+        while (index < queue.length) {
+            const node = queue[index++];
 
             callback(node);
 
@@ -286,13 +296,14 @@ class Parent extends TreeNode {
         const stack: TreeNode[] = [this];
 
         while (stack.length) {
-            const node = stack.shift()!;
+            const node = stack.pop()!;
 
             callback(node);
 
             if (node.isParent()) {
-                // Use splice ot make sure the first block in document is process first.
-                node.children.forEach((child, i) => stack.splice(i, 0, child));
+                const children = [...node.children.iterator()];
+                for (let i = children.length - 1; i >= 0; i--)
+                    stack.push(children[i]);
             }
         }
     }

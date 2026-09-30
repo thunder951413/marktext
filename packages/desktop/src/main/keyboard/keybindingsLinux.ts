@@ -13,8 +13,8 @@ const keybindings: Map<string, string> = new Map([
   ['mt.hide-others', ''],
 
   // File menu
-  ['file.new-window', 'Ctrl+N'],
-  ['file.new-tab', 'Ctrl+T'],
+  ['file.new-window', 'Ctrl+Shift+N'],
+  ['file.new-tab', 'Ctrl+N'],
   ['file.open-file', 'Ctrl+O'],
   ['file.open-folder', 'Ctrl+Shift+O'],
   ['file.save', 'Ctrl+S'],
@@ -41,7 +41,7 @@ const keybindings: Map<string, string> = new Map([
   ['edit.paste-as-plaintext', 'Ctrl+Shift+V'],
   ['edit.select-all', 'Ctrl+A'],
   ['edit.duplicate', 'Ctrl+Shift+E'],
-  ['edit.create-paragraph', 'Ctrl+Shift+N'],
+  ['edit.create-paragraph', 'Ctrl+Shift+Enter'],
   ['edit.delete-paragraph', 'Ctrl+Shift+D'],
   ['edit.find', 'Ctrl+F'],
   ['edit.find-next', 'F3'],
@@ -57,8 +57,8 @@ const keybindings: Map<string, string> = new Map([
   ['paragraph.heading-4', 'Ctrl+Alt+4'],
   ['paragraph.heading-5', 'Ctrl+Alt+5'],
   ['paragraph.heading-6', 'Ctrl+Alt+6'],
-  ['paragraph.upgrade-heading', 'Ctrl+Plus'],
-  ['paragraph.degrade-heading', 'Ctrl+-'],
+  ['paragraph.upgrade-heading', 'Ctrl+Shift+Up'],
+  ['paragraph.degrade-heading', 'Ctrl+Shift+Down'],
   ['paragraph.table', 'Ctrl+Shift+T'],
   ['paragraph.code-fence', 'Ctrl+Shift+K'],
   ['paragraph.quote-block', 'Ctrl+Shift+Q'],
@@ -89,8 +89,9 @@ const keybindings: Map<string, string> = new Map([
   // Window menu
   ['window.minimize', 'Ctrl+M'],
   ['window.toggle-always-on-top', ''],
-  ['window.zoomIn', ''],
-  ['window.zoomOut', ''],
+  ['window.zoomIn', 'Ctrl+='],
+  ['window.zoomOut', 'Ctrl+-'],
+  ['window.zoomReset', 'Ctrl+0'],
   ['window.toggle-full-screen', 'F11'],
 
   // View menu
@@ -119,7 +120,7 @@ const keybindings: Map<string, string> = new Map([
   ['tabs.switchToSeventh', 'Ctrl+7'],
   ['tabs.switchToEighth', 'Ctrl+8'],
   ['tabs.switchToNinth', 'Ctrl+9'],
-  ['tabs.switchToTenth', 'Ctrl+0'],
+  ['tabs.switchToTenth', ''],
   ['file.quick-open', 'Ctrl+P']
 ])
 

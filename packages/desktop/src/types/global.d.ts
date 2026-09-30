@@ -43,7 +43,7 @@ declare global {
   }
 
   interface ElectronShellAPI {
-    openExternal(url: string): Promise<void>
+    openExternal(url: string): Promise<boolean>
     showItemInFolder(fullPath: string): void
     openPath(fullPath: string): Promise<string>
   }
@@ -99,7 +99,6 @@ declare global {
   interface FileUtilsAPI {
     isFile(p: string): Promise<boolean>
     isDirectory(p: string): Promise<boolean>
-    emptyDir(p: string): Promise<void>
     copy(src: string, dest: string): Promise<void>
     ensureDir(p: string): Promise<void>
     outputFile(p: string, data: string | Uint8Array): Promise<void>
@@ -108,7 +107,6 @@ declare global {
     writeFile(p: string, data: string | Uint8Array): Promise<void>
     readFile(p: string, encoding?: string): Promise<string | Uint8Array>
     pathExists(p: string): Promise<boolean>
-    unlink(p: string): Promise<void>
     readdir(p: string): Promise<string[]>
     isExecutable(p: string): Promise<boolean>
     isChildOfDirectory(dir: string, child: string): boolean
@@ -148,7 +146,7 @@ declare global {
   }
 
   interface RipgrepAPI {
-    start(req: unknown): Promise<{ searchId: string }>
+    start(req: unknown): Promise<boolean>
     cancel(searchId: string): void
     onMatch(handler: (payload: unknown) => void): () => void
     onProgress(handler: (payload: unknown) => void): () => void

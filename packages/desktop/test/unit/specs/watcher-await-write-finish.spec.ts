@@ -31,6 +31,8 @@ vi.mock('chokidar', () => ({
 // uses the native `ced` addon. Its bindings are built for Electron's ABI, not
 // the plain-Node test runner, so stub it to keep this spec import-only.
 vi.mock('ced', () => ({ default: () => 'UTF-8' }))
+// Pure watcher tests must not resolve or download an Electron executable.
+vi.mock('electron', () => ({}))
 
 import Watcher, {
   WATCHER_STABILITY_THRESHOLD,

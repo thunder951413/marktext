@@ -43,6 +43,15 @@ const CONTAINER_TOKEN_TYPES = new Set([
     'footnote',
 ]);
 
+/**
+ * Push tokens onto a LIFO work stack while preserving their source order.
+ * The last pushed item is consumed first, so append the input backwards.
+ */
+function pushTokensInOrder(stack: TBlockToken[], items: TBlockToken[]) {
+    for (let i = items.length - 1; i >= 0; i--)
+        stack.push(items[i]);
+}
+
 export class MarkdownToState {
     constructor(private _options: IMarkdownToStateOptions = DEFAULT_OPTIONS) {}
 
@@ -67,14 +76,14 @@ export class MarkdownToState {
             math,
             frontMatter,
             isGitlabCompatibilityEnabled,
-        });
+        }).reverse();
 
         const states: TState[] = [];
         let token: TBlockToken | undefined;
         const parentList: TState[][] = [states];
 
         // eslint-disable-next-line no-cond-assign
-        while ((token = tokens.shift())) {
+        while ((token = tokens.pop())) {
             if (CONTAINER_TOKEN_TYPES.has(token.type))
                 this._handleContainerToken(token, parentList, tokens);
             else
@@ -117,8 +126,8 @@ export class MarkdownToState {
                 };
                 parentList[0].push(state);
                 parentList.unshift(state.children);
-                tokens.unshift({ type: 'block-end', tokenType: 'blockquote' });
-                tokens.unshift(...(token.tokens as TBlockToken[]));
+                tokens.push({ type: 'block-end', tokenType: 'blockquote' });
+                pushTokensInOrder(tokens, token.tokens as TBlockToken[]);
                 break;
             }
 
@@ -163,8 +172,8 @@ export class MarkdownToState {
                 state = listState;
                 parentList[0].push(state);
                 parentList.unshift(state.children);
-                tokens.unshift({ type: 'block-end', tokenType: 'list' });
-                tokens.unshift(...(token.items as TBlockToken[]));
+                tokens.push({ type: 'block-end', tokenType: 'list' });
+                pushTokensInOrder(tokens, token.items as TBlockToken[]);
                 break;
             }
 
@@ -188,8 +197,8 @@ export class MarkdownToState {
                 state = itemState;
                 parentList[0].push(state);
                 parentList.unshift(state.children);
-                tokens.unshift({ type: 'block-end', tokenType: 'list-item' });
-                tokens.unshift(...(token.tokens as TBlockToken[]));
+                tokens.push({ type: 'block-end', tokenType: 'list-item' });
+                pushTokensInOrder(tokens, token.tokens as TBlockToken[]);
                 break;
             }
 
@@ -197,7 +206,7 @@ export class MarkdownToState {
                 // The footnote extension (utils/marked/extensions/footnote.ts)
                 // emits a parent token whose `tokens` array holds nested
                 // block tokens. Mirror that into a `footnote` container
-                // state and recurse via tokens.unshift / block-end.
+                // state and recurse through the token stack / block-end.
                 const { identifier } = token;
                 state = {
                     name: 'footnote' as const,
@@ -206,8 +215,8 @@ export class MarkdownToState {
                 };
                 parentList[0].push(state);
                 parentList.unshift(state.children);
-                tokens.unshift({ type: 'block-end', tokenType: 'footnote' });
-                tokens.unshift(...(token.tokens as TBlockToken[]));
+                tokens.push({ type: 'block-end', tokenType: 'footnote' });
+                pushTokensInOrder(tokens, token.tokens as TBlockToken[]);
                 break;
             }
         }
@@ -360,8 +369,8 @@ export class MarkdownToState {
 
             case 'text': {
                 value = token.text;
-                while (tokens[0]?.type === 'text') {
-                    const next = tokens.shift() as Extract<TBlockToken, { type: 'text' }>;
+                while (tokens[tokens.length - 1]?.type === 'text') {
+                    const next = tokens.pop() as Extract<TBlockToken, { type: 'text' }>;
                     value += `\n${next.text}`;
                 }
                 state = {

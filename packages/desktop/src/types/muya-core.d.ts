@@ -17,6 +17,16 @@
  * `lib/types/*.d.ts` and can be resolved as a normal typed dependency.
  */
 
+declare module '@muyajs/core/state/htmlToMarkdown' {
+  export default class HtmlToMarkdown {
+    generate(html: string): string
+  }
+}
+
+declare module '@muyajs/core/utils/marked/getHighlightHtml' {
+  export function getHighlightHtml(markdown: string): string
+}
+
 declare module '@muyajs/core' {
   export interface ILocale {
     name: string
@@ -95,4 +105,15 @@ declare module '@muyajs/core' {
     character: number
     all: number
   }
+}
+
+declare module '@muyajs/core/utils/wordCount' {
+  export interface IWordCount {
+    word: number
+    paragraph: number
+    character: number
+    all: number
+  }
+
+  export function wordCount(markdown: string): IWordCount
 }

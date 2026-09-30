@@ -1,7 +1,8 @@
-import { Menu, ipcMain, type BrowserWindow } from 'electron'
+import { ipcMain } from '../../utils/secureIpc'
+import { Menu, type BrowserWindow } from 'electron'
 import { isOsx } from '../../config'
 import { COMMANDS } from '../../commands'
-import { zoomIn, zoomOut } from '../../windows/utils'
+import { resetZoom, zoomIn, zoomOut } from '../../windows/utils'
 import type { CommandManager } from '../../commands'
 
 export const minimizeWindow = (win: BrowserWindow | null | undefined): void => {
@@ -34,4 +35,5 @@ export const loadWindowCommands = (commandManager: CommandManager): void => {
   commandManager.add(COMMANDS.WINDOW_TOGGLE_FULL_SCREEN, toggleFullScreen)
   commandManager.add(COMMANDS.WINDOW_ZOOM_IN, zoomIn)
   commandManager.add(COMMANDS.WINDOW_ZOOM_OUT, zoomOut)
+  commandManager.add(COMMANDS.WINDOW_ZOOM_RESET, resetZoom)
 }

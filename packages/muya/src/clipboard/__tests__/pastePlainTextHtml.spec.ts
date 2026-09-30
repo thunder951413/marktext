@@ -57,6 +57,25 @@ function firstContent(muya: Muya): Content {
 }
 
 describe('paste as plain text — block-level HTML is literal (A8, muyajs parity)', () => {
+    it('accepts an explicit trusted text payload without reading the OS clipboard', async () => {
+        const muya = bootMuya('foo\n', { clipboardText: () => 'wrong payload' });
+        const block = firstContent(muya);
+        const path = block.path;
+        muya.editor.selection.getSelection = () => ({
+            anchor: { offset: 3, block, path },
+            focus: { offset: 3, block, path },
+            isCollapsed: true,
+            isSelectionInSameBlock: true,
+            direction: SelectionDirection.FORWARD,
+            type: SelectionCaretType.RANGE,
+        });
+
+        await muya.editor.clipboard.pasteText(' explicit');
+        await new Promise(r => setTimeout(r, 40));
+
+        expect(muya.getMarkdown()).toBe('foo explicit\n');
+    });
+
     it('inserts <ul>...</ul> as literal text rather than a live html-block', async () => {
         const html = '<ul><li>a</li><li>b</li></ul>';
         const muya = bootMuya('foo\n', { clipboardText: () => html });

@@ -14,6 +14,7 @@ export default function(
   const { autoSave } = userPreference.getAll() as { autoSave?: boolean }
   const submenu: MenuItemConstructorOptions[] = [
     {
+      id: 'newDocumentMenuItem',
       label: t('menu.file.newTab'),
       accelerator: keybindings.getAccelerator('file.new-tab') ?? undefined,
       click(_menuItem, browserWindow) {

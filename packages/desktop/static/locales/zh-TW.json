@@ -7,7 +7,7 @@
     },
     "file": {
       "file": "檔案",
-      "newTab": "新建標籤頁",
+      "newTab": "新建文件",
       "newWindow": "新建視窗",
       "openFile": "開啟檔案…",
       "openFolder": "開啟資料夾…",
@@ -339,7 +339,7 @@
   },
   "recent": {
     "noTabsOpen": "您沒有開啟的標籤頁。",
-    "newFile": "新建檔案"
+    "newFile": "新建文件"
   },
   "import": {
     "title": "匯入或開啟",
@@ -738,7 +738,7 @@
     },
     "file": {
       "newWindow": "新建視窗",
-      "newTab": "新建標籤頁",
+      "newTab": "新建文件",
       "openFile": "開啟檔案",
       "openFolder": "開啟資料夾",
       "save": "儲存",

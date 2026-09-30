@@ -160,6 +160,14 @@ class Clipboard {
             await pastePlainText(this, text);
     }
 
+    // Paste an explicit plain-text payload without synthesizing a ClipboardEvent
+    // or reading the operating-system clipboard again. Embedders such as Vim
+    // registers already own a trusted text snapshot and need a deterministic
+    // route through the same Markdown-aware paste pipeline.
+    pasteText(text: string): Promise<void> {
+        return text ? pastePlainText(this, text) : Promise.resolve();
+    }
+
     // Insert an image at the cursor from an explicit `src` (a saved file path or
     // `data:` URL), routing through `imageAction` like a clipboard image paste.
     // Drives the macOS screenshot flow, which can no longer use the removed

@@ -7,7 +7,7 @@
     },
     "file": {
       "file": "Archivo",
-      "newTab": "Nueva Pestaña",
+      "newTab": "Nuevo documento",
       "newWindow": "Nueva Ventana",
       "openFile": "Abrir Archivo...",
       "openFolder": "Abrir Carpeta...",
@@ -339,7 +339,7 @@
   },
   "recent": {
     "noTabsOpen": "No tienes pestañas abiertas.",
-    "newFile": "Nuevo Archivo"
+    "newFile": "Nuevo documento"
   },
   "import": {
     "title": "Importar o Abrir",
@@ -738,7 +738,7 @@
     },
     "file": {
       "newWindow": "Nueva Ventana",
-      "newTab": "Nueva Pestaña",
+      "newTab": "Nuevo documento",
       "openFile": "Abrir Archivo",
       "openFolder": "Abrir Carpeta",
       "save": "Guardar",

@@ -16,8 +16,8 @@ MarkText is a WYSIWYG markdown editor built on Electron + Vue 3. It supports Com
 
 | Layer | Technology |
 |---|---|
-| Language | TypeScript 5.9 (strict mode) — `packages/muyajs/` retained as JS via ambient shim |
-| Desktop shell | Electron 42 |
+| Language | TypeScript 6 (strict mode) — `packages/muyajs/` retained as JS via ambient shim |
+| Desktop shell | Electron 42.11 |
 | Build system | electron-vite 5 |
 | Packaging | electron-builder 26 |
 | Frontend framework | Vue 3 |
@@ -32,7 +32,7 @@ MarkText is a WYSIWYG markdown editor built on Electron + Vue 3. It supports Com
 
 ## Directory Structure
 
-This is a pnpm workspace. Three packages live under `packages/`, and the
+This is a pnpm workspace. Five packages live under `packages/`, and the
 root holds only shared tooling and CI-facing scripts.
 
 ```
@@ -43,7 +43,7 @@ root holds only shared tooling and CI-facing scripts.
   pnpm-workspace.yaml       `packages: ['packages/*']` plus allowBuilds.
   pnpm-lock.yaml            Single lockfile, shared across all packages.
   eslint.config.js          Root ESLint v9 flat config (covers desktop +
-                            muyajs; website has its own ESLint v8 config
+                            muyajs; website has its own ESLint config
                             and is ignored here).
   scripts/                  Workspace-level scripts. postinstall.ts,
                             minify-locales.ts, generateThirdPartyLicense.ts,
@@ -130,11 +130,14 @@ root holds only shared tooling and CI-facing scripts.
                             wired in playwright.config.ts but deferred
                             until BACKLOG Phase 3 lands engine-independent
                             specs.
-    website/                marktext-website (Vite + React 18). Standalone
-                            toolchain; depends on @muyajs/core from npm,
-                            not on the local muyajs package. Not part of
-                            desktop CI today.
-      src/ / public/ / build/ / vite.config.ts / tsconfig.json
+    wysiwyg/                @marktext/wysiwyg — optional CodeMirror 6 live
+                            preview engine. Select with environment variable
+                            MARKTEXT_EDITOR_ENGINE=codemirror; Muya remains
+                            the desktop default until UI feature parity.
+      src/ / demo/          Engine, regression tests and Vite demo.
+    website/                marktext-website (Next.js 15 + React 19).
+                            Standalone toolchain, not part of desktop CI.
+      app/ / public/ / next.config.ts / tsconfig.json
 ```
 
 The root has no `src/`, `test/`, `static/`, or `build/` of its own anymore — they all live in `packages/desktop/`.
@@ -143,7 +146,8 @@ The root has no `src/`, `test/`, `static/`, or `build/` of its own anymore — t
 
 All commands run from the repo root. The root `package.json` proxies every
 desktop-specific script to `packages/desktop` via `pnpm --filter marktext`,
-so the names and behavior are unchanged from the pre-monorepo layout.
+The root test and typecheck commands also validate Muya and the optional
+CodeMirror WYSIWYG engine.
 
 ```bash
 # Install dependencies (runs scripts/postinstall.ts automatically — patches

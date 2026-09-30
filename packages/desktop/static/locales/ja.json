@@ -7,7 +7,7 @@
     },
     "file": {
       "file": "ファイル",
-      "newTab": "新しいタブ",
+      "newTab": "新規ドキュメント",
       "newWindow": "新しいウィンドウ",
       "openFile": "ファイルを開く...",
       "openFolder": "フォルダを開く...",
@@ -339,7 +339,7 @@
   },
   "recent": {
     "noTabsOpen": "開いているタブがありません。",
-    "newFile": "新しいファイル"
+    "newFile": "新規ドキュメント"
   },
   "import": {
     "title": "インポートまたは開く",
@@ -738,7 +738,7 @@
     },
     "file": {
       "newWindow": "新しいウィンドウ",
-      "newTab": "新しいタブ",
+      "newTab": "新規ドキュメント",
       "openFile": "ファイルを開く",
       "openFolder": "フォルダを開く",
       "save": "保存",

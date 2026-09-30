@@ -1,4 +1,5 @@
-import { ipcMain } from 'electron'
+import { ipcMain } from '../utils/secureIpc'
+
 import { loadTranslations, getSupportedLanguages, isLanguageSupported } from 'common/i18n'
 
 export const registerI18nHandlers = (): void => {
