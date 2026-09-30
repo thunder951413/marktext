@@ -1,7 +1,25 @@
+import { ipcMain } from '../utils/secureIpc'
 import fs from 'fs-extra'
 import { statSync, constants, type Stats } from 'fs'
-import { ipcMain } from 'electron'
+
 import { isFile as commonIsFile, isDirectory as commonIsDirectory } from 'common/filesystem'
+import { isImageFile } from 'common/filesystem/paths'
+import { isWithinRoots } from '../utils/fileAccess'
+import type { IpcMainInvokeEvent } from 'electron'
+
+type AccessRoots = { read: string[]; write: string[] }
+let accessRoots: (senderId: number) => Promise<AccessRoots> = async() => ({ read: [], write: [] })
+
+export const configureFileSystemAccess = (resolve: typeof accessRoots): void => { accessRoots = resolve }
+
+export const checkedPath = async(event: IpcMainInvokeEvent, value: string, write = false, image = false): Promise<string> => {
+  if (typeof value !== 'string') throw new Error('Invalid filesystem path')
+  const roots = await accessRoots(event.sender.id)
+  if (!isWithinRoots(value, write ? roots.write : [...roots.read, ...roots.write]) && !(image && isImageFile(value))) {
+    throw new Error('Filesystem path is outside the opened workspace')
+  }
+  return value
+}
 
 interface SerializedStat {
   size: number
@@ -40,27 +58,26 @@ const toBuffer = (data: unknown): unknown => {
 export const registerFsHandlers = (): void => {
   ipcMain.handle('mt::fs::is-file', (_e, p: string) => commonIsFile(p))
   ipcMain.handle('mt::fs::is-directory', (_e, p: string) => commonIsDirectory(p))
-  ipcMain.handle('mt::fs::empty-dir', (_e, p: string) => fs.emptyDir(p))
-  ipcMain.handle('mt::fs::copy', (_e, src: string, dest: string) => fs.copy(src, dest))
-  ipcMain.handle('mt::fs::ensure-dir', (_e, p: string) => fs.ensureDir(p))
+  ipcMain.handle('mt::fs::copy', async(e, src: string, dest: string) =>
+    fs.copy(await checkedPath(e, src, false, true), await checkedPath(e, dest, true)))
+  ipcMain.handle('mt::fs::ensure-dir', async(e, p: string) => fs.ensureDir(await checkedPath(e, p, true)))
 
-  ipcMain.handle('mt::fs::output-file', (_e, p: string, data: unknown) =>
-    fs.outputFile(p, toBuffer(data) as string | NodeJS.ArrayBufferView)
+  ipcMain.handle('mt::fs::output-file', async(e, p: string, data: unknown) =>
+    fs.outputFile(await checkedPath(e, p, true), toBuffer(data) as string | NodeJS.ArrayBufferView)
   )
-  ipcMain.handle('mt::fs::move', (_e, src: string, dest: string) =>
-    fs.move(src, dest, { overwrite: false })
+  ipcMain.handle('mt::fs::move', async(e, src: string, dest: string) =>
+    fs.move(await checkedPath(e, src, true), await checkedPath(e, dest, true), { overwrite: false })
   )
   ipcMain.handle('mt::fs::stat', async(_e, p: string) => serializeStat(await fs.stat(p)))
 
-  ipcMain.handle('mt::fs::write-file', (_e, p: string, data: unknown) =>
-    fs.writeFile(p, toBuffer(data) as string | NodeJS.ArrayBufferView)
+  ipcMain.handle('mt::fs::write-file', async(e, p: string, data: unknown) =>
+    fs.writeFile(await checkedPath(e, p, true), toBuffer(data) as string | NodeJS.ArrayBufferView)
   )
-  ipcMain.handle('mt::fs::read-file', async(_e, p: string, encoding?: BufferEncoding) => {
-    const buf = await fs.readFile(p, encoding)
+  ipcMain.handle('mt::fs::read-file', async(e, p: string, encoding?: BufferEncoding) => {
+    const buf = await fs.readFile(await checkedPath(e, p, false, true), encoding)
     return buf
   })
   ipcMain.handle('mt::fs::path-exists', (_e, p: string) => fs.pathExists(p))
-  ipcMain.handle('mt::fs::unlink', (_e, p: string) => fs.unlink(p))
   ipcMain.handle('mt::fs::readdir', (_e, p: string) => fs.readdir(p))
   ipcMain.handle('mt::fs::is-executable', (_e, p: string) => {
     try {

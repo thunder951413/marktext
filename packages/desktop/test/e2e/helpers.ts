@@ -53,6 +53,7 @@ export interface LaunchResult {
 }
 
 export interface LaunchOptions {
+  editorEngine?: 'muya' | 'codemirror'
   // Seed the isolated profile before startup to exercise saved preferences.
   preferences?: Record<string, unknown>
   // When true, sets MARKTEXT_ERROR_INTERACTION=1 in the launch env so
@@ -84,6 +85,8 @@ export const launchElectron = async(
   const env: Record<string, string> = {}
   for (const [k, v] of Object.entries(process.env)) if (v !== undefined) env[k] = v
   env.PERF_TESTING = 'true'
+  if (options.editorEngine) env.MARKTEXT_EDITOR_ENGINE = options.editorEngine
+  else delete env.MARKTEXT_EDITOR_ENGINE
   if (options.vimMode) env.MARKTEXT_VIM_TESTING = 'true'
   if (options.suppressErrorDialog) env.MARKTEXT_ERROR_INTERACTION = '1'
   const app = await _electron.launch({

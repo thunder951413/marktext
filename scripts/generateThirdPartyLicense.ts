@@ -58,6 +58,7 @@ ${summary}
 ${licenseList}
 `
 
-  fs.writeFileSync(path.resolve(desktopRoot, 'build', 'THIRD-PARTY-LICENSES.txt'), output)
+  const normalizedOutput = output.replace(/[ \t]+$/gm, '').trimEnd() + '\n'
+  fs.writeFileSync(path.resolve(desktopRoot, 'build', 'THIRD-PARTY-LICENSES.txt'), normalizedOutput)
   console.log('THIRD-PARTY-LICENSES.txt generated successfully.')
 })

@@ -1,5 +1,6 @@
+import { ipcMain } from '../../utils/secureIpc'
 import path from 'path'
-import { BrowserWindow, ipcMain, type Menu, type MenuItem } from 'electron'
+import { BrowserWindow, type Menu, type MenuItem } from 'electron'
 import log from 'electron-log'
 import { COMMANDS } from '../../commands'
 import type { CommandManager } from '../../commands'

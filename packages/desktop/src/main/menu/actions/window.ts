@@ -1,4 +1,5 @@
-import { Menu, ipcMain, type BrowserWindow } from 'electron'
+import { ipcMain } from '../../utils/secureIpc'
+import { Menu, type BrowserWindow } from 'electron'
 import { isOsx } from '../../config'
 import { COMMANDS } from '../../commands'
 import { resetZoom, zoomIn, zoomOut } from '../../windows/utils'

@@ -12,12 +12,22 @@
 
 | 项目 | 状态 |
 | --- | --- |
-| 当前版本 | `0.20.0-rc.6` |
+| 当前版本 | `0.20.0-rc.7` |
 | 开发分支 | `codex/desktop-performance-foundation` |
 | 桌面平台 | macOS、Windows、Linux（不包含 Android/iOS） |
-| macOS 本地应用 | GitHub Release 的 `rc.6` Apple Silicon (`arm64`) 产物已校验、安装并运行 |
-| GitHub Release | [`v0.20.0-rc.6`](https://github.com/thunder951413/marktext/releases/tag/v0.20.0-rc.6) 已发布，含 macOS、Windows、Linux 产物与 SHA-256 |
+| macOS 本地构建 | Apple Silicon (`arm64`)，通过 `pnpm build:mac:arm64` 生成 DMG、ZIP 和应用包 |
+| 上次 GitHub Release | [`v0.20.0-rc.6`](https://github.com/thunder951413/marktext/releases/tag/v0.20.0-rc.6) 已发布，含 macOS、Windows、Linux 产物与 SHA-256 |
 | 合并请求 | [thunder951413/marktext#1](https://github.com/thunder951413/marktext/pull/1) |
+
+## 本轮修复（0.20.0-rc.7）
+
+- 默认使用经过完整桌面回归的 Muya 编辑器；保留新的 CodeMirror WYSIWYG 引擎作为可选预览，避免尚未接入的浮动工具栏、选择器等功能影响日常使用。
+- 修复预览引擎的 TOC 标签、Vim 状态、HTML 清洗和开关、拼写检查、富文本剪贴板及初始偏好同步；配置改为实例独立，避免窗口间相互覆盖，并复用同一状态的装饰计算结果。
+- 恢复 Electron `webSecurity`；preload 和主进程均检查 IPC 通道，主进程验证请求来自应用主框架。移除未使用的批量删除接口，限制文件读写、移动、删除和搜索路径，并拦截危险外部 URL 和可执行文件打开。
+- Electron 升级到 `42.11.10`，修补 DOMPurify、Mermaid、Next.js 及相关传递依赖；生产依赖安全审计为 0 项已知漏洞。
+- 新编辑器加入工作区依赖、根目录测试和类型检查及 CI。修复 Node 26 测试环境、窗口标题及测试目录隔离；补齐第三方许可正文，修复网站生产构建误启动 Cloudflare 开发模拟器的问题。
+
+预览引擎可通过 `MARKTEXT_EDITOR_ENGINE=codemirror pnpm dev` 启动。它仍缺少部分 Muya 上下文浮动界面、表格列宽拖动和矩形选择，完整切换尚未完成；详见 [WYSIWYG 包说明](packages/wysiwyg/README.md)。
 
 ## 本分支修改
 
@@ -78,22 +88,20 @@
 
 ## 验证结果
 
-`0.20.0-rc.6` 当前已完成以下验证：
+`0.20.0-rc.7` 本地验证：
 
-- 桌面端类型检查通过。
-- ESLint 通过，无新增错误。
-- 桌面端单元测试通过：53 个测试文件、747 项测试。
-- Muya 编辑器单元测试通过：213 个测试文件、1441 项测试。
-- 桌面端完整端到端测试通过：226 项通过、4 项按既有条件跳过。
-- 新建文档端到端功能断言通过。
-- 显示缩放与 Markdown 内容不变端到端断言通过。
-- Vim 键序列状态机 7 项单元测试通过。
-- Vim WYSIWYG/源码模式 8 项端到端场景通过，包括块光标尺寸与显隐、空白新文档定位、模式切换、输入防护、`hjkl` 导航、计数、撤销、搜索、operator、Visual、字符查找、剪贴板粘贴、换行插入和列表项删除。
-- 新图标的 PNG alpha、16–1024 像素缩放、7 层 ICO 和 10 层 ICNS 资源已校验。
-- 生产构建通过。
-- macOS `arm64` 的 DMG、ZIP 和应用包已生成；应用版本、CPU 架构、签名完整性及启动运行均已校验。
+- 桌面、Muya、新 WYSIWYG 引擎和网站类型检查通过。
+- ESLint 无错误，保留 140 条现存警告。
+- 桌面单元测试：54 个文件、751 项通过。
+- Muya 单元测试：213 个文件、1441 项通过。
+- CodeMirror WYSIWYG 单元测试：11 个文件、96 项通过，无未处理异常。
+- 新版 Electron 上的完整桌面端到端回归：232 项通过、4 项按既有条件跳过，无失败。
+- `pnpm audit --prod`：0 项已知漏洞；第三方许可检查通过。
+- 桌面和网站生产构建通过。
 
-## 发布结果
+复查命令：`pnpm typecheck`、`pnpm test`、`pnpm lint`、`pnpm test:e2e`、`pnpm audit --prod`。网站独立检查：`pnpm --filter marktext-website build`。
+
+## 上次跨平台发布（0.20.0-rc.6）
 
 1. `0.20.0-rc.6` 完整回归通过，代码和标签已推送。
 2. macOS、Windows、Linux 五组构建均成功，GitHub Release 已发布 24 个资产。

@@ -287,7 +287,7 @@ watch(
       title = hasOpenFolder ? projectName : ''
     }
 
-    document.title = title
+    document.title = title ? `${title} - MarkText` : 'MarkText'
   }
 )
 

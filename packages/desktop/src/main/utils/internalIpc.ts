@@ -1,4 +1,5 @@
-import { ipcMain } from 'electron'
+import { ipcMain } from './secureIpc'
+
 import type { IpcMainEvent } from 'electron'
 
 // Subscribe to an in-process channel dispatched via `ipcMain.emit(channel, ...args)`,

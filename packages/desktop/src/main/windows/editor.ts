@@ -1,5 +1,6 @@
+import { ipcMain } from '../utils/secureIpc'
 import path from 'path'
-import { BrowserWindow, dialog, ipcMain } from 'electron'
+import { BrowserWindow, dialog } from 'electron'
 import type { BrowserWindowConstructorOptions } from 'electron'
 import log from 'electron-log'
 import windowStateKeeper from 'electron-window-state'
@@ -520,6 +521,13 @@ class EditorWindow extends BaseWindow {
 
   get openedRootDirectory(): string | null {
     return this._openedRootDirectory
+  }
+
+  override get fileSystemRoots(): string[] {
+    return [
+      ...(this._openedRootDirectory ? [this._openedRootDirectory] : []),
+      ...(this._openedFiles ?? []).map(file => path.dirname(file))
+    ]
   }
 
   // --- private ---------------------------------

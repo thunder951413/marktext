@@ -1,6 +1,7 @@
+import { ipcMain } from '../utils/secureIpc'
 import path from 'path'
 import fs from 'fs-extra'
-import { app, ipcMain } from 'electron'
+import { app } from 'electron'
 import { rgPath } from '@vscode/ripgrep'
 import { MARKDOWN_INCLUSIONS } from 'common/filesystem/paths'
 import type { BootInfo } from '@shared/types/ipc'
@@ -9,6 +10,7 @@ const ENV_ALLOWLIST = [
   'NODE_ENV',
   'PERF_TESTING',
   'MARKTEXT_VIM_TESTING',
+  'MARKTEXT_EDITOR_ENGINE',
   'APPIMAGE',
   'MARKTEXT_VERSION',
   'MARKTEXT_VERSION_STRING',

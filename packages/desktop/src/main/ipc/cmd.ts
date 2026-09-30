@@ -1,5 +1,6 @@
+import { ipcMain } from '../utils/secureIpc'
 import fs from 'fs-extra'
-import { ipcMain } from 'electron'
+
 import commandExists from 'command-exists'
 
 export const registerCmdHandlers = (): void => {

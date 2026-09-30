@@ -42,12 +42,15 @@ import { isVimModeEnabled } from '@/util/vim/enabled'
 import { storeToRefs } from 'pinia'
 import { computed, defineAsyncComponent, onBeforeUnmount, onMounted } from 'vue'
 import Tabs from './tabs.vue'
-import Editor from './editor.vue'
+import MuyaEditor from './editor.vue'
 import TabNotifications from './notifications.vue'
 
 // Source mode carries CodeMirror and its language descriptions. Most sessions
 // never open it, so keep that work out of the WYSIWYG startup path.
 const SourceCode = defineAsyncComponent(() => import('./sourceCode.vue'))
+const Editor = window.electron.process.env.MARKTEXT_EDITOR_ENGINE === 'codemirror'
+  ? defineAsyncComponent(() => import('./codemirrorEditor.vue'))
+  : MuyaEditor
 
 defineProps<{
   markdown: string

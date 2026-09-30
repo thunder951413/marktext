@@ -1,5 +1,6 @@
+import { ipcMain } from '../../utils/secureIpc'
 import { autoUpdater } from 'electron-updater'
-import { BrowserWindow, Menu, ipcMain } from 'electron'
+import { BrowserWindow, Menu } from 'electron'
 import { COMMANDS } from '../../commands'
 import type { CommandManager } from '../../commands'
 import { isOsx } from '../../config'

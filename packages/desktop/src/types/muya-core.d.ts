@@ -17,6 +17,16 @@
  * `lib/types/*.d.ts` and can be resolved as a normal typed dependency.
  */
 
+declare module '@muyajs/core/state/htmlToMarkdown' {
+  export default class HtmlToMarkdown {
+    generate(html: string): string
+  }
+}
+
+declare module '@muyajs/core/utils/marked/getHighlightHtml' {
+  export function getHighlightHtml(markdown: string): string
+}
+
 declare module '@muyajs/core' {
   export interface ILocale {
     name: string

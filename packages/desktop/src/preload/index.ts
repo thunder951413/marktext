@@ -9,6 +9,7 @@
 import { contextBridge, ipcRenderer, webFrame, webUtils } from 'electron'
 import type { IpcRendererEvent } from 'electron'
 import pathe from 'pathe'
+import { isAllowedChannel } from '@shared/security/ipcChannels'
 
 import type {
   IpcInvokeChannels,
@@ -26,10 +27,15 @@ type RendererEventListener<K extends keyof IpcMainEventChannels> = (
 const invoke = <K extends keyof IpcInvokeChannels>(
   channel: K,
   ...args: IpcInvokeChannels[K]['args']
-): Promise<IpcInvokeChannels[K]['ret']> => ipcRenderer.invoke(channel, ...args)
+): Promise<IpcInvokeChannels[K]['ret']> => {
+  if (!isAllowedChannel('invoke', channel)) return Promise.reject(new Error('Unsupported IPC channel'))
+  return ipcRenderer.invoke(channel, ...args)
+}
 
-const send = <K extends keyof IpcSendChannels>(channel: K, ...args: IpcSendChannels[K]): void =>
+const send = <K extends keyof IpcSendChannels>(channel: K, ...args: IpcSendChannels[K]): void => {
+  if (!isAllowedChannel('send', channel)) throw new Error('Unsupported IPC channel')
   ipcRenderer.send(channel, ...args)
+}
 
 // One synchronous handshake at startup so the renderer can read platform/env
 // without an `await` from inside Vue computed properties etc.
@@ -40,14 +46,18 @@ const ipcWrapper = {
   sendSync: <K extends keyof IpcSyncChannels>(
     channel: K,
     ...args: IpcSyncChannels[K]['args']
-  ): IpcSyncChannels[K]['ret'] => ipcRenderer.sendSync(channel, ...args),
+  ): IpcSyncChannels[K]['ret'] => {
+    if (!isAllowedChannel('sync', channel)) throw new Error('Unsupported IPC channel')
+    return ipcRenderer.sendSync(channel, ...args)
+  },
   invoke,
   on: <K extends keyof IpcMainEventChannels>(
     channel: K,
     listener: RendererEventListener<K>
   ): (() => void) => {
-    const subscription = (event: IpcRendererEvent, ...args: unknown[]): void => {
-      listener(event, ...(args as IpcMainEventChannels[K]))
+    if (!isAllowedChannel('event', channel)) throw new Error('Unsupported IPC channel')
+    const subscription = (_event: IpcRendererEvent, ...args: unknown[]): void => {
+      listener({} as IpcRendererEvent, ...(args as IpcMainEventChannels[K]))
     }
     ipcRenderer.on(channel, subscription)
     return () => ipcRenderer.removeListener(channel, subscription)
@@ -56,13 +66,15 @@ const ipcWrapper = {
     channel: K,
     listener: RendererEventListener<K>
   ): (() => void) => {
-    const subscription = (event: IpcRendererEvent, ...args: unknown[]): void => {
-      listener(event, ...(args as IpcMainEventChannels[K]))
+    if (!isAllowedChannel('event', channel)) throw new Error('Unsupported IPC channel')
+    const subscription = (_event: IpcRendererEvent, ...args: unknown[]): void => {
+      listener({} as IpcRendererEvent, ...(args as IpcMainEventChannels[K]))
     }
     ipcRenderer.once(channel, subscription)
     return () => ipcRenderer.removeListener(channel, subscription)
   },
   removeAllListeners: (channel: keyof IpcMainEventChannels | string): void => {
+    if (!isAllowedChannel('event', channel)) throw new Error('Unsupported IPC channel')
     ipcRenderer.removeAllListeners(channel as string)
   }
 }
@@ -158,7 +170,6 @@ const isSamePathSync = (pathA: string, pathB: string, isNormalized: boolean = fa
 const fileUtilsAPI = {
   isFile: (p: string) => invoke('mt::fs::is-file', p),
   isDirectory: (p: string) => invoke('mt::fs::is-directory', p),
-  emptyDir: (p: string) => invoke('mt::fs::empty-dir', p),
   copy: (src: string, dest: string) => invoke('mt::fs::copy', src, dest),
   ensureDir: (p: string) => invoke('mt::fs::ensure-dir', p),
   outputFile: (p: string, data: string | Uint8Array) => invoke('mt::fs::output-file', p, data),
@@ -167,7 +178,6 @@ const fileUtilsAPI = {
   writeFile: (p: string, data: string | Uint8Array) => invoke('mt::fs::write-file', p, data),
   readFile: (p: string, encoding?: string) => invoke('mt::fs::read-file', p, encoding),
   pathExists: (p: string) => invoke('mt::fs::path-exists', p),
-  unlink: (p: string) => invoke('mt::fs::unlink', p),
   readdir: (p: string) => invoke('mt::fs::readdir', p),
   isExecutable: (p: string) => invoke('mt::fs::is-executable', p),
   // Pure-string predicates — synchronous, no IPC for the common case.

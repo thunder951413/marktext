@@ -19,6 +19,10 @@ const config: NextConfig = {
   // the templating layer entirely.
 }
 
-initOpenNextCloudflareForDev()
+// The Workers emulator is only needed by the development server. Starting it
+// during a production build races the build workers over its local SQLite cache.
+if (process.env.NODE_ENV === 'development') {
+  initOpenNextCloudflareForDev()
+}
 
 export default config

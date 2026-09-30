@@ -293,6 +293,9 @@ const emptySearch = (selectHighlight = false) => {
   replaceValue.value = ''
   bus.emit('searchValue', { value: searchValue.value, opt: { selectHighlight } })
   bus.emit('vim-search-finished')
+  // Hand focus back so the engine syncs its (match-anchored) selection into
+  // the DOM — the hidden input otherwise leaves the document selection empty.
+  bus.emit('editor-focus')
 }
 
 const toggleSearchType = () => {
