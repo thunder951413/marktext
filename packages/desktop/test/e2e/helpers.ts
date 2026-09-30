@@ -53,6 +53,8 @@ export interface LaunchResult {
 }
 
 export interface LaunchOptions {
+  // Seed the isolated profile before startup to exercise saved preferences.
+  preferences?: Record<string, unknown>
   // When true, sets MARKTEXT_ERROR_INTERACTION=1 in the launch env so
   // src/main/exceptionHandler.ts suppresses the modal "Unexpected error"
   // dialog. Only crash-guard specs that explicitly call expectNoRendererErrors
@@ -73,6 +75,11 @@ export const launchElectron = async(
   // Pass project root as entry so Electron reads package.json and getAppPath() returns project root.
   // Passing out/main/index.js directly bypasses package.json and breaks __static path resolution.
   const userDataDir = trackTempDir(getTempPath())
+  if (options.preferences) {
+    const defaults = JSON.parse(fs.readFileSync(path.join(projectRoot, 'static/preference.json'), 'utf-8'))
+    fs.mkdirSync(userDataDir, { recursive: true })
+    fs.writeFileSync(path.join(userDataDir, 'preferences.json'), JSON.stringify({ ...defaults, ...options.preferences }))
+  }
   const args = [projectRoot, '--user-data-dir', userDataDir].concat(userArgs)
   const env: Record<string, string> = {}
   for (const [k, v] of Object.entries(process.env)) if (v !== undefined) env[k] = v

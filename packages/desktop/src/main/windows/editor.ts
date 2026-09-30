@@ -118,7 +118,11 @@ class EditorWindow extends BaseWindow {
       spellcheckerEnabled,
       spellcheckerLanguage
     } = preferences.getAll()
-    const resolvedSideBarVisibility = restoreLayoutState ? !!sideBarVisibility : false
+    // File-only launches start with the editor unobstructed, even when the
+    // previous window had its sidebar open. Folder and session launches keep
+    // their existing layout behavior.
+    const openFilesOnly = !rootDirectory && fileList.length > 0 && !bufferStoreInfo
+    const resolvedSideBarVisibility = !openFilesOnly && restoreLayoutState ? !!sideBarVisibility : false
 
     // Enable native or custom/frameless window and titlebar
     if (!isOsx) {
