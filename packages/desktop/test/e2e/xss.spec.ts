@@ -42,6 +42,15 @@ test.describe('Test XSS Vulnerabilities', () => {
   })
 
   test('runtime bridge rejects internal channels and forbidden URL protocols', async() => {
+    const completion = await page.evaluate(() => new Promise<unknown>((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('Image completion reply timed out')), 3000)
+      const ipc = window.electron.ipcRenderer as unknown as {
+        once: (channel: string, callback: (event: unknown, files: unknown) => void) => void
+      }
+      ipc.once('mt::response-of-image-path-mt-888', (_event, files) => { clearTimeout(timer); resolve(files) })
+      window.electron.ipcRenderer.send('mt::ask-for-image-auto-path', { pathname: '', src: '', id: 'mt-888' })
+    }))
+    expect(completion).toEqual([])
     const rejected = await page.evaluate(async(outsidePath) => {
       const ipc = window.electron.ipcRenderer as unknown as {
         send: (channel: string, ...args: unknown[]) => void

@@ -18,6 +18,9 @@ describe('IPC security boundaries', () => {
     }
     expect(isAllowedChannel('invoke', 'mt::fs::empty-dir')).toBe(false)
     expect(isAllowedChannel('invoke', 'mt::fs::unlink')).toBe(false)
+    expect(isAllowedChannel('event', 'mt::response-of-image-path-mt-42')).toBe(true)
+    expect(isAllowedChannel('send', 'mt::response-of-image-path-mt-42')).toBe(false)
+    expect(isAllowedChannel('event', 'mt::response-of-image-path-__proto__')).toBe(false)
   })
 
   it('trusts the application page, including its bootstrap query, and rejects other files and origins', () => {

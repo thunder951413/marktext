@@ -206,6 +206,9 @@ export const eventChannels = {
 } satisfies Record<keyof IpcMainEventChannels, boolean>
 
 export function isAllowedChannel(kind: 'invoke' | 'send' | 'sync' | 'event', channel: string): boolean {
+  // Image completion replies use the renderer's monotonically allocated mt-N
+  // request IDs. Permit this reply family without opening arbitrary channels.
+  if (kind === 'event' && /^mt::response-of-image-path-mt-\d{1,12}$/.test(channel)) return true
   const channels = { invoke: invokeChannels, send: sendChannels, sync: syncChannels, event: eventChannels }[kind]
   if (!Object.hasOwn(channels, channel)) return false
   // The non-mt channels below are main-process EventEmitter messages.
