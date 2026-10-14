@@ -59,6 +59,7 @@ import {
   type InlineFormatType
 } from './features/commands'
 import { formatToolbar, formatToolbarField } from './features/formatToolbar'
+import { markdownCompletions } from './features/completions'
 import { Emitter } from './emitter'
 import './styles/wysiwyg.css'
 
@@ -176,6 +177,7 @@ export class WysiwygEditor {
         ...defaultKeymap
       ]),
       tablePipeEscapeInput,
+      markdownCompletions(),
       createClipboardHandlers({
         imageAction: this.options.imageAction,
         htmlToMarkdown: this.options.htmlToMarkdown,

@@ -77,6 +77,7 @@ export {
   isFormatActive
 } from './features/formatToolbar'
 export type { FormatToolbarConfig } from './features/formatToolbar'
+export { emojiSource, fenceLanguageSource, markdownCompletions } from './features/completions'
 export { setVimExHandlers } from './features/vimEx'
 export type { VimExHandlers } from './features/vimEx'
 export { Emitter } from './emitter'
