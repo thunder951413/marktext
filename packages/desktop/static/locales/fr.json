@@ -555,7 +555,13 @@
         "hideLinkPopup": "Masquer la popup de lien",
         "autoCheck": "Vérification automatique",
         "autoNormalizeLineEndings": "Normaliser automatiquement les fins de ligne en LF à l'ouverture",
-        "wrapCodeBlocks": "Retour à la ligne des blocs de code"
+        "wrapCodeBlocks": "Retour à la ligne des blocs de code",
+        "editorEngine": {
+          "title": "Moteur WYSIWYG",
+          "codemirror": "CodeMirror (par défaut, Vim et gros fichiers)",
+          "muya": "Muya (ancien moteur, repli)",
+          "notes": "Prend effet après le redémarrage de MarkText."
+        }
       }
     },
     "image": {

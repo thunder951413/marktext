@@ -85,8 +85,9 @@ export const launchElectron = async(
   const env: Record<string, string> = {}
   for (const [k, v] of Object.entries(process.env)) if (v !== undefined) env[k] = v
   env.PERF_TESTING = 'true'
-  if (options.editorEngine) env.MARKTEXT_EDITOR_ENGINE = options.editorEngine
-  else delete env.MARKTEXT_EDITOR_ENGINE
+  // The app defaults to the CodeMirror engine; the historical specs assert
+  // Muya's DOM, so they keep running against Muya until they are ported.
+  env.MARKTEXT_EDITOR_ENGINE = options.editorEngine ?? 'muya'
   if (options.vimMode) env.MARKTEXT_VIM_TESTING = 'true'
   if (options.suppressErrorDialog) env.MARKTEXT_ERROR_INTERACTION = '1'
   const app = await _electron.launch({

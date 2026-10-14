@@ -555,7 +555,13 @@
         "hideLinkPopup": "隐藏链接弹出窗口",
         "autoCheck": "自动检查",
         "autoNormalizeLineEndings": "打开时自动将行尾规范化为 LF",
-        "wrapCodeBlocks": "换行代码块"
+        "wrapCodeBlocks": "换行代码块",
+        "editorEngine": {
+          "title": "所见即所得引擎",
+          "codemirror": "CodeMirror（默认，适合 Vim 与大文件）",
+          "muya": "Muya（旧版回退）",
+          "notes": "重启 MarkText 后生效。"
+        }
       }
     },
     "image": {

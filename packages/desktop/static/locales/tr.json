@@ -555,7 +555,13 @@
         "hideLinkPopup": "Bağlantı açılır penceresini gizle",
         "autoCheck": "Otomatik işaretle",
         "autoNormalizeLineEndings": "Açılışta satır sonlarını LF'ye otomatik normalleştir",
-        "wrapCodeBlocks": "Kod bloklarını kaydır"
+        "wrapCodeBlocks": "Kod bloklarını kaydır",
+        "editorEngine": {
+          "title": "WYSIWYG motoru",
+          "codemirror": "CodeMirror (varsayılan, Vim ve büyük dosyalar)",
+          "muya": "Muya (eski motor, yedek)",
+          "notes": "MarkText yeniden başlatıldıktan sonra etkili olur."
+        }
       }
     },
     "image": {

@@ -555,7 +555,13 @@
         "hideLinkPopup": "링크 팝업 숨기기",
         "autoCheck": "자동 확인",
         "autoNormalizeLineEndings": "열 때 줄 바꿈을 자동으로 LF로 정규화",
-        "wrapCodeBlocks": "코드 블록 줄바꿈"
+        "wrapCodeBlocks": "코드 블록 줄바꿈",
+        "editorEngine": {
+          "title": "WYSIWYG 엔진",
+          "codemirror": "CodeMirror (기본값, Vim 및 대용량 파일)",
+          "muya": "Muya (기존 엔진 대체용)",
+          "notes": "MarkText를 다시 시작하면 적용됩니다."
+        }
       }
     },
     "image": {

@@ -13,6 +13,7 @@ import Accessor from './app/accessor'
 import App from './app'
 import { t } from './i18n'
 import { registerSandboxIpcHandlers } from './ipc'
+import { setEditorEnginePreferenceReader } from './ipc/bootInfo'
 import { configureFileSystemAccess } from './ipc/fs'
 import { BrowserWindow } from 'electron'
 
@@ -96,6 +97,7 @@ app.on('browser-window-created', (_, window) => {
 let accessor: Accessor
 try {
   accessor = new Accessor(appEnvironment)
+  setEditorEnginePreferenceReader(() => accessor.preferences.getItem('editorEngine'))
 } catch (err) {
   const errorObj = err instanceof Error ? err : new Error(String(err))
   const msgHint = errorObj.message.includes('Config schema violation')

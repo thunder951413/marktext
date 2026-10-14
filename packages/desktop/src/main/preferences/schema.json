@@ -91,6 +91,11 @@
     "minimum": 1.2,
     "default": 1.6
   },
+  "editorEngine": {
+    "description": "Editor--WYSIWYG engine (takes effect after restart).",
+    "enum": ["codemirror", "muya"],
+    "default": "codemirror"
+  },
   "wrapCodeBlocks": {
     "description": "Editor--Wrap text inside code blocks",
     "type": "boolean",

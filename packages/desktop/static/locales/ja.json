@@ -555,7 +555,13 @@
         "hideLinkPopup": "リンクポップアップを隠す",
         "autoCheck": "自動チェック",
         "autoNormalizeLineEndings": "開くときに改行コードを自動的にLFに正規化する",
-        "wrapCodeBlocks": "コードブロックを折り返し"
+        "wrapCodeBlocks": "コードブロックを折り返し",
+        "editorEngine": {
+          "title": "WYSIWYG エンジン",
+          "codemirror": "CodeMirror（既定、Vim と大きなファイル向け）",
+          "muya": "Muya（旧エンジン・フォールバック）",
+          "notes": "MarkText の再起動後に反映されます。"
+        }
       }
     },
     "image": {

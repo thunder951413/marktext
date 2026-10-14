@@ -66,6 +66,17 @@ export const getTextDirectionOptions = (): PrefSelectOption<string>[] => [
   }
 ]
 
+export const getEditorEngineOptions = (): PrefSelectOption<string>[] => [
+  {
+    label: t('preferences.editor.misc.editorEngine.codemirror'),
+    value: 'codemirror'
+  },
+  {
+    label: t('preferences.editor.misc.editorEngine.muya'),
+    value: 'muya'
+  }
+]
+
 let defaultEncodingOptions: PrefSelectOption<string>[] | null = null
 export const getDefaultEncodingOptions = (): PrefSelectOption<string>[] => {
   if (defaultEncodingOptions) {

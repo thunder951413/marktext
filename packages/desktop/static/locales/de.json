@@ -555,7 +555,13 @@
         "hideLinkPopup": "Link-Popup ausblenden",
         "autoCheck": "Automatische Überprüfung",
         "autoNormalizeLineEndings": "Zeilenenden beim Öffnen automatisch auf LF normalisieren",
-        "wrapCodeBlocks": "Code-Blöcke umbrechen"
+        "wrapCodeBlocks": "Code-Blöcke umbrechen",
+        "editorEngine": {
+          "title": "WYSIWYG-Engine",
+          "codemirror": "CodeMirror (Standard, Vim und große Dateien)",
+          "muya": "Muya (alte Engine, Fallback)",
+          "notes": "Wird nach einem Neustart von MarkText wirksam."
+        }
       }
     },
     "image": {

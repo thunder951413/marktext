@@ -555,7 +555,13 @@
         "hideLinkPopup": "Hide link popup",
         "autoCheck": "Auto check",
         "autoNormalizeLineEndings": "Auto-normalize line endings to LF on open",
-        "wrapCodeBlocks": "Wrap code blocks"
+        "wrapCodeBlocks": "Wrap code blocks",
+        "editorEngine": {
+          "title": "WYSIWYG engine",
+          "codemirror": "CodeMirror (default, Vim + large files)",
+          "muya": "Muya (legacy fallback)",
+          "notes": "Takes effect after restarting MarkText."
+        }
       }
     },
     "image": {
