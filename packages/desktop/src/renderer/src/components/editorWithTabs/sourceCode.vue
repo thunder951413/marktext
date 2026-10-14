@@ -18,6 +18,7 @@ import { adjustCursor } from '../../util'
 import bus from '../../bus'
 import { oneDarkThemes, railscastsThemes } from '@/config'
 import { isVimModeEnabled } from '@/util/vim/enabled'
+import { installVimExCommands } from '@/util/vim/exCommands'
 
 type CMInstance = SourceEditor
 type CMCursor = SourcePosition
@@ -336,6 +337,7 @@ const handleScrollToHeader = (slug: unknown) => {
 }
 
 onMounted(() => {
+  if (isVimModeEnabled()) installVimExCommands(editorStore)
   if (!currentTab.value) return
   const { id } = currentTab.value
   // reset currentTab scrollTop position because the codeMirror scroll position is completely different from the muya scroll position

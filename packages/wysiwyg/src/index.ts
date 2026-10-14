@@ -77,4 +77,6 @@ export {
   isFormatActive
 } from './features/formatToolbar'
 export type { FormatToolbarConfig } from './features/formatToolbar'
+export { setVimExHandlers } from './features/vimEx'
+export type { VimExHandlers } from './features/vimEx'
 export { Emitter } from './emitter'

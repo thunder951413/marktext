@@ -113,6 +113,7 @@ import '@/assets/themes/codemirror/one-dark.css'
 import { Close as CloseIcon } from '@element-plus/icons-vue'
 import { type InputNumberInstance } from 'element-plus'
 import { isVimModeEnabled } from '@/util/vim/enabled'
+import { installVimExCommands } from '@/util/vim/exCommands'
 
 const { t } = useI18n()
 const STANDAR_Y = 320
@@ -1422,6 +1423,7 @@ const handleLanguageChanged = (_newLocale?: unknown) => {
 const resizeObserverForEditor = new ResizeObserver(handleResetPaddingBottom)
 
 onMounted(() => {
+  if (isVimModeEnabled()) installVimExCommands(editorStore)
   printer = new Printer()
   const ele = editorRef.value
   if (!ele) return
