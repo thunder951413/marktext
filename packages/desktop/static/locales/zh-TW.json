@@ -7,7 +7,7 @@
     },
     "file": {
       "file": "檔案",
-      "newTab": "新建標籤頁",
+      "newTab": "新建文件",
       "newWindow": "新建視窗",
       "openFile": "開啟檔案…",
       "openFolder": "開啟資料夾…",
@@ -339,7 +339,7 @@
   },
   "recent": {
     "noTabsOpen": "您沒有開啟的標籤頁。",
-    "newFile": "新建檔案"
+    "newFile": "新建文件"
   },
   "import": {
     "title": "匯入或開啟",
@@ -555,7 +555,13 @@
         "hideLinkPopup": "隱藏連結彈出視窗",
         "autoCheck": "自動檢查",
         "autoNormalizeLineEndings": "開啟時自動將行尾標準化為 LF",
-        "wrapCodeBlocks": "換行程式碼區塊"
+        "wrapCodeBlocks": "換行程式碼區塊",
+        "editorEngine": {
+          "title": "所見即所得引擎",
+          "codemirror": "CodeMirror（預設，適合 Vim 與大型檔案）",
+          "muya": "Muya（舊版備援）",
+          "notes": "重新啟動 MarkText 後生效。"
+        }
       }
     },
     "image": {
@@ -738,7 +744,7 @@
     },
     "file": {
       "newWindow": "新建視窗",
-      "newTab": "新建標籤頁",
+      "newTab": "新建文件",
       "openFile": "開啟檔案",
       "openFolder": "開啟資料夾",
       "save": "儲存",

@@ -32,7 +32,14 @@
     </div>
     <div
       class="new-file"
+      role="button"
+      tabindex="0"
+      data-testid="new-document-button"
+      :aria-label="t('recent.newFile')"
+      :title="t('recent.newFile')"
       @click.stop="newFile()"
+      @keydown.enter.stop="newFile()"
+      @keydown.space.prevent.stop="newFile()"
     >
       <el-icon :size="16">
         <Plus />
@@ -52,9 +59,11 @@ import { Plus, Close } from '@element-plus/icons-vue'
 import { showContextMenu } from '../../contextMenu/tabs'
 import bus from '../../bus'
 import type { IFileState } from '@shared/types/files'
+import { useI18n } from 'vue-i18n'
 
 const editorStore = useEditorStore()
 const layoutStore = useLayoutStore()
+const { t } = useI18n()
 
 const { currentFile, tabs } = storeToRefs(editorStore)
 

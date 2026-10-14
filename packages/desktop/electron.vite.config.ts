@@ -77,6 +77,12 @@ export default defineConfig({
     define: {
       global: 'globalThis'
     },
+    // The word-count worker imports the tree-shaken editor utility graph,
+    // which contains lazy chunks. ES workers support that code splitting;
+    // Rollup's legacy IIFE worker format does not.
+    worker: {
+      format: 'es'
+    },
     resolve: {
       alias: {
         '@': resolve(__dirname, 'src/renderer/src'),

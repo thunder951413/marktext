@@ -279,7 +279,10 @@ export class Editor {
         const muya = this._muya;
         const state = this.jsonState.getState();
 
-        this.scrollPage = ScrollPage.create(muya, state);
+        this.scrollPage = this.inlineRenderer.renderDocument(
+            state,
+            () => ScrollPage.create(muya, state),
+        );
 
         this._dispatchEvents();
         // Hovering a rendered link wrapper dispatches `muya-link-tools` so the
@@ -486,7 +489,10 @@ export class Editor {
         this.jsonState.dispatch(operations, source);
 
         const state = this.jsonState.getState();
-        this.scrollPage!.updateState(state);
+        this.inlineRenderer.renderDocument(
+            state,
+            () => this.scrollPage!.updateState(state),
+        );
 
         // The tree was rebuilt wholesale, so the selection's cached block
         // references are stale — resolve the caret from paths instead.
@@ -497,7 +503,10 @@ export class Editor {
         this.jsonState.setContent(content);
         const state = this.jsonState.getState();
 
-        this.scrollPage!.updateState(state);
+        this.inlineRenderer.renderDocument(
+            state,
+            () => this.scrollPage!.updateState(state),
+        );
         this.history.clear();
         this.searchModule.reset();
 

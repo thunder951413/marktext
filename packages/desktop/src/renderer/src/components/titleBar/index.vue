@@ -46,13 +46,45 @@
           />
         </span>
       </div>
-      <div :class="showCustomTitleBar ? 'left-toolbar title-no-drag' : 'right-toolbar'">
+      <div :class="showCustomTitleBar ? 'left-toolbar editor-tools title-no-drag' : 'right-toolbar editor-tools'">
         <div
           v-if="showCustomTitleBar"
           class="frameless-titlebar-menu title-no-drag"
           @click.stop="handleMenuClick"
         >
           <span class="text-center-vertical">&#9776;</span>
+        </div>
+        <div class="zoom-controls title-no-drag">
+          <button
+            type="button"
+            data-testid="zoom-out"
+            :aria-label="t('commands.window.zoomOut')"
+            :title="t('commands.window.zoomOut')"
+            :disabled="zoom <= MIN_ZOOM_FACTOR"
+            @click.stop="changeZoom(-1)"
+          >
+            −
+          </button>
+          <button
+            type="button"
+            class="zoom-value"
+            data-testid="zoom-reset"
+            :aria-label="t('commands.view.actualSize')"
+            :title="t('commands.view.actualSize')"
+            @click.stop="resetDisplayZoom"
+          >
+            {{ zoomPercent }}%
+          </button>
+          <button
+            type="button"
+            data-testid="zoom-in"
+            :aria-label="t('commands.window.zoomIn')"
+            :title="t('commands.window.zoomIn')"
+            :disabled="zoom >= MAX_ZOOM_FACTOR"
+            @click.stop="changeZoom(1)"
+          >
+            +
+          </button>
         </div>
         <el-tooltip
           v-if="wordCount"
@@ -149,6 +181,12 @@ import { useEditorStore } from '@/store/editor'
 import { useI18n } from 'vue-i18n'
 import { ArrowRight } from '@element-plus/icons-vue'
 import type { FileWordCount } from '@shared/types/files'
+import {
+  DEFAULT_ZOOM_FACTOR,
+  MAX_ZOOM_FACTOR,
+  MIN_ZOOM_FACTOR,
+  stepZoomFactor
+} from 'common/zoom'
 
 interface ProjectInfo {
   name?: string
@@ -209,8 +247,18 @@ onMounted(async () => {
   } catch {}
 })
 
-const { titleBarStyle } = storeToRefs(preferencesStore)
+const { titleBarStyle, zoom } = storeToRefs(preferencesStore)
 const { showTabBar } = storeToRefs(layoutStore)
+
+const zoomPercent = computed(() => Math.round(zoom.value * 100))
+
+const changeZoom = (direction: -1 | 1) => {
+  editorStore.EDIT_ZOOM(stepZoomFactor(zoom.value, direction))
+}
+
+const resetDisplayZoom = () => {
+  editorStore.EDIT_ZOOM(DEFAULT_ZOOM_FACTOR)
+}
 
 const paths = computed(() => {
   if (!props.pathname) return []
@@ -239,7 +287,7 @@ watch(
       title = hasOpenFolder ? projectName : ''
     }
 
-    document.title = title
+    document.title = title ? `${title} - MarkText` : 'MarkText'
   }
 )
 
@@ -350,7 +398,7 @@ img {
   vertical-align: top;
 }
 .title {
-  padding: 0 142px;
+  padding: 0 190px;
   height: 100%;
   line-height: var(--titleBarHeight);
   font-size: 14px;
@@ -405,7 +453,7 @@ div.title > span {
   position: absolute;
   top: 0;
   left: 0;
-  width: 118px; /* + 2*10px padding*/
+  width: 145px; /* + 2*10px padding*/
   display: flex;
   flex-direction: row;
 }
@@ -420,6 +468,64 @@ div.title > span {
   flex-direction: row-reverse;
   & .item {
     margin-right: 10px;
+  }
+}
+
+.right-toolbar.editor-tools {
+  width: 190px;
+}
+
+.zoom-controls {
+  height: 24px;
+  display: inline-flex;
+  align-items: stretch;
+  flex: 0 0 auto;
+  border: 1px solid var(--editorColor10);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 0 4px;
+
+  & button {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    color: var(--editorColor50);
+    min-width: 23px;
+    padding: 0 5px;
+    cursor: pointer;
+    font: inherit;
+    line-height: 22px;
+  }
+
+  & button:hover:not(:disabled) {
+    color: var(--editorColor);
+    background: var(--sideBarBgColor);
+  }
+
+  & button:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+
+  & .zoom-value {
+    min-width: 48px;
+    border-left: 1px solid var(--editorColor10);
+    border-right: 1px solid var(--editorColor10);
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 700px) {
+  .title {
+    display: none;
+  }
+
+  .editor-tools .word-count {
+    display: none;
+  }
+
+  .right-toolbar.editor-tools {
+    width: 125px;
   }
 }
 

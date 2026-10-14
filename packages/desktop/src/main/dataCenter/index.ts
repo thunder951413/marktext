@@ -1,6 +1,7 @@
+import { ipcMain } from '../utils/secureIpc'
 import fs from 'fs'
 import path from 'path'
-import { BrowserWindow, dialog, ipcMain } from 'electron'
+import { BrowserWindow, dialog } from 'electron'
 import keytar from 'keytar'
 import schema from './schema.json'
 import Store, { type Schema } from 'electron-store'

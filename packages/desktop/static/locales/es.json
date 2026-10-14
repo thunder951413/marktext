@@ -7,7 +7,7 @@
     },
     "file": {
       "file": "Archivo",
-      "newTab": "Nueva Pestaña",
+      "newTab": "Nuevo documento",
       "newWindow": "Nueva Ventana",
       "openFile": "Abrir Archivo...",
       "openFolder": "Abrir Carpeta...",
@@ -339,7 +339,7 @@
   },
   "recent": {
     "noTabsOpen": "No tienes pestañas abiertas.",
-    "newFile": "Nuevo Archivo"
+    "newFile": "Nuevo documento"
   },
   "import": {
     "title": "Importar o Abrir",
@@ -555,7 +555,13 @@
         "hideLinkPopup": "Ocultar popup de enlace",
         "autoCheck": "Verificación automática",
         "autoNormalizeLineEndings": "Normalizar automáticamente los finales de línea a LF al abrir",
-        "wrapCodeBlocks": "Ajustar bloques de código"
+        "wrapCodeBlocks": "Ajustar bloques de código",
+        "editorEngine": {
+          "title": "Motor WYSIWYG",
+          "codemirror": "CodeMirror (predeterminado, Vim y archivos grandes)",
+          "muya": "Muya (motor anterior, alternativa)",
+          "notes": "Se aplica tras reiniciar MarkText."
+        }
       }
     },
     "image": {
@@ -738,7 +744,7 @@
     },
     "file": {
       "newWindow": "Nueva Ventana",
-      "newTab": "Nueva Pestaña",
+      "newTab": "Nuevo documento",
       "openFile": "Abrir Archivo",
       "openFolder": "Abrir Carpeta",
       "save": "Guardar",

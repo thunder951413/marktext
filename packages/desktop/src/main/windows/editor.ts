@@ -1,5 +1,6 @@
+import { ipcMain } from '../utils/secureIpc'
 import path from 'path'
-import { BrowserWindow, dialog, ipcMain } from 'electron'
+import { BrowserWindow, dialog } from 'electron'
 import type { BrowserWindowConstructorOptions } from 'electron'
 import log from 'electron-log'
 import windowStateKeeper from 'electron-window-state'
@@ -118,7 +119,11 @@ class EditorWindow extends BaseWindow {
       spellcheckerEnabled,
       spellcheckerLanguage
     } = preferences.getAll()
-    const resolvedSideBarVisibility = restoreLayoutState ? !!sideBarVisibility : false
+    // File-only launches start with the editor unobstructed, even when the
+    // previous window had its sidebar open. Folder and session launches keep
+    // their existing layout behavior.
+    const openFilesOnly = !rootDirectory && fileList.length > 0 && !bufferStoreInfo
+    const resolvedSideBarVisibility = !openFilesOnly && restoreLayoutState ? !!sideBarVisibility : false
 
     // Enable native or custom/frameless window and titlebar
     if (!isOsx) {
@@ -516,6 +521,13 @@ class EditorWindow extends BaseWindow {
 
   get openedRootDirectory(): string | null {
     return this._openedRootDirectory
+  }
+
+  override get fileSystemRoots(): string[] {
+    return [
+      ...(this._openedRootDirectory ? [this._openedRootDirectory] : []),
+      ...(this._openedFiles ?? []).map(file => path.dirname(file))
+    ]
   }
 
   // --- private ---------------------------------

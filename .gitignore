@@ -20,3 +20,6 @@ playwright-report/
 .claude/
 .agents/
 .agent/
+
+# Local AI-assistant planning scratch (zcode)
+.zcode/

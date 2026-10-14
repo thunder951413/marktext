@@ -1,7 +1,8 @@
+import { ipcMain } from '../utils/secureIpc'
 import fs from 'fs'
 import path from 'path'
 import writeFileAtomic from 'write-file-atomic'
-import { BrowserWindow, ipcMain, type IpcMainInvokeEvent } from 'electron'
+import { BrowserWindow, type IpcMainInvokeEvent } from 'electron'
 import { TypedEmitter } from '@shared/types/typedEmitter'
 import type BaseWindow from '../windows/base'
 

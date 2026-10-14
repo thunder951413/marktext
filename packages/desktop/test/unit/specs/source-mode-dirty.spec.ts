@@ -82,4 +82,20 @@ describe('useEditorStore LISTEN_FOR_CONTENT_CHANGE — source-mode dirty trackin
 
     expect(tab.isSaved).toBe(true)
   })
+
+  it('applies worker word counts only to the matching markdown snapshot', () => {
+    const store = useEditorStore()
+    const tab = makeSavedTab(store) as ReturnType<typeof makeSavedTab> & {
+      wordCount?: { word: number; paragraph: number; character: number; all: number }
+    }
+    const current = { word: 1, paragraph: 1, character: 5, all: 5 }
+    const stale = { word: 2, paragraph: 1, character: 10, all: 11 }
+
+    store.UPDATE_WORD_COUNT({ id: 'tab-1', markdown: 'hello', wordCount: current })
+    expect(tab.wordCount).toEqual(current)
+
+    store.UPDATE_WORD_COUNT({ id: 'tab-1', markdown: 'hello world', wordCount: stale })
+    expect(tab.wordCount).toEqual(current)
+    expect(tab.markdown).toBe('hello')
+  })
 })

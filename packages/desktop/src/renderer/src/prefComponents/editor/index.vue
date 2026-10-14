@@ -157,6 +157,13 @@
       </template>
       <template #children>
         <cur-select
+          :description="t('preferences.editor.misc.editorEngine.title')"
+          :notes="t('preferences.editor.misc.editorEngine.notes')"
+          :value="editorEngine"
+          :options="getEditorEngineOptions()"
+          :on-change="(value) => onSelectChange('editorEngine', value)"
+        />
+        <cur-select
           :description="t('preferences.editor.misc.textDirection.title')"
           :value="textDirection"
           :options="getTextDirectionOptions()"
@@ -197,6 +204,7 @@ import {
   tabSizeOptions,
   getEndOfLineOptions,
   getTextDirectionOptions,
+  getEditorEngineOptions,
   getTrimTrailingNewlineOptions,
   getDefaultEncodingOptions
 } from './config'
@@ -216,6 +224,7 @@ const {
   tabSize,
   endOfLine,
   textDirection,
+  editorEngine,
   codeFontSize,
   codeFontFamily,
   codeBlockLineNumbers,

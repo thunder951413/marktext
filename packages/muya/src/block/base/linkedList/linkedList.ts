@@ -19,8 +19,25 @@ export class LinkedList<T extends ILinkedNode> {
     }
 
     append(...nodes: T[]) {
-        for (const node of nodes)
-            this.insertBefore(node);
+        if (!nodes.length)
+            return;
+
+        // Batch the common initialization path. Calling insertBefore once per
+        // node is correct but repeats the same tail-lookup and branch chain for
+        // every block in a large document.
+        let previous = this.tail;
+        for (const node of nodes) {
+            node.prev = previous;
+            node.next = null;
+            if (previous)
+                previous.next = node;
+            else
+                this.head = node;
+            previous = node;
+        }
+
+        this.tail = previous;
+        this.length += nodes.length;
     }
 
     contains(node: T) {

@@ -1,4 +1,5 @@
-import { MenuItem, ipcMain, type BrowserWindow, type MenuItemConstructorOptions } from 'electron'
+import { ipcMain } from '../../utils/secureIpc'
+import { MenuItem, type BrowserWindow, type MenuItemConstructorOptions } from 'electron'
 import log from 'electron-log'
 import { isOsx } from '../../config'
 import { addToDictionary } from '../../spellchecker'

@@ -349,7 +349,12 @@ export class Muya {
 
     private _forceRender() {
         const selection = this.editor.selection.getSelection();
-        this.editor.scrollPage?.updateState(this.getState());
+        const state = this.getState();
+        const { inlineRenderer, scrollPage } = this.editor;
+        inlineRenderer.renderDocument(
+            state,
+            () => scrollPage?.updateState(state),
+        );
 
         if (selection && selection.isSelectionInSameBlock) {
             const begin = Math.min(selection.anchor.offset, selection.focus.offset);

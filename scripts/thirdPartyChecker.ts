@@ -3,6 +3,7 @@
 'use strict'
 
 const path = require('path')
+const fs = require('fs')
 const checker = require('license-checker')
 
 // license-checker keys packages as "<name>@<version>", and excludePackages
@@ -12,7 +13,7 @@ const checker = require('license-checker')
 // pinned because it's a published third-party dep that license-checker
 // fails to detect (MIT).
 const repoRoot = path.resolve(__dirname, '..')
-const workspaceExclusions = ['packages/desktop', 'packages/muyajs', 'packages/muya']
+const workspaceExclusions = ['packages/desktop', 'packages/muyajs', 'packages/muya', 'packages/wysiwyg']
   .map((rel) => {
     const { name, version } = require(path.join(repoRoot, rel, 'package.json'))
     return `${name}@${version}`
@@ -33,6 +34,22 @@ const getLicenses = (rootDir, callback) => {
         'Unlicense;WTFPL;ISC;MIT;BSD;Apache-2.0;MIT*;Apache;Apache*;BSD*;CC0-1.0;CC-BY-4.0;CC-BY-3.0'
     },
     function(err, packages) {
+      // electron-vite bundles this build-time helper into the main process.
+      // Include its notice without treating its Electron download tooling as
+      // an application runtime dependency.
+      if (!err && packages) {
+        for (const dependency of Object.values(packages)) {
+          if (!dependency.licenseText && dependency.licenseFile) {
+            dependency.licenseText = fs.readFileSync(dependency.licenseFile, 'utf8')
+          }
+        }
+        const helperRoot = path.join(rootDir, 'node_modules', '@electron-toolkit', 'utils')
+        const helper = JSON.parse(fs.readFileSync(path.join(helperRoot, 'package.json'), 'utf8'))
+        packages[`${helper.name}@${helper.version}`] = {
+          licenses: helper.license,
+          licenseText: fs.readFileSync(path.join(helperRoot, 'LICENSE'), 'utf8')
+        }
+      }
       callback(err, packages, checker)
     }
   )

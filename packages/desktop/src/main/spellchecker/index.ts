@@ -1,4 +1,5 @@
-import { BrowserWindow, ipcMain } from 'electron'
+import { ipcMain } from '../utils/secureIpc'
+import { BrowserWindow } from 'electron'
 import log from 'electron-log'
 import { isOsx } from '../config'
 

@@ -1,8 +1,9 @@
+import { ipcMain } from '../utils/secureIpc'
 import path from 'path'
 import { tmpdir } from 'os'
 import { exec, execFile } from 'child_process'
 import fs from 'fs-extra'
-import { ipcMain } from 'electron'
+
 import commandExists from 'command-exists'
 import { isImageFile } from 'common/filesystem/paths'
 

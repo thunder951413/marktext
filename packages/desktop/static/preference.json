@@ -24,6 +24,7 @@
   "codeBlockLineNumbers": false,
   "trimUnnecessaryCodeBlockEmptyLines": true,
   "wrapCodeBlocks": false,
+  "editorEngine": "codemirror",
   "editorLineWidth": "",
 
   "autoPairBracket": true,

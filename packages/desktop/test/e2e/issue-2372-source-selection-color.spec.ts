@@ -30,16 +30,16 @@ test.describe('#2372 source-mode selection colour', () => {
   })
 
   test('selection background is the visible editor selection colour, not near-background', async() => {
-    // Select all via the real CodeMirror instance so it renders .CodeMirror-selected.
+    // Select all via the compatibility API so CM6 renders its selection layer.
     await page.evaluate(() => {
       const cm = (document.querySelector('.source-code .CodeMirror') as Element & { CodeMirror?: { focus: () => void; execCommand: (c: string) => void } }).CodeMirror
       cm!.focus()
       cm!.execCommand('selectAll')
     })
-    await page.waitForSelector('.source-code .CodeMirror-selected', { state: 'attached', timeout: 5000 })
+    await page.waitForSelector('.source-code .cm-selectionBackground', { state: 'attached', timeout: 5000 })
 
     const { selBg, selectionColor } = await page.evaluate(() => {
-      const sel = document.querySelector('.source-code .CodeMirror-selected') as HTMLElement
+      const sel = document.querySelector('.source-code .cm-selectionBackground') as HTMLElement
       // Resolve --selection-color (what the WYSIWYG editor uses) to its computed
       // rgb form so we can compare against the rendered selection background.
       const probe = document.createElement('div')

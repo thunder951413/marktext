@@ -1,13 +1,17 @@
+import { ipcMain } from '../utils/secureIpc'
 import path from 'path'
 import fs from 'fs-extra'
-import { app, ipcMain } from 'electron'
+import { app } from 'electron'
 import { rgPath } from '@vscode/ripgrep'
 import { MARKDOWN_INCLUSIONS } from 'common/filesystem/paths'
 import type { BootInfo } from '@shared/types/ipc'
+import { resolveEditorEngine } from 'common/editorEngine'
 
 const ENV_ALLOWLIST = [
   'NODE_ENV',
   'PERF_TESTING',
+  'MARKTEXT_VIM_TESTING',
+  'MARKTEXT_EDITOR_ENGINE',
   'APPIMAGE',
   'MARKTEXT_VERSION',
   'MARKTEXT_VERSION_STRING',
@@ -16,12 +20,22 @@ const ENV_ALLOWLIST = [
   'HOME'
 ]
 
+let readEditorEnginePreference: () => unknown = () => undefined
+
+/** Lets the app hand over preference access once the accessor exists. */
+export const setEditorEnginePreferenceReader = (reader: () => unknown): void => {
+  readEditorEnginePreference = reader
+}
+
 const pickEnv = (): Record<string, string> => {
   const out: Record<string, string> = {}
   for (const key of ENV_ALLOWLIST) {
     const value = process.env[key]
     if (value !== undefined) out[key] = value
   }
+  // The renderer picks its engine from this resolved value, so env override,
+  // saved preference and default are decided in one place.
+  out.MARKTEXT_EDITOR_ENGINE = resolveEditorEngine(process.env.MARKTEXT_EDITOR_ENGINE, readEditorEnginePreference())
   return out
 }
 

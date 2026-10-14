@@ -1,4 +1,4 @@
-import { ipcMain } from 'electron'
+import { ipcMain } from '../../utils/secureIpc'
 
 export const selectTheme = (theme: string): void => {
   ipcMain.emit('set-user-preference', { theme })

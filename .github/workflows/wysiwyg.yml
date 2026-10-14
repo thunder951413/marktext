@@ -1,0 +1,29 @@
+name: WYSIWYG checks
+
+on:
+  pull_request:
+    paths:
+      - 'packages/wysiwyg/**'
+      - 'packages/desktop/src/renderer/src/components/editorWithTabs/**'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - '.github/workflows/wysiwyg.yml'
+  push:
+    branches: ['codex/**']
+    paths:
+      - 'packages/wysiwyg/**'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/wysiwyg.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: pnpm -C packages/wysiwyg typecheck
+      - run: pnpm -C packages/wysiwyg test

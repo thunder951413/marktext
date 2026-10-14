@@ -93,6 +93,10 @@ class BaseWindow extends TypedEmitter<BaseWindowEvents> {
     this.browserWindow?.reload()
   }
 
+  get fileSystemRoots(): string[] {
+    return []
+  }
+
   destroy(): void {
     this.lifecycle = WindowLifecycle.QUITTED
     this.emit('window-closed')

@@ -47,22 +47,20 @@ describe('findMarkdownHeadingLine', () => {
 })
 
 // marktext #3580 follow-up: clicking a TOC entry in Source Code mode must put
-// the heading at the TOP of the viewport (not the bottom, as CodeMirror's
-// minimal `scrollIntoView` did) and animate the scroll. Because CodeMirror runs
-// with viewportMargin: Infinity (full-height render), the OUTER `.source-code`
-// container is the scrollable element — that is what gets scrolled.
+// the heading at the top of CodeMirror 6's virtualized scroll viewport.
 type SourceEditor = Parameters<typeof scrollSourceEditorToLine>[0]
 
 describe('scrollSourceEditorToLine', () => {
   const makeEditor = () => {
     const setCursor = vi.fn()
     const heightAtLine = vi.fn(() => 480)
-    const editor: SourceEditor = { setCursor, heightAtLine }
-    return { editor, setCursor, heightAtLine }
+    const scrollTo = vi.fn()
+    const editor: SourceEditor = { setCursor, heightAtLine, scrollTo }
+    return { editor, setCursor, heightAtLine, scrollTo }
   }
 
   it('smooth-scrolls the container so the line sits at the top', () => {
-    const { editor, setCursor, heightAtLine } = makeEditor()
+    const { editor, setCursor, heightAtLine, scrollTo } = makeEditor()
     const containerScrollTo = vi.fn()
     const container = { scrollTo: containerScrollTo } as unknown as HTMLElement
 
@@ -70,16 +68,17 @@ describe('scrollSourceEditorToLine', () => {
 
     // line top resolved as a local Y coordinate
     expect(heightAtLine).toHaveBeenCalledWith(12, 'local')
-    // the OUTER container is scrolled so that Y sits at the top, animated
-    expect(containerScrollTo).toHaveBeenCalledWith({ top: 480, behavior: 'smooth' })
+    expect(scrollTo).toHaveBeenCalledWith(null, 480)
+    expect(containerScrollTo).not.toHaveBeenCalled()
     // caret moved without its native scroll fighting the animation
     expect(setCursor).toHaveBeenCalledWith({ line: 12, ch: 0 }, null, { scroll: false })
   })
 
   it('still places the caret but does not throw when no container is given', () => {
-    const { editor, setCursor, heightAtLine } = makeEditor()
+    const { editor, setCursor, heightAtLine, scrollTo } = makeEditor()
     scrollSourceEditorToLine(editor, 5, null)
     expect(setCursor).toHaveBeenCalledWith({ line: 5, ch: 0 }, null, { scroll: false })
-    expect(heightAtLine).not.toHaveBeenCalled()
+    expect(heightAtLine).toHaveBeenCalledWith(5, 'local')
+    expect(scrollTo).toHaveBeenCalledWith(null, 480)
   })
 })

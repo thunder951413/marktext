@@ -7,7 +7,7 @@
     },
     "file": {
       "file": "Dosya",
-      "newTab": "Yeni Sekme",
+      "newTab": "Yeni Belge",
       "newWindow": "Yeni Pencere",
       "openFile": "Dosya Aç...",
       "openFolder": "Klasör Aç...",
@@ -339,7 +339,7 @@
   },
   "recent": {
     "noTabsOpen": "Açık sekmeniz yok.",
-    "newFile": "Yeni Dosya"
+    "newFile": "Yeni Belge"
   },
   "import": {
     "title": "İçe Aktar veya Aç",
@@ -555,7 +555,13 @@
         "hideLinkPopup": "Bağlantı açılır penceresini gizle",
         "autoCheck": "Otomatik işaretle",
         "autoNormalizeLineEndings": "Açılışta satır sonlarını LF'ye otomatik normalleştir",
-        "wrapCodeBlocks": "Kod bloklarını kaydır"
+        "wrapCodeBlocks": "Kod bloklarını kaydır",
+        "editorEngine": {
+          "title": "WYSIWYG motoru",
+          "codemirror": "CodeMirror (varsayılan, Vim ve büyük dosyalar)",
+          "muya": "Muya (eski motor, yedek)",
+          "notes": "MarkText yeniden başlatıldıktan sonra etkili olur."
+        }
       }
     },
     "image": {
@@ -738,7 +744,7 @@
     },
     "file": {
       "newWindow": "Yeni Pencere",
-      "newTab": "Yeni Sekme",
+      "newTab": "Yeni Belge",
       "openFile": "Dosya Aç",
       "openFolder": "Klasör Aç",
       "save": "Kaydet",

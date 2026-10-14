@@ -7,7 +7,7 @@
     },
     "file": {
       "file": "File",
-      "newTab": "New Tab",
+      "newTab": "New Document",
       "newWindow": "New Window",
       "openFile": "Open File...",
       "openFolder": "Open Folder...",
@@ -339,7 +339,7 @@
   },
   "recent": {
     "noTabsOpen": "You have no tabs open.",
-    "newFile": "New File"
+    "newFile": "New Document"
   },
   "import": {
     "title": "Import or Open",
@@ -555,7 +555,13 @@
         "hideLinkPopup": "Hide link popup",
         "autoCheck": "Auto check",
         "autoNormalizeLineEndings": "Auto-normalize line endings to LF on open",
-        "wrapCodeBlocks": "Wrap code blocks"
+        "wrapCodeBlocks": "Wrap code blocks",
+        "editorEngine": {
+          "title": "WYSIWYG engine",
+          "codemirror": "CodeMirror (default, Vim + large files)",
+          "muya": "Muya (legacy fallback)",
+          "notes": "Takes effect after restarting MarkText."
+        }
       }
     },
     "image": {
@@ -738,7 +744,7 @@
     },
     "file": {
       "newWindow": "New Window",
-      "newTab": "New Tab",
+      "newTab": "New Document",
       "openFile": "Open File",
       "openFolder": "Open Folder",
       "save": "Save",

@@ -7,7 +7,7 @@
     },
     "file": {
       "file": "文件",
-      "newTab": "新建标签页",
+      "newTab": "新建文档",
       "newWindow": "新建窗口",
       "openFile": "打开文件…",
       "openFolder": "打开文件夹…",
@@ -339,7 +339,7 @@
   },
   "recent": {
     "noTabsOpen": "您没有打开的标签页。",
-    "newFile": "新建文件"
+    "newFile": "新建文档"
   },
   "import": {
     "title": "导入或打开",
@@ -555,7 +555,13 @@
         "hideLinkPopup": "隐藏链接弹出窗口",
         "autoCheck": "自动检查",
         "autoNormalizeLineEndings": "打开时自动将行尾规范化为 LF",
-        "wrapCodeBlocks": "换行代码块"
+        "wrapCodeBlocks": "换行代码块",
+        "editorEngine": {
+          "title": "所见即所得引擎",
+          "codemirror": "CodeMirror（默认，适合 Vim 与大文件）",
+          "muya": "Muya（旧版回退）",
+          "notes": "重启 MarkText 后生效。"
+        }
       }
     },
     "image": {
@@ -738,7 +744,7 @@
     },
     "file": {
       "newWindow": "新建窗口",
-      "newTab": "新建标签页",
+      "newTab": "新建文档",
       "openFile": "打开文件",
       "openFolder": "打开文件夹",
       "save": "保存",

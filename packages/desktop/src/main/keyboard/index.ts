@@ -1,4 +1,5 @@
-import { shell, ipcMain } from 'electron'
+import { ipcMain } from '../utils/secureIpc'
+import { shell } from 'electron'
 import log from 'electron-log'
 import EventEmitter from 'events'
 import fsPromises from 'fs/promises'

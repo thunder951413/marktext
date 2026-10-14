@@ -2,9 +2,10 @@ packages:
   - 'packages/*'
   # muya v2 (TS) nests its dev surface and Playwright suite inside its own
   # package directory rather than as siblings under packages/, so list them
-  # explicitly.
+  # explicitly. Same pattern for the wysiwyg demo.
   - 'packages/muya/examples'
   - 'packages/muya/e2e'
+  - 'packages/wysiwyg/examples'
 
 allowBuilds:
   ced: true
@@ -15,3 +16,19 @@ allowBuilds:
   sharp: true
   unrs-resolver: true
   workerd: true
+
+overrides:
+  postcss: 8.5.23
+  'esbuild@>=0.27.0 <0.28.1': 0.28.1
+  dompurify: 3.4.13
+  fast-uri: 3.1.8
+  'js-yaml@<4': 3.15.2
+  'js-yaml@>=4': 4.3.2
+  '@xmldom/xmldom': 0.9.12
+  # plist 3.1.1 passes an explicit MIME type required by the patched XML parser.
+  'plist@<4': 3.1.1
+  undici: 7.29.1
+  'nanoid@<4': 3.3.18
+  browserslist: 4.28.7
+  baseline-browser-mapping: 2.11.0
+  sharp: 0.35.4

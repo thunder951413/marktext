@@ -30,9 +30,9 @@ test.describe('search and replace', () => {
         await page.locator(toolbar.replace).click();
         await slowType(page, 'bar');
         await page.locator(toolbar.single).click();
-        const md = await getMarkdown(page);
         // After replacing one occurrence: at least one 'foo' becomes 'bar'.
-        expect(md).toContain('bar');
+        await expect.poll(() => getMarkdown(page)).toContain('bar');
+        const md = await getMarkdown(page);
         expect(md.match(/foo/g)?.length ?? 0).toBeLessThanOrEqual(2);
     });
 
@@ -45,8 +45,9 @@ test.describe('search and replace', () => {
         await page.locator(toolbar.replace).click();
         await slowType(page, 'dog');
         await page.locator(toolbar.all).click();
+        // The replacement paints before its JSON-state rAF batch commits.
+        await expect.poll(() => getMarkdown(page)).not.toContain('cat');
         const md = await getMarkdown(page);
-        expect(md).not.toContain('cat');
         expect(md.match(/dog/g)?.length).toBe(3);
     });
 });

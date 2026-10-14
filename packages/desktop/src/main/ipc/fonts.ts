@@ -1,4 +1,5 @@
-import { ipcMain } from 'electron'
+import { ipcMain } from '../utils/secureIpc'
+
 import log from 'electron-log'
 
 interface FontListShape {

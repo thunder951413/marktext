@@ -1,14 +1,7 @@
+import { ipcMain } from '../../utils/secureIpc'
 import { rename as fsRename } from 'fs-extra'
 import path from 'path'
-import {
-  BrowserWindow,
-  app,
-  dialog,
-  shell,
-  ipcMain,
-  type IpcMainEvent,
-  type MenuItem
-} from 'electron'
+import { BrowserWindow, app, dialog, shell, type IpcMainEvent, type MenuItem } from 'electron'
 import log from 'electron-log'
 import { isDirectory, isFile, exists } from 'common/filesystem'
 import { MARKDOWN_EXTENSIONS, isDangerousExecutableFile, isMarkdownFile } from 'common/filesystem/paths'

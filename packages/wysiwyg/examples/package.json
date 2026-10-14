@@ -1,0 +1,13 @@
+{
+  "name": "wysiwyg-examples",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Vanilla TS demo for @marktext/wysiwyg (CodeMirror 6 live preview)",
+  "license": "MIT",
+  "scripts": {
+    "dev:demo": "vite"
+  },
+  "dependencies": {
+    "@marktext/wysiwyg": "workspace:*"
+  }
+}

@@ -1,4 +1,5 @@
-import { ipcMain } from 'electron'
+import { ipcMain } from '../utils/secureIpc'
+
 import { isSamePathSync, isImageFile } from 'common/filesystem/paths'
 
 export const registerPathHandlers = (): void => {

@@ -26,7 +26,7 @@ test.describe('Ripgrep IPC streaming', () => {
 
   test.beforeAll(async() => {
     fixtureDir = writeFixtureTree()
-    const launched = await launchElectron()
+    const launched = await launchElectron([fixtureDir])
     app = launched.app
     page = launched.page
   })

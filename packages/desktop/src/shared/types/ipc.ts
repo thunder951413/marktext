@@ -46,7 +46,6 @@ export interface IpcInvokeChannels {
   'mt::fonts::list': { args: []; ret: string[] }
   'mt::fs-trash-item': { args: [pathname: string]; ret: void }
   'mt::fs::copy': { args: [src: string, dest: string]; ret: void }
-  'mt::fs::empty-dir': { args: [path: string]; ret: void }
   'mt::fs::ensure-dir': { args: [path: string]; ret: void }
   'mt::fs::is-directory': { args: [path: string]; ret: boolean }
   'mt::fs::is-executable': { args: [path: string]; ret: boolean }
@@ -57,7 +56,6 @@ export interface IpcInvokeChannels {
   'mt::fs::read-file': { args: [path: string, encoding?: string]; ret: string | Uint8Array }
   'mt::fs::readdir': { args: [path: string]; ret: string[] }
   'mt::fs::stat': { args: [path: string]; ret: SerializedStat }
-  'mt::fs::unlink': { args: [path: string]; ret: void }
   'mt::fs::write-file': { args: [path: string, data: string | Uint8Array]; ret: void }
   'mt::i18n::is-supported': { args: [lang: string]; ret: boolean }
   'mt::i18n::load': { args: [language: string]; ret: Record<string, unknown> }
@@ -69,8 +67,8 @@ export interface IpcInvokeChannels {
   }
   'mt::keybinding-save-user-keybindings': { args: [bindings: unknown]; ret: boolean }
   'mt::paths::is-image': { args: [path: string]; ret: boolean }
-  'mt::rg::start': { args: [req: unknown]; ret: { searchId: string } }
-  'mt::shell::open-external': { args: [url: string]; ret: void }
+  'mt::rg::start': { args: [req: unknown]; ret: boolean }
+  'mt::shell::open-external': { args: [url: string]; ret: boolean }
   'mt::shell::open-path': { args: [fullPath: string]; ret: string }
   'mt::spellchecker-get-available-dictionaries': { args: []; ret: string[] }
   'mt::spellchecker-get-custom-dictionary-words': { args: []; ret: string[] }

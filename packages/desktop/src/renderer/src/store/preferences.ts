@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { DEFAULT_EDITOR_ENGINE, type EditorEngine } from 'common/editorEngine'
 import bus from '../bus'
 import { setLanguage } from '../i18n'
 
@@ -47,6 +48,7 @@ export interface PreferencesState {
   codeBlockLineNumbers: boolean
   trimUnnecessaryCodeBlockEmptyLines: boolean
   wrapCodeBlocks: boolean
+  editorEngine: EditorEngine
   editorLineWidth: string
 
   // ----- Markdown editing -----
@@ -164,6 +166,7 @@ export const usePreferencesStore = defineStore('preferences', {
     codeBlockLineNumbers: false,
     trimUnnecessaryCodeBlockEmptyLines: true,
     wrapCodeBlocks: false,
+    editorEngine: DEFAULT_EDITOR_ENGINE,
     editorLineWidth: '',
 
     autoPairBracket: true,
