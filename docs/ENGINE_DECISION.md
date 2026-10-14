@@ -56,7 +56,7 @@ Muya 打开 704 KB 文档时生成了 150 002 个 DOM 节点。CodeMirror 只渲
 
 | | Muya 路径 | CodeMirror 路径 |
 | --- | --- | --- |
-| 引擎单元测试 | `packages/muya` 有自己的套件，包括 CommonMark/GFM 规范测试 | `packages/wysiwyg`：16 个文件，122 个用例，本轮新增 26 个 |
+| 引擎单元测试 | `packages/muya` 有自己的套件，包括 CommonMark/GFM 规范测试 | `packages/wysiwyg`：16 个文件，124 个用例，本轮新增 28 个 |
 | 桌面 E2E | 62 个用例文件（40 个直接断言 `mu-*` DOM） | 1 个文件、2 个用例（`codemirror-preview.spec.ts`），**远远不够** |
 
 ### 3.4 维护成本
