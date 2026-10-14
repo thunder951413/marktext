@@ -151,3 +151,43 @@ hr.wysiwyg-hr {
   opacity: 0.45;
   transition: opacity 0.15s ease-in;
 }
+
+/* Floating inline-format toolbar (features/formatToolbar.ts) */
+.cm-tooltip:has(> .wysiwyg-format-toolbar) {
+  border: none;
+  background: transparent;
+}
+.wysiwyg-format-toolbar {
+  display: flex;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 6px;
+  border: 1px solid var(--floatBorderColor, rgba(127, 127, 127, 0.25));
+  background: var(--floatBgColor, #fff);
+  color: var(--editorColor, #333);
+  box-shadow: 0 4px 14px var(--floatShadow, rgba(15, 15, 15, 0.12));
+  user-select: none;
+}
+.wysiwyg-format-button {
+  min-width: 26px;
+  height: 26px;
+  padding: 0 6px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font: 13px/26px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  cursor: pointer;
+}
+.wysiwyg-format-button:hover {
+  background: var(--floatHoverColor, rgba(127, 127, 127, 0.15));
+}
+.wysiwyg-format-button.active {
+  color: var(--themeColor, #409eff);
+  background: var(--floatHoverColor, rgba(64, 158, 255, 0.12));
+}
+.wysiwyg-format-button.is-strong { font-weight: 700; }
+.wysiwyg-format-button.is-em { font-style: italic; font-family: Georgia, serif; }
+.wysiwyg-format-button.is-u { text-decoration: underline; }
+.wysiwyg-format-button.is-del { text-decoration: line-through; }
+.wysiwyg-format-button.is-mark { background: rgba(255, 213, 0, 0.35); }

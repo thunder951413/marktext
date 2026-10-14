@@ -56,6 +56,7 @@ import {
   updateParagraph as updateParagraphCmd,
   type InlineFormatType
 } from './features/commands'
+import { formatToolbar, formatToolbarField } from './features/formatToolbar'
 import { Emitter } from './emitter'
 import './styles/wysiwyg.css'
 
@@ -95,6 +96,10 @@ export interface WysiwygOptions extends ClipboardHooks {
   wrapCodeBlocks?: boolean
   codeFontSize?: number
   codeFontFamily?: string
+  /** Floating inline-format toolbar over selections. Default true. */
+  formatToolbar?: boolean
+  /** Localised toolbar button titles keyed by format type. */
+  formatToolbarLabels?: Partial<Record<InlineFormatType, string>>
 }
 
 export type WysiwygEvents = {
@@ -139,6 +144,7 @@ export class WysiwygEditor {
   private vimCompartment = new Compartment()
   private featureCompartment = new Compartment()
   private indentationCompartment = new Compartment()
+  private toolbarCompartment = new Compartment()
 
   constructor(container: HTMLElement, options: WysiwygOptions = {}) {
     this.container = container
@@ -184,6 +190,7 @@ export class WysiwygEditor {
       this.themeCompartment.of(this.buildTheme()),
       this.featureCompartment.of(livePreviewOptions.of(this.buildFeatureFacet())),
       this.indentationCompartment.of(this.indentationConfig()),
+      this.toolbarCompartment.of(this.toolbarConfig()),
       EditorView.lineWrapping,
       EditorView.updateListener.of(update => {
         if (update.docChanged) {
@@ -610,7 +617,8 @@ export class WysiwygEditor {
   }
 
   hideAllFloatTools(): void {
-    /* No engine-owned floats yet; kept for contract parity. */
+    if (!this.view || !this.view.state.field(formatToolbarField, false)?.visible) return
+    this.view.dispatch({ selection: this.view.state.selection, userEvent: 'select.dismiss-toolbar' })
   }
 
   invalidateImageCache(): void {
@@ -633,6 +641,7 @@ export class WysiwygEditor {
         this.autoPairCompartment.reconfigure(this.autoPairConfig()),
         this.featureCompartment.reconfigure(livePreviewOptions.of(this.buildFeatureFacet())),
         this.indentationCompartment.reconfigure(this.indentationConfig()),
+        this.toolbarCompartment.reconfigure(this.toolbarConfig()),
         ...(options.vimMode !== undefined ? [this.vimCompartment.reconfigure(this.vimConfig())] : []),
         relayoutEffect.of(null)
       ]
@@ -685,6 +694,15 @@ export class WysiwygEditor {
       codeBlockLineNumbers: opts.codeBlockLineNumbers,
       diagramRenderer: opts.diagramRenderer ?? createDefaultDiagramRenderer(opts.plantumlServer)
     }
+  }
+
+  private toolbarConfig() {
+    return formatToolbar({
+      enabled: this.options.formatToolbar !== false,
+      // Vim selections come from motions; only mouse selections get a toolbar.
+      pointerOnly: Boolean(this.options.vimMode),
+      labels: this.options.formatToolbarLabels ?? {}
+    })
   }
 
   private autoPairConfig() {

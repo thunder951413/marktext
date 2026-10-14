@@ -63,4 +63,12 @@ export {
   updateParagraph
 } from './features/commands'
 export type { BlockRange, InlineFormatType } from './features/commands'
+export {
+  FORMAT_TOOLBAR_BUTTONS,
+  formatToolbar,
+  formatToolbarConfig,
+  formatToolbarField,
+  isFormatActive
+} from './features/formatToolbar'
+export type { FormatToolbarConfig } from './features/formatToolbar'
 export { Emitter } from './emitter'
