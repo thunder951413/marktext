@@ -27,7 +27,18 @@
 - Electron 升级到 `42.11.10`，修补 DOMPurify、Mermaid、Next.js 及相关传递依赖；生产依赖安全审计为 0 项已知漏洞。
 - 新编辑器加入工作区依赖、根目录测试和类型检查及 CI。修复 Node 26 测试环境、窗口标题及测试目录隔离；补齐第三方许可正文，修复网站生产构建误启动 Cloudflare 开发模拟器的问题。
 
-预览引擎可通过 `MARKTEXT_EDITOR_ENGINE=codemirror pnpm dev` 启动。它仍缺少部分 Muya 上下文浮动界面、表格列宽拖动和矩形选择，完整切换尚未完成；详见 [WYSIWYG 包说明](packages/wysiwyg/README.md)。
+## 下一版（开发中）：默认切换到 CodeMirror 引擎
+
+- 所见即所得默认使用 CodeMirror 引擎（`packages/wysiwyg`）。决策过程和退出条件见 [docs/ENGINE_DECISION.md](docs/ENGINE_DECISION.md)。
+- 回退：在“偏好设置 → 编辑器 → 杂项 → 所见即所得引擎”中选择 Muya，重启后生效；也可以用 `MARKTEXT_EDITOR_ENGINE=muya` 临时指定。
+- 新引擎补齐了以下功能：
+  - 浮动格式工具栏；
+  - 表格网格渲染、列移动（`Alt-Shift-←/→`）、表格格式化（`Alt-Shift-F`）；
+  - 矩形选择（`Alt` + 拖动）；
+  - 代码块语言补全、emoji 补全；
+  - Vim 的 `:w`、`:q`、`:q!`、`:wq`、`:x`。
+- 新引擎打开大文档快得多：704 KB 文档的打开时间从约 8.7 秒降到约 50 毫秒，打字延迟中位数从约 400 毫秒降到约 27 毫秒。
+- 与上游同步的方法见 [docs/UPSTREAM_SYNC.md](docs/UPSTREAM_SYNC.md)。
 
 ## 本分支修改
 

@@ -130,10 +130,13 @@ root holds only shared tooling and CI-facing scripts.
                             wired in playwright.config.ts but deferred
                             until BACKLOG Phase 3 lands engine-independent
                             specs.
-    wysiwyg/                @marktext/wysiwyg — optional CodeMirror 6 live
-                            preview engine. Select with environment variable
-                            MARKTEXT_EDITOR_ENGINE=codemirror; Muya remains
-                            the desktop default until UI feature parity.
+    wysiwyg/                @marktext/wysiwyg — CodeMirror 6 live-preview
+                            engine, the desktop's default WYSIWYG engine.
+                            Muya is a frozen fallback: `editorEngine`
+                            preference or MARKTEXT_EDITOR_ENGINE=muya (see
+                            src/common/editorEngine.ts and
+                            docs/ENGINE_DECISION.md). New editor features go
+                            here, not into editor.vue/Muya.
       src/ / demo/          Engine, regression tests and Vite demo.
     website/                marktext-website (Next.js 15 + React 19).
                             Standalone toolchain, not part of desktop CI.

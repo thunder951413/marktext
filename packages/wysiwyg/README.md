@@ -43,21 +43,28 @@ surface — `format`, `updateParagraph`, `duplicate`/`insertParagraph`/
 opaque in-memory history tokens that preserve undo across tab switches,
 spellcheck word replacement, locale storage, no-op float hooks.
 
-The desktop uses Muya by default. Launch the CodeMirror preview explicitly:
+The desktop uses this engine by default. Muya remains as a fallback until
+the exit criteria in `docs/ENGINE_DECISION.md` are met:
 
 ```bash
-MARKTEXT_EDITOR_ENGINE=codemirror pnpm dev
-# For an installed macOS application:
-MARKTEXT_EDITOR_ENGINE=codemirror /Applications/MarkText.app/Contents/MacOS/marktext
+MARKTEXT_EDITOR_ENGINE=muya pnpm dev          # one-off fallback
+# or Preferences > Editor > Misc > WYSIWYG engine (applies after restart)
 ```
 
-The desktop adapter covers document changes, tab history, source switching,
-TOC labels and navigation, Vim mode reporting, HTML previews, clipboard
-conversion, themes and dynamic spelling preferences. Preview configuration
-is scoped to each editor instance; HTML is sanitized with DOMPurify.
+Engine-owned UI that replaces Muya's floats:
 
-The Muya floating toolbar, emoji/language pickers and other contextual
-panels still require dedicated CodeMirror integration. Table column
-resizing and rectangular selection remain unsupported. Keep Muya as the
-default until these interfaces and their full desktop regression suite
-reach parity; a passing engine unit suite alone does not establish parity.
+- `features/formatToolbar.ts` — floating inline-format toolbar over
+  selections (pointer selections only in Vim mode).
+- `decorations/tableWidget.ts` — tables render as a grid until the caret
+  enters their lines; `moveTableColumn` (Alt-Shift-Left/Right) and
+  `formatTable` (Alt-Shift-F, pads cells so pipes align — GFM has no
+  column-width syntax). Alt-drag makes rectangular selections.
+- `features/completions.ts` — code-fence language and `:emoji` completion.
+- `features/vimEx.ts` — `:w`, `:q`, `:q!`, `:wq`, `:x`; the embedder supplies
+  the save/close handlers via `setVimExHandlers`.
+
+Large documents (> 50k chars) are decorated only around the viewport, so
+keystroke cost no longer scales with document size.
+
+Still missing compared with Muya: image toolbar/editing popups, link hover
+tools, footnote tool, the `@` quick-insert menu and paragraph front menu.
