@@ -89,8 +89,8 @@ function emojiCompletions(): Promise<Completion[]> {
 /** `:smi` at a word start — completes emoji shortcodes to the emoji itself. */
 export async function emojiSource(context: CompletionContext): Promise<CompletionResult | null> {
   const match = context.matchBefore(/(?:^|[\s([{>])(:[a-z0-9_+-]{2,})$/i)
-  if (!match) return null
-  const text = /:[a-z0-9_+-]+$/i.exec(match.text)![0]
+  const text = match && /:[a-z0-9_+-]+$/i.exec(match.text)?.[0]
+  if (!text) return null
   const options = await emojiCompletions()
   return {
     from: context.pos - text.length,
