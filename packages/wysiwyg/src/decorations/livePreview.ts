@@ -38,6 +38,8 @@ const INLINE_STYLE_CLASSES: Record<string, string> = {
   Link: 'wysiwyg-link'
 }
 
+const FENCE_CONTAINERS = new Set(['Document', 'BulletList', 'OrderedList', 'ListItem', 'Blockquote'])
+
 const HEADING_CLASSES: Record<string, string> = {
   ATXHeading1: 'wysiwyg-h1',
   ATXHeading2: 'wysiwyg-h2',
@@ -260,18 +262,23 @@ function caretInInnerContent(state: EditorState, from: number, to: number): bool
  * untouched; fences are excluded via the syntax tree.
  */
 function findMathBlocks(state: EditorState, fenced: Array<[number, number]>): Array<BaseEntry> {
-  const inFence = (pos: number) => fenced.some(([a, b]) => pos >= a && pos < b)
+  // Linear sweep: `fenced` is in document order, so a single moving pointer
+  // replaces the per-line `fenced.some(...)` scan that made this quadratic in
+  // (lines x fences) and dominated keystroke latency on large documents.
   const blocks: Array<BaseEntry> = []
   let openStart = -1
-
-  for (let lineNo = 1; lineNo <= state.doc.lines; lineNo++) {
-    const line = state.doc.line(lineNo)
-    if (inFence(line.from)) continue
-    if (line.text.trim() !== '$$') continue
+  let fenceIdx = 0
+  let pos = 0
+  for (const iter = state.doc.iterLines(); !iter.next().done; pos += iter.value.length + 1) {
+    const text = iter.value
+    while (fenceIdx < fenced.length && fenced[fenceIdx][1] <= pos) fenceIdx++
+    const fence = fenced[fenceIdx]
+    if (fence && pos >= fence[0] && pos < fence[1]) continue
+    if (text.trim() !== '$$') continue
     if (openStart < 0) {
-      openStart = line.from
+      openStart = pos
     } else {
-      blocks.push({ from: openStart, to: line.to })
+      blocks.push({ from: openStart, to: pos + text.length })
       openStart = -1
     }
   }
@@ -289,16 +296,34 @@ export interface LivePreviewResult {
   atomicRanges: DecorationSet
 }
 
+/**
+ * Document window the builder decorates. Omitted = the whole document (small
+ * documents and unit tests); the editor passes the viewport plus a margin for
+ * large documents so per-keystroke work stays proportional to what is on
+ * screen instead of to the document size.
+ */
+export interface DecorationWindow {
+  from: number
+  to: number
+}
+
 export function buildLivePreviewDecorations(
   state: EditorState,
   tree: Tree,
   composing: boolean,
-  partialOpts: LivePreviewOptions = {}
+  partialOpts: LivePreviewOptions = {},
+  win?: DecorationWindow
 ): LivePreviewResult {
   const opts = { ...DEFAULT_OPTIONS, ...partialOpts }
   const docLength = state.doc.length
   const selection = state.selection
   const reveal = composing || !!opts.revealAll
+  const winFrom = win ? Math.max(0, win.from) : 0
+  const winTo = win ? Math.min(docLength, win.to) : docLength
+  // Line-decoration loops over long container nodes (lists, quotes, tables)
+  // are clipped to the window as well.
+  const firstLineIn = (from: number) => state.doc.lineAt(Math.max(from, winFrom)).number
+  const lastLineIn = (to: number) => state.doc.lineAt(Math.max(0, Math.min(to, winTo))).number
 
   const fenced: Array<[number, number]> = []
   tree.iterate({
@@ -307,7 +332,9 @@ export function buildLivePreviewDecorations(
         fenced.push([node.from, node.to])
         return false
       }
-      return undefined
+      // Fenced code only nests inside container blocks; skipping leaf blocks
+      // keeps this whole-document pass from walking every inline node.
+      return FENCE_CONTAINERS.has(node.name) ? undefined : false
     }
   })
 
@@ -334,6 +361,8 @@ export function buildLivePreviewDecorations(
   let codeLineCounter = 0
 
   tree.iterate({
+    from: winFrom,
+    to: winTo,
     enter: node => {
       const { name } = node
 
@@ -424,15 +453,15 @@ export function buildLivePreviewDecorations(
       }
 
       if (name === 'Table') {
-        for (let lineNo = state.doc.lineAt(node.from).number; lineNo <= state.doc.lineAt(node.to - 1).number; lineNo++) {
+        for (let lineNo = firstLineIn(node.from); lineNo <= lastLineIn(node.to - 1); lineNo++) {
           lines.push({ pos: state.doc.line(lineNo).from, spec: { class: 'wysiwyg-table-line' } })
         }
         return false
       }
 
       if (name === 'Blockquote') {
-        const firstLine = state.doc.lineAt(node.from).number
-        const lastLine = state.doc.lineAt(Math.max(node.from, node.to - 1)).number
+        const firstLine = firstLineIn(node.from)
+        const lastLine = lastLineIn(Math.max(node.from, node.to - 1))
         for (let lineNo = firstLine; lineNo <= lastLine; lineNo++) {
           lines.push({ pos: state.doc.line(lineNo).from, spec: { class: 'wysiwyg-quote-line' } })
         }
@@ -440,8 +469,8 @@ export function buildLivePreviewDecorations(
       }
 
       if (name === 'BulletList' || name === 'OrderedList') {
-        const firstLine = state.doc.lineAt(node.from).number
-        const lastLine = state.doc.lineAt(Math.max(node.from, node.to - 1)).number
+        const firstLine = firstLineIn(node.from)
+        const lastLine = lastLineIn(Math.max(node.from, node.to - 1))
         for (let lineNo = firstLine; lineNo <= lastLine; lineNo++) {
           lines.push({ pos: state.doc.line(lineNo).from, spec: { class: 'wysiwyg-list-line' } })
         }
@@ -500,6 +529,7 @@ export function buildLivePreviewDecorations(
   const keptWidgets = widgets.filter(w => !overlapsAny(w, mathBlocks))
 
   for (const block of mathBlocks) {
+    if (block.to < winFrom || block.from > winTo) continue
     if (caretInInnerContent(state, block.from, block.to)) continue
     blocks.push({
       from: block.from,
@@ -594,9 +624,36 @@ interface TriggerCache {
   options: LivePreviewOptions
   tree: unknown
   composing: boolean
+  /** Decorated window for large documents; null = whole document. */
+  window: DecorationWindow | null
 }
 
+/**
+ * Documents above this size are decorated only around the viewport. Below it
+ * the whole document is decorated, which keeps small-document behaviour (and
+ * every unit test) identical to the original full rebuild.
+ */
+export const LARGE_DOCUMENT_THRESHOLD = 50_000
+/** Characters decorated beyond each edge of the viewport. */
+const WINDOW_MARGIN = 4_000
+
 const triggerCaches = new WeakMap<EditorView, TriggerCache>()
+
+function computeWindow(view: EditorView): DecorationWindow | null {
+  const { doc } = view.state
+  if (doc.length <= LARGE_DOCUMENT_THRESHOLD) return null
+  const { from, to } = view.viewport
+  return {
+    from: doc.lineAt(Math.max(0, from - WINDOW_MARGIN)).from,
+    to: doc.lineAt(Math.min(doc.length, to + WINDOW_MARGIN)).to
+  }
+}
+
+function windowCovers(outer: DecorationWindow | null, view: EditorView): boolean {
+  if (!outer) return true
+  const { from, to } = view.viewport
+  return from >= outer.from && to <= outer.to
+}
 
 function shouldRecompute(view: EditorView): boolean {
   const composing = view.composing
@@ -605,8 +662,9 @@ function shouldRecompute(view: EditorView): boolean {
   const { doc, selection } = view.state
   const options = view.state.facet(livePreviewOptions)
   if (previous && previous.doc === doc && previous.selection.eq(selection) &&
-      previous.tree === tree && previous.composing === composing && previous.options === options) return false
-  triggerCaches.set(view, { doc, selection, options, tree, composing })
+      previous.tree === tree && previous.composing === composing && previous.options === options &&
+      windowCovers(previous.window, view)) return false
+  triggerCaches.set(view, { doc, selection, options, tree, composing, window: computeWindow(view) })
   return true
 }
 
@@ -623,11 +681,13 @@ export function requestLivePreviewRebuild(view: EditorView): void {
 }
 
 function dispatchRecompute(view: EditorView): void {
+  const cached = triggerCaches.get(view)
   const result = buildLivePreviewDecorations(
     view.state,
     syntaxTree(view.state),
     view.composing,
-    view.state.facet(livePreviewOptions)
+    view.state.facet(livePreviewOptions),
+    (cached ? cached.window : computeWindow(view)) ?? undefined
   )
   view.dispatch({ effects: setLivePreviewEffect.of(result) })
 }
