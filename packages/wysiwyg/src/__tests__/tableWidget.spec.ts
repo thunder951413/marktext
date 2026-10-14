@@ -72,6 +72,33 @@ describe('rendered tables', () => {
     expect(view.dom.querySelector('table.wysiwyg-table')).toBeNull()
   })
 
+  it('redirects a one-line step over a rendered table into its rows', () => {
+    const view = makeLiveView(DOC, 0)
+    const lineBefore = view.state.doc.line(2)
+    const tableFirst = view.state.doc.line(3)
+    const tableLast = view.state.doc.line(6)
+    const lineAfter = view.state.doc.line(7)
+    view.dispatch({ selection: EditorSelection.cursor(lineBefore.from) })
+    // What vertical motion produces when the table is one atomic block.
+    view.dispatch({ selection: EditorSelection.cursor(lineAfter.from), userEvent: 'select' })
+    expect(view.state.selection.main.head).toBe(tableFirst.from)
+    view.dispatch({ selection: EditorSelection.cursor(lineAfter.from) })
+    requestLivePreviewRebuild(view)
+    view.dispatch({ selection: EditorSelection.cursor(lineBefore.from), userEvent: 'select' })
+    expect(view.state.selection.main.head).toBe(tableLast.from)
+  })
+
+  it('leaves pointer clicks and longer jumps alone', () => {
+    const view = makeLiveView(DOC, 0)
+    const lineAfter = view.state.doc.line(7)
+    view.dispatch({ selection: EditorSelection.cursor(0) })
+    view.dispatch({ selection: EditorSelection.cursor(lineAfter.from), userEvent: 'select' })
+    expect(view.state.selection.main.head).toBe(lineAfter.from)
+    view.dispatch({ selection: EditorSelection.cursor(view.state.doc.line(2).from) })
+    view.dispatch({ selection: EditorSelection.cursor(lineAfter.from), userEvent: 'select.pointer' })
+    expect(view.state.selection.main.head).toBe(lineAfter.from)
+  })
+
   it('can be switched off', () => {
     const view = makeLiveView(DOC, 0, false)
     expect(view.dom.querySelector('table.wysiwyg-table')).toBeNull()

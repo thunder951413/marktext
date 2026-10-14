@@ -1,8 +1,8 @@
 import { syntaxTree } from '@codemirror/language'
 import {
   EditorSelection,
+  EditorState,
   Facet,
-  type EditorState,
   RangeSet,
   StateEffect,
   StateField
@@ -602,6 +602,48 @@ interface LivePreviewFieldValue {
 export const setLivePreviewEffect = StateEffect.define<LivePreviewFieldValue>()
 
 /**
+ * Vertical caret motion treats a block widget as one atomic line, so a
+ * single ArrowDown/`j` from the line above a rendered table or math block
+ * lands on the line below it and the block can never be entered from the
+ * keyboard. When a one-line step jumps exactly over one block, redirect the
+ * caret into it: the first (or, moving up, last) table row, or the first/last
+ * inner line of a fenced block — both reveal the source for editing.
+ */
+function blockEntryFilter(field: StateField<LivePreviewFieldValue>) {
+  return EditorState.transactionFilter.of(tr => {
+    if (!tr.selection || tr.docChanged || tr.isUserEvent('select.pointer')) return tr
+    const before = tr.startState.selection.main
+    const after = tr.selection.main
+    if (!before.empty || !after.empty || tr.selection.ranges.length > 1) return tr
+    const value = tr.startState.field(field, false)
+    if (!value || value.decorations === Decoration.none) return tr
+    const doc = tr.startState.doc
+    const oldLine = doc.lineAt(before.head).number
+    const newLine = doc.lineAt(after.head).number
+    if (Math.abs(newLine - oldLine) < 2) return tr
+    let target = -1
+    value.decorations.between(Math.min(before.head, after.head), Math.max(before.head, after.head), (from, to, deco) => {
+      const widget = deco.spec.widget as { kind?: string } | undefined
+      if (!deco.spec.block || !widget) return undefined
+      const fromLine = doc.lineAt(from).number
+      const toLine = doc.lineAt(to).number
+      const inner = widget.kind !== 'table' && toLine - fromLine >= 2
+      if (newLine > oldLine && oldLine === fromLine - 1 && newLine === toLine + 1) {
+        target = doc.line(inner ? fromLine + 1 : fromLine).from
+        return false
+      }
+      if (newLine < oldLine && oldLine === toLine + 1 && newLine === fromLine - 1) {
+        target = doc.line(inner ? toLine - 1 : toLine).from
+        return false
+      }
+      return undefined
+    })
+    if (target < 0) return tr
+    return [tr, { selection: EditorSelection.cursor(target), scrollIntoView: true, sequential: true }]
+  })
+}
+
+/**
  * Block decorations (math/html/diagram replacements) are illegal from
  * ViewPlugins, so the computed sets live in a StateField. The listener below
  * recomputes after each update and dispatches the result as an effect.
@@ -627,6 +669,7 @@ export const livePreviewField = StateField.define<LivePreviewFieldValue>({
     // Block decorations MUST come from a field (plugin-provided ones throw);
     // this is also what puts the computed sets onto the view.
     EditorView.decorations.from(field, value => value.decorations),
+    blockEntryFilter(field),
     EditorView.atomicRanges.of(view => {
       const value = view.state.field(field, false)
       return value ? value.atomicRanges : Decoration.none
