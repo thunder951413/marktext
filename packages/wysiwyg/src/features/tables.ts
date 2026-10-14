@@ -81,6 +81,11 @@ function parseAlignments(delimiterTexts: string[]): TableAlignment[] {
   })
 }
 
+/** Column alignments of a GFM delimiter row such as `| :--- | ---: |`. */
+export function tableAlignmentsFromDelimiter(lineText: string): TableAlignment[] {
+  return parseAlignments(splitRowCells(lineText).texts)
+}
+
 function delimCellFor(align: TableAlignment): string {
   switch (align) {
     case 'left':
@@ -103,7 +108,11 @@ export function parseTableAt(state: EditorState, pos: number): TableStructure | 
   // Collect through the callback; a plain `let` assigned inside iterate() is
   // narrowed to null by TS control-flow analysis.
   const found: Array<{ from: number; to: number }> = []
+  // Bounded to `pos`: only nodes overlapping it are visited, so callers on the
+  // typing path (pipe escaping) stay independent of document size.
   syntaxTree(state).iterate({
+    from: pos,
+    to: pos,
     enter: node => {
       if (node.name === 'Table' && pos >= node.from && pos <= node.to) {
         found.push({ from: node.from, to: node.to })
@@ -374,6 +383,105 @@ export function createTable(view: EditorView, spec: { rows: number; columns: num
     selection: EditorSelection.single(pos + prefix.length + 2),
     scrollIntoView: true
   })
+  return true
+}
+
+/**
+ * Moves the caret's column one step left (`delta` -1) or right (+1), cells
+ * and alignment together. The caret follows the moved cell.
+ */
+export function moveTableColumn(view: EditorView, delta: -1 | 1): boolean {
+  const located = locateCell(view)
+  if (!located) return false
+  const { table, rowIndex, colIndex } = located
+  const target = colIndex + delta
+  if (target < 0 || target >= table.columnCount) return true
+  const swap = <T>(items: T[]): T[] => {
+    const next = [...items]
+    while (next.length < table.columnCount) next.push('' as T)
+    ;[next[colIndex], next[target]] = [next[target], next[colIndex]]
+    return next
+  }
+  const changes: Array<{ from: number; to: number; insert: string }> = []
+  applyToLines(table, (lineNo, cells) => {
+    const line = view.state.doc.line(lineNo)
+    changes.push({ from: line.from, to: line.to, insert: renderRow(swap(cells)) })
+  })
+  view.dispatch({ changes, userEvent: 'input.table' })
+  const fresh = parseTableAt(view.state, view.state.doc.line(table.header.lineNo).from)
+  if (fresh) {
+    const cells = rowIndex === 0 ? fresh.header.cells : fresh.rows[rowIndex - 1]?.cells
+    const cell = cells?.[target]
+    if (cell) selectCell(view, cell)
+  }
+  return true
+}
+
+/** Display width in monospace cells; East Asian wide characters count twice. */
+export function displayWidth(text: string): number {
+  let width = 0
+  for (const ch of text) {
+    const code = ch.codePointAt(0) ?? 0
+    width += (code >= 0x1100 && (
+      code <= 0x115f || (code >= 0x2e80 && code <= 0xa4cf) || (code >= 0xac00 && code <= 0xd7a3) ||
+      (code >= 0xf900 && code <= 0xfaff) || (code >= 0xfe30 && code <= 0xfe4f) ||
+      (code >= 0xff00 && code <= 0xff60) || (code >= 0xffe0 && code <= 0xffe6) ||
+      (code >= 0x1f300 && code <= 0x1faff) || (code >= 0x20000 && code <= 0x3fffd)
+    ))
+      ? 2
+      : 1
+  }
+  return width
+}
+
+/**
+ * Pads every cell so the pipes of the table line up in plain text — the
+ * source-level stand-in for column widths, which GFM cannot store. The caret
+ * stays in the same cell.
+ */
+export function formatTable(view: EditorView): boolean {
+  const located = locateCell(view)
+  if (!located) return false
+  const { table, rowIndex, colIndex } = located
+  const rows = [table.header.cells.map(c => c.text), ...table.rows.map(r => r.cells.map(c => c.text))]
+  const widths = new Array(table.columnCount).fill(3)
+  for (const row of rows) {
+    row.forEach((text, i) => {
+      if (i < widths.length) widths[i] = Math.max(widths[i], displayWidth(text))
+    })
+  }
+  const pad = (text: string, i: number) => {
+    const fill = Math.max(0, widths[i] - displayWidth(text))
+    switch (table.alignments[i]) {
+      case 'right':
+        return ' '.repeat(fill) + text
+      case 'center':
+        return ' '.repeat(Math.floor(fill / 2)) + text + ' '.repeat(Math.ceil(fill / 2))
+      default:
+        return text + ' '.repeat(fill)
+    }
+  }
+  const renderCells = (cells: string[]) =>
+    renderRow(widths.map((_, i) => pad(cells[i] ?? '', i)))
+  const delimiter = renderRow(widths.map((width, i) => {
+    const align = table.alignments[i] ?? 'none'
+    const left = align === 'left' || align === 'center' ? ':' : '-'
+    const right = align === 'right' || align === 'center' ? ':' : '-'
+    return left + '-'.repeat(Math.max(1, width - 2)) + right
+  }))
+  const changes: Array<{ from: number; to: number; insert: string }> = []
+  const replaceLine = (lineNo: number, insert: string) => {
+    const line = view.state.doc.line(lineNo)
+    if (line.text !== insert) changes.push({ from: line.from, to: line.to, insert })
+  }
+  replaceLine(table.header.lineNo, renderCells(rows[0]))
+  replaceLine(table.delimiterLineNo, delimiter)
+  table.rows.forEach((row, i) => replaceLine(row.lineNo, renderCells(rows[i + 1])))
+  if (!changes.length) return true
+  view.dispatch({ changes, userEvent: 'input.table' })
+  const fresh = parseTableAt(view.state, view.state.doc.line(table.header.lineNo).from)
+  const cells = fresh && (rowIndex === 0 ? fresh.header.cells : fresh.rows[rowIndex - 1]?.cells)
+  if (cells?.[colIndex]) selectCell(view, cells[colIndex])
   return true
 }
 

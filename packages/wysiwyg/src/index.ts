@@ -38,17 +38,23 @@ export {
   createTable,
   deleteTableColumn,
   deleteTableRow,
+  displayWidth,
   enterInTable,
+  formatTable,
   goToNextCell,
   goToPrevCell,
   insertTableColumn,
   insertTableRow,
+  moveTableColumn,
   parseTableAt,
   setTableColumnAlignment,
   smartShiftTab,
   smartTab,
+  tableAlignmentsFromDelimiter,
   tablePipeEscapeInput
 } from './features/tables'
+export { buildTableModel, TableWidget } from './decorations/tableWidget'
+export type { TableModel } from './decorations/tableWidget'
 export type { TableAlignment, TableStructure } from './features/tables'
 export { renderMathToString } from './features/math'
 export { createDefaultDiagramRenderer } from './features/diagrams'

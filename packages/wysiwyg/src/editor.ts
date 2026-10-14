@@ -1,5 +1,5 @@
 import { defaultKeymap, history, historyKeymap, undo, redo } from '@codemirror/commands'
-import { EditorView, highlightActiveLine, keymap } from '@codemirror/view'
+import { crosshairCursor, drawSelection, EditorView, highlightActiveLine, keymap, rectangularSelection } from '@codemirror/view'
 import { Compartment, EditorSelection, EditorState } from '@codemirror/state'
 import { indentUnit } from '@codemirror/language'
 import { markdownKeymap } from '@codemirror/lang-markdown'
@@ -23,6 +23,8 @@ import {
   deleteTableColumn,
   deleteTableRow,
   enterInTable,
+  formatTable,
+  moveTableColumn,
   insertTableColumn,
   insertTableRow,
   setTableColumnAlignment,
@@ -96,6 +98,8 @@ export interface WysiwygOptions extends ClipboardHooks {
   wrapCodeBlocks?: boolean
   codeFontSize?: number
   codeFontFamily?: string
+  /** Render GFM tables as a grid while the caret is outside them. Default true. */
+  renderTables?: boolean
   /** Floating inline-format toolbar over selections. Default true. */
   formatToolbar?: boolean
   /** Localised toolbar button titles keyed by format type. */
@@ -163,6 +167,9 @@ export class WysiwygEditor {
         // Must precede markdownKeymap so Enter inside tables moves rows
         // instead of splitting the paragraph.
         { key: 'Enter', run: enterInTable },
+        { key: 'Alt-Shift-ArrowLeft', run: view => moveTableColumn(view, -1) },
+        { key: 'Alt-Shift-ArrowRight', run: view => moveTableColumn(view, 1) },
+        { key: 'Alt-Shift-f', run: formatTable },
         ...closeBracketsKeymap,
         ...markdownKeymap,
         ...historyKeymap,
@@ -185,6 +192,12 @@ export class WysiwygEditor {
       livePreviewDomHandlers,
       createMarkdownLanguage(),
       highlightActiveLine(),
+      // Alt-drag makes a rectangular (column) selection, e.g. over a table's
+      // revealed source; multiple ranges need CM-drawn selection layers.
+      EditorState.allowMultipleSelections.of(true),
+      drawSelection(),
+      rectangularSelection(),
+      crosshairCursor(),
       this.autoPairCompartment.of(this.autoPairConfig()),
       this.vimCompartment.of(this.vimConfig()),
       this.themeCompartment.of(this.buildTheme()),
@@ -390,6 +403,15 @@ export class WysiwygEditor {
 
   deleteTableColumn(): boolean {
     return this.view ? deleteTableColumn(this.view) : false
+  }
+
+  moveTableColumn(delta: -1 | 1): boolean {
+    return this.view ? moveTableColumn(this.view, delta) : false
+  }
+
+  /** Pads the table under the caret so its pipes line up in the source. */
+  formatTable(): boolean {
+    return this.view ? formatTable(this.view) : false
   }
 
   setTableColumnAlignment(align: TableAlignment): boolean {
@@ -689,6 +711,7 @@ export class WysiwygEditor {
     const opts = this.options
     return {
       mathEnabled: opts.mathEnabled,
+      renderTables: opts.renderTables,
       htmlPreviewEnabled: opts.htmlPreviewEnabled,
       sanitizeHtml: html => DOMPurify.sanitize(html),
       codeBlockLineNumbers: opts.codeBlockLineNumbers,

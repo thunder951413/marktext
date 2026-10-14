@@ -15,12 +15,15 @@ export interface LivePreviewOptions {
   codeBlockLineNumbers?: boolean
   /** Required when htmlPreviewEnabled; usually DOMPurify.sanitize. */
   sanitizeHtml?: (html: string) => string
+  /** Render GFM tables as a grid while the caret is outside them. Default true. */
+  renderTables?: boolean
   /** Renders a diagram into the container. Defaults to muya's loaders. */
   diagramRenderer?: DiagramRenderer
 }
 
-export const DEFAULT_OPTIONS: Required<Pick<LivePreviewOptions, 'revealAll' | 'mathEnabled' | 'htmlPreviewEnabled' | 'codeBlockLineNumbers'>> = {
+export const DEFAULT_OPTIONS: Required<Pick<LivePreviewOptions, 'revealAll' | 'mathEnabled' | 'htmlPreviewEnabled' | 'codeBlockLineNumbers' | 'renderTables'>> = {
   revealAll: false,
+  renderTables: true,
   mathEnabled: true,
   htmlPreviewEnabled: true,
   codeBlockLineNumbers: false

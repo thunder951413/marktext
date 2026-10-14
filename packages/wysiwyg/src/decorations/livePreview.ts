@@ -11,6 +11,7 @@ import { Decoration, type DecorationSet, EditorView, WidgetType } from '@codemir
 import type { Tree } from '@lezer/common'
 import { renderMathToString } from '../features/math'
 import { toggleTaskAt } from '../features/tasks'
+import { buildTableModel, TableWidget } from './tableWidget'
 import {
   DEFAULT_OPTIONS,
   DIAGRAM_LANGUAGES,
@@ -314,7 +315,9 @@ export function buildLivePreviewDecorations(
   partialOpts: LivePreviewOptions = {},
   win?: DecorationWindow
 ): LivePreviewResult {
-  const opts = { ...DEFAULT_OPTIONS, ...partialOpts }
+  // Explicit `undefined` (an unset embedder option) must not erase a default.
+  const defined = Object.fromEntries(Object.entries(partialOpts).filter(([, v]) => v !== undefined))
+  const opts = { ...DEFAULT_OPTIONS, ...defined } as typeof DEFAULT_OPTIONS & LivePreviewOptions
   const docLength = state.doc.length
   const selection = state.selection
   const reveal = composing || !!opts.revealAll
@@ -453,6 +456,21 @@ export function buildLivePreviewDecorations(
       }
 
       if (name === 'Table') {
+        const tableFrom = state.doc.lineAt(node.from).from
+        const tableTo = state.doc.lineAt(Math.max(node.from, node.to - 1)).to
+        // Any caret on the table's lines (including its edges) reveals the
+        // source, so arrow keys and Vim j/k walk into the rows naturally.
+        if (opts.renderTables && !reveal && !selectionTouches(selection, tableFrom, tableTo)) {
+          const model = buildTableModel(state, node.node, tableFrom)
+          if (model) {
+            blocks.push({
+              from: tableFrom,
+              to: tableTo,
+              widget: new TableWidget(state.doc.sliceString(tableFrom, tableTo), model)
+            })
+            return false
+          }
+        }
         for (let lineNo = firstLineIn(node.from); lineNo <= lastLineIn(node.to - 1); lineNo++) {
           lines.push({ pos: state.doc.line(lineNo).from, spec: { class: 'wysiwyg-table-line' } })
         }
@@ -705,6 +723,19 @@ export const livePreviewDomHandlers = EditorView.domEventHandlers({
     if (widget instanceof HTMLElement) {
       const pos = view.posAtDOM(widget)
       view.dispatch({ selection: EditorSelection.single(pos) })
+      event.preventDefault()
+      return true
+    }
+    const cell = target?.closest?.('.wysiwyg-table th, .wysiwyg-table td')
+    const tableWrap = cell?.closest('.wysiwyg-table-wrap')
+    if (cell instanceof HTMLElement && tableWrap instanceof HTMLElement) {
+      // Offsets are table-relative (see tableWidget.ts); resolve the table
+      // start now so edits above the table cannot leave them stale.
+      const tableStart = view.posAtDOM(tableWrap)
+      const offset = Number(cell.dataset.offset)
+      const pos = Number.isFinite(offset) ? tableStart + offset : tableStart
+      view.dispatch({ selection: EditorSelection.single(Math.min(pos, view.state.doc.length)), userEvent: 'select.pointer' })
+      view.focus()
       event.preventDefault()
       return true
     }
