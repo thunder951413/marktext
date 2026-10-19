@@ -115,34 +115,21 @@
             +
           </button>
         </div>
-        <el-tooltip
-          v-if="wordCount"
-          class="item"
-          :content="`${wordCount[show]} ${HASH[show].full + (wordCount[show] > 1 ? 's' : '')}`"
-          placement="bottom-end"
-        >
-          <template #content>
-            <div class="title-item">
-              <span class="front">{{ t('menu.counter.words') }}:</span><span class="text">{{ wordCount['word'] }}</span>
-            </div>
-            <div class="title-item">
-              <span class="front">{{ t('menu.counter.characters') }}:</span><span class="text">{{ wordCount['character'] }}</span>
-            </div>
-            <div class="title-item">
-              <span class="front">{{ t('menu.counter.paragraphs') }}:</span><span class="text">{{ wordCount['paragraph'] }}</span>
-            </div>
-          </template>
-          <div
-            v-if="wordCount"
-            class="word-count"
-            @click.stop="handleWordClick"
-          >
-            <span class="text-center-vertical">{{ `${HASH[show].short} ${wordCount[show]}` }}</span>
-          </div>
-        </el-tooltip>
+        <!-- Frameless Windows/Linux keep the count on the right (below); elsewhere it stays in this toolbar. -->
+        <word-count-badge
+          v-if="wordCount && !showCustomTitleBar"
+          :word-count="wordCount"
+        />
       </div>
       <div
-        v-if="titleBarStyle === 'custom' && !isFullScreen && !isOsx"
+        v-if="wordCount && showCustomTitleBar"
+        class="word-count-slot title-no-drag"
+        :class="{ 'with-window-controls': windowControlsVisible }"
+      >
+        <word-count-badge :word-count="wordCount" />
+      </div>
+      <div
+        v-if="windowControlsVisible"
         class="right-toolbar"
         :class="[{ 'title-no-drag': titleBarStyle === 'custom' }]"
       >
@@ -210,6 +197,7 @@ import { useEditorStore } from '@/store/editor'
 import { useI18n } from 'vue-i18n'
 import { ArrowRight } from '@element-plus/icons-vue'
 import ThemeSwitcher from './themeSwitcher.vue'
+import WordCountBadge from './wordCountBadge.vue'
 import type { FileWordCount } from '@shared/types/files'
 import {
   DEFAULT_ZOOM_FACTOR,
@@ -239,24 +227,6 @@ const editorStore = useEditorStore()
 const { t } = useI18n()
 
 const isOsx = isOsxPlatform
-const HASH = {
-  word: {
-    short: 'W',
-    full: 'word'
-  },
-  character: {
-    short: 'C',
-    full: 'character'
-  },
-  paragraph: {
-    short: 'P',
-    full: 'paragraph'
-  },
-  all: {
-    short: 'A',
-    full: '(with space)character'
-  }
-}
 const windowIconMinimize = minimizePath
 const windowIconRestore = restorePath
 const windowIconMaximize = maximizePath
@@ -264,7 +234,6 @@ const windowIconClose = closePath
 
 const isFullScreen = ref(false)
 const isMaximized = ref(false)
-const show = ref<'word' | 'paragraph' | 'character' | 'all'>('word')
 
 onMounted(async () => {
   try {
@@ -313,6 +282,11 @@ const showCustomTitleBar = computed(() => {
   return titleBarStyle.value === 'custom' && !isOsx
 })
 
+// The minimize / maximize / close buttons are drawn only on a frameless window.
+const windowControlsVisible = computed(
+  () => titleBarStyle.value === 'custom' && !isFullScreen.value && !isOsx
+)
+
 const showTitleBar = computed(() => {
   return shouldShowInAppTitleBar(titleBarStyle.value, isOsx)
 })
@@ -333,15 +307,6 @@ watch(
     document.title = title ? `${title} - MarkText` : 'MarkText'
   }
 )
-
-const handleWordClick = () => {
-  const ITEMS = ['word', 'paragraph', 'character', 'all'] as const
-  const len = ITEMS.length
-  let index = ITEMS.indexOf(show.value)
-  index += 1
-  if (index >= len) index = 0
-  show.value = ITEMS[index]!
-}
 
 const handleCloseClick = () => {
   window.electron.windowControl.close()
@@ -519,6 +484,20 @@ div.title > span {
   width: 270px;
 }
 
+.word-count-slot {
+  position: absolute;
+  top: 0;
+  right: 12px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+/* Sit just left of the minimize / maximize / close buttons (3 x 46px). */
+.word-count-slot.with-window-controls {
+  right: 146px;
+}
+
 .titlebar-icon-button {
   -webkit-app-region: no-drag;
   appearance: none;
@@ -589,32 +568,12 @@ div.title > span {
     display: none;
   }
 
-  .editor-tools .word-count {
+  .word-count-slot {
     display: none;
   }
 
   .right-toolbar.editor-tools {
     width: 195px;
-  }
-}
-
-.word-count {
-  -webkit-app-region: no-drag;
-  cursor: pointer;
-  font-size: 14px;
-  color: var(--editorColor30);
-  text-align: center;
-  line-height: 24px;
-  padding: 0 5px;
-  box-sizing: border-box;
-  transition: all 0.25s ease-in-out;
-  & > .text-center-vertical {
-    padding: 2px 5px;
-    border-radius: 3px;
-  }
-  &:hover > span {
-    background: var(--sideBarBgColor);
-    color: var(--sideBarTitleColor);
   }
 }
 
@@ -656,18 +615,5 @@ div.title > span {
   display: inline-block;
   vertical-align: middle;
   line-height: normal;
-}
-</style>
-
-<style>
-.title-item {
-  height: 28px;
-  line-height: 28px;
-  & .front {
-    opacity: 0.7;
-  }
-  & .text {
-    margin-left: 10px;
-  }
 }
 </style>
