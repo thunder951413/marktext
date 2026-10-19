@@ -29,6 +29,7 @@ import {
 } from '@codemirror/view'
 import { minimalSetup } from 'codemirror'
 import { getCM, vim } from '@replit/codemirror-vim'
+import { restrictVimKeysOnWindows } from '@/util/vim/windowsKeys'
 import type { VimMode } from '@/store/vim'
 import './index.css'
 
@@ -172,6 +173,7 @@ class CodeMirror6Adapter implements SourceEditor {
 
   constructor(parent: HTMLElement, config: SourceEditorConfig) {
     this.config = config
+    if (config.vimMode) restrictVimKeysOnWindows()
     this.extensions = [
       ...(config.vimMode ? [vim()] : []),
       minimalSetup,

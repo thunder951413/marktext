@@ -116,6 +116,13 @@ export class VimController {
       return false
     }
 
+    // Ctrl+R is the app's Replace accelerator on Windows (see windowsKeys.ts).
+    const windowsPlatform =
+      typeof window !== 'undefined' && window.electron?.process?.platform === 'win32'
+    if (event.ctrlKey && event.key.toLowerCase() === 'r' && windowsPlatform) {
+      return false
+    }
+
     if (event.ctrlKey && event.key.toLowerCase() === 'r') {
       this.adapter.redo()
       this.clearPending()
