@@ -108,7 +108,7 @@ pnpm test:e2e        # 桌面端到端测试（Playwright，需要图形环境�
 
 ## 与上游的关系
 
-本项目源自 [marktext/marktext](https://github.com/marktext/marktext)，感谢原作者和贡献者。最后一次合并上游是在 2026-07，之后的开发独立进行，上游的修复会按 [docs/UPSTREAM_SYNC.md](docs/UPSTREAM_SYNC.md) 的流程选择性同步。上游的功能介绍、历史安装方式和贡献指南请看[上游 README](https://github.com/marktext/marktext#readme)。`docs/i18n/` 下的多语言 README 沿用自上游，内容可能与本项目不一致。
+本项目源自 [marktext/marktext](https://github.com/marktext/marktext)，感谢原作者和贡献者。最后一次合并上游是在 2026-07，之后的开发独立进行，上游的修复会按 [docs/UPSTREAM_SYNC.md](docs/UPSTREAM_SYNC.md) 的流程选择性同步。上游的功能介绍、历史安装方式和贡献指南请看[上游 README](https://github.com/marktext/marktext#readme)。
 
 ## 许可证
 
