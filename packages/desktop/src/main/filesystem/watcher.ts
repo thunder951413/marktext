@@ -16,6 +16,10 @@ import type Preference from '../preferences'
 export const WATCHER_STABILITY_THRESHOLD = 1000
 export const WATCHER_STABILITY_POLL_INTERVAL = 150
 
+// Directories that are never worth watching: dependencies, packed archives and
+// git internals (a repository checkout otherwise floods the watcher with events).
+const IGNORED_DIR_REG = /(?:^|[/\\])(?:node_modules|\.git|(?:.+\.asar))(?:[/\\]|$)/
+
 const EVENT_NAME = {
   dir: 'mt::update-object-tree' as const,
   file: 'mt::update-file' as const
@@ -195,17 +199,20 @@ class Watcher {
   }
 
   watch(win: BrowserWindow, watchPath: string, type: WatchType = 'dir'): () => void {
-    const usePolling = isOsx ? true : this._preferences.getItem<boolean>('watcherUsePolling')
+    // chokidar >= 4 no longer ships fsevents and watches through `fs.watch`,
+    // which macOS backs with native events, so polling is no longer forced
+    // there; it stays available through the `watcherUsePolling` preference.
+    const usePolling = this._preferences.getItem<boolean>('watcherUsePolling')
 
     const id = getUniqueId()
 
     const watcher = chokidar.watch(watchPath, {
       ignored: (pathname: string, fileInfo?: { isDirectory: () => boolean }) => {
         if (!fileInfo) {
-          return /(?:^|[/\\])(?:node_modules|(?:.+\.asar))/.test(pathname)
+          return IGNORED_DIR_REG.test(pathname)
         }
 
-        if (/(?:^|[/\\])(?:node_modules|(?:.+\.asar))/.test(pathname)) {
+        if (IGNORED_DIR_REG.test(pathname)) {
           return true
         }
 
