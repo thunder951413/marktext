@@ -5,10 +5,81 @@ import axios from './axios'
 import pinia from './store'
 import './assets/symbolIcon'
 
-// Element Plus instead of Element UI for Vue 3
-import ElementPlus from 'element-plus'
-import 'element-plus/dist/index.css'
-import en from 'element-plus/es/locale/lang/en'
+// Element Plus is registered per component, with each component's own
+// stylesheet: the full bundle plus dist/index.css added ~0.5 MB to startup for
+// the ~22 components the app actually renders. English is Element Plus's
+// default locale, so no locale object is needed.
+import {
+  ElAutocomplete,
+  ElButton,
+  ElCol,
+  ElDialog,
+  ElForm,
+  ElFormItem,
+  ElIcon,
+  ElInput,
+  ElInputNumber,
+  ElOption,
+  ElRadio,
+  ElRadioGroup,
+  ElRow,
+  ElSelect,
+  ElSlider,
+  ElSwitch,
+  ElTable,
+  ElTableColumn,
+  ElTabPane,
+  ElTabs,
+  ElTooltip,
+  ElTree
+} from 'element-plus'
+import 'element-plus/es/components/autocomplete/style/css'
+import 'element-plus/es/components/button/style/css'
+import 'element-plus/es/components/col/style/css'
+import 'element-plus/es/components/dialog/style/css'
+import 'element-plus/es/components/form/style/css'
+import 'element-plus/es/components/form-item/style/css'
+import 'element-plus/es/components/icon/style/css'
+import 'element-plus/es/components/input/style/css'
+import 'element-plus/es/components/input-number/style/css'
+import 'element-plus/es/components/option/style/css'
+import 'element-plus/es/components/radio/style/css'
+import 'element-plus/es/components/radio-group/style/css'
+import 'element-plus/es/components/row/style/css'
+import 'element-plus/es/components/select/style/css'
+import 'element-plus/es/components/slider/style/css'
+import 'element-plus/es/components/switch/style/css'
+import 'element-plus/es/components/table/style/css'
+import 'element-plus/es/components/table-column/style/css'
+import 'element-plus/es/components/tab-pane/style/css'
+import 'element-plus/es/components/tabs/style/css'
+import 'element-plus/es/components/tooltip/style/css'
+import 'element-plus/es/components/tree/style/css'
+
+const elementComponents = [
+  ElAutocomplete,
+  ElButton,
+  ElCol,
+  ElDialog,
+  ElForm,
+  ElFormItem,
+  ElIcon,
+  ElInput,
+  ElInputNumber,
+  ElOption,
+  ElRadio,
+  ElRadioGroup,
+  ElRow,
+  ElSelect,
+  ElSlider,
+  ElSwitch,
+  ElTable,
+  ElTableColumn,
+  ElTabPane,
+  ElTabs,
+  ElTooltip,
+  ElTree
+]
 
 // I18n translation system
 import i18nPlugin from './i18n'
@@ -32,10 +103,7 @@ bootstrapRenderer()
 // Create Vue app
 const app: App<Element> = createApp(Main)
 
-// Configure Element Plus with locale
-app.use(ElementPlus, {
-  locale: en
-})
+elementComponents.forEach(component => app.use(component))
 
 const envType = window.marktext?.env?.type as string | undefined
 

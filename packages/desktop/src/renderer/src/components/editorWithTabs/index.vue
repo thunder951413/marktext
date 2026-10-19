@@ -43,7 +43,6 @@ import { resolveEditorEngine } from 'common/editorEngine'
 import { storeToRefs } from 'pinia'
 import { computed, defineAsyncComponent, onBeforeUnmount, onMounted } from 'vue'
 import Tabs from './tabs.vue'
-import MuyaEditor from './editor.vue'
 import TabNotifications from './notifications.vue'
 
 // Source mode carries CodeMirror and its language descriptions. Most sessions
@@ -51,9 +50,11 @@ import TabNotifications from './notifications.vue'
 const SourceCode = defineAsyncComponent(() => import('./sourceCode.vue'))
 // Main resolves env override / `editorEngine` preference / default into this
 // variable (see common/editorEngine.ts); it is fixed for the window's life.
+// Muya is the frozen fallback engine; loading it lazily keeps the legacy
+// editor out of the startup bundle for the default CodeMirror engine.
 const Editor = resolveEditorEngine(window.electron.process.env.MARKTEXT_EDITOR_ENGINE) === 'codemirror'
   ? defineAsyncComponent(() => import('./codemirrorEditor.vue'))
-  : MuyaEditor
+  : defineAsyncComponent(() => import('./editor.vue'))
 
 defineProps<{
   markdown: string
