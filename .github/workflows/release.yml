@@ -19,6 +19,9 @@ jobs:
     name: Validate tag
     runs-on: ubuntu-latest
     steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4.3.1
+
       - name: Validate semver tag
         run: |
           tag="${GITHUB_REF_NAME}"
@@ -28,6 +31,17 @@ jobs:
             exit 1
           fi
           echo "Tag '$tag' is valid."
+
+      # Installers are named from package.json, so a tag that disagrees with it
+      # would publish files whose names do not match the release.
+      - name: Tag must match the package version
+        run: |
+          version="$(node -p "require('./packages/desktop/package.json').version")"
+          if [[ "${GITHUB_REF_NAME}" != "v${version}" ]]; then
+            echo "::error::Tag '${GITHUB_REF_NAME}' does not match packages/desktop/package.json version '${version}'. Bump the version first, then tag v${version}."
+            exit 1
+          fi
+          echo "Tag matches package version ${version}."
 
   build:
     name: Build (${{ matrix.name }})

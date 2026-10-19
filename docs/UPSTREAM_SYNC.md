@@ -63,7 +63,7 @@ pnpm run test:e2e                  # 在 Mac 上运行；默认引擎和 Muya �
 | --- | --- | --- | --- |
 | `packages/muya/src/muya.ts` | 38 | 小（+6/−1） | 以上游为准，再补回本分支的一行接口改动 |
 | `packages/desktop/src/renderer/src/components/editorWithTabs/editor.vue` | 36 | 中（+214，Vim 块光标和适配器） | 以上游为准，再把 Vim 相关代码段重新放回去。这个文件属于冻结的 Muya 路径，不要在这里加新功能。 |
-| `package.json`（根目录） | 27 | 版本号和脚本 | 保留本分支的 `version`（`0.20.0-rc.N`）和 `test`/`typecheck` 中的 wysiwyg 部分，其余跟随上游 |
+| `package.json`（根目录） | 27 | 版本号和脚本 | 保留本分支的 `version`和 `test`/`typecheck` 中的 wysiwyg 部分，其余跟随上游 |
 | `pnpm-lock.yaml` | 25 | 大 | **不要手动合并**，见 4.2 |
 | `packages/desktop/src/renderer/src/store/editor.ts` | 18 | 小 | 逐段合并 |
 | `packages/muya/src/editor/index.ts`、`clipboard/index.ts`、`state/markdownToState.ts`、`inlineRenderer/index.ts` | 16 / 16 / 9 / 5 | 性能补丁 | 以上游为准，再重新应用补丁。补丁本身值得提交到上游，见第 5 节。 |
