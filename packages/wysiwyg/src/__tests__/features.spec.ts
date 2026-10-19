@@ -86,6 +86,53 @@ describe('image widgets', () => {
     expect(dom.getAttribute('src')).toBe('/img/cat.png')
     expect(dom.getAttribute('alt')).toBe('cat')
   })
+
+  it('loads the resolved source and keeps the Markdown source for widget identity', () => {
+    const state = EditorState.create({ doc: 'text ![cat](./cat.png) tail' })
+    const resolveImageSrc = (src: string) => `file:///notes/${src.replace('./', '')}`
+    const image = collect(state, { resolveImageSrc }).find(d => d.kind === 'image')
+    expect(renderWidgetDom(image).getAttribute('src')).toBe('file:///notes/cat.png')
+
+    const moved = collect(state, { resolveImageSrc: src => `file:///other/${src.replace('./', '')}` })
+      .find(d => d.kind === 'image')
+    // Same Markdown, different directory: the widget DOM must be rebuilt.
+    expect(image?.widget).toBeDefined()
+    expect(moved?.widget).toBeDefined()
+    expect(image?.widget?.eq(moved?.widget as never)).toBe(false)
+  })
+
+  it('shows the placeholder when the resolver rejects the source', () => {
+    const state = EditorState.create({ doc: 'text ![cat](cat.png) tail' })
+    const image = collect(state, { resolveImageSrc: () => '' }).find(d => d.kind === 'image')
+    expect(renderWidgetDom(image).className).toBe('wysiwyg-image-placeholder')
+  })
+})
+
+describe('bullet list markers', () => {
+  it('shows bullets for unordered items away from the caret', () => {
+    const state = EditorState.create({ doc: 'intro\n\n- one\n- two', selection: { anchor: 0 } })
+    const bullets = collect(state).filter(d => d.kind === 'bullet')
+    expect(bullets.map(b => [b.from, b.to])).toEqual([[7, 8], [13, 14]])
+  })
+
+  it('reveals the source marker on the line with the caret', () => {
+    const state = EditorState.create({ doc: 'intro\n\n- one\n- two', selection: { anchor: 10 } })
+    const bullets = collect(state).filter(d => d.kind === 'bullet')
+    expect(bullets.map(b => [b.from, b.to])).toEqual([[13, 14]])
+  })
+
+  it('leaves ordered lists and task items alone', () => {
+    const state = EditorState.create({ doc: 'x\n\n1. one\n\n- [ ] task', selection: { anchor: 0 } })
+    expect(collect(state).filter(d => d.kind === 'bullet')).toEqual([])
+  })
+
+  it('uses a different glyph for nested bullets', () => {
+    const state = EditorState.create({ doc: 'x\n\n- one\n  - nested', selection: { anchor: 0 } })
+    const glyphs = collect(state)
+      .filter(d => d.kind === 'bullet')
+      .map(b => renderWidgetDom(b).textContent)
+    expect(glyphs).toEqual(['•', '◦'])
+  })
 })
 
 describe('task list checkboxes', () => {

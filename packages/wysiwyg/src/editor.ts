@@ -101,6 +101,14 @@ export interface WysiwygOptions extends ClipboardHooks {
   codeFontFamily?: string
   /** Render GFM tables as a grid while the caret is outside them. Default true. */
   renderTables?: boolean
+  /** Maps a Markdown image `src` to a loadable URL; '' shows the placeholder. */
+  resolveImageSrc?: (src: string) => string
+  /**
+   * Emit `cursor-coords` after every caret move so the embedder can keep the
+   * caret at a fixed height (typewriter mode). Default false: the layout read
+   * is only worth paying for when someone consumes it.
+   */
+  typewriterMode?: boolean
   /** Floating inline-format toolbar over selections. Default true. */
   formatToolbar?: boolean
   /** Localised toolbar button titles keyed by format type. */
@@ -122,6 +130,8 @@ export type WysiwygEvents = {
   /** Click on a rendered image widget; data is the image src. */
   'preview-image': { data: string }
   'vim-mode-change': 'normal' | 'insert' | 'visual' | 'visual-line'
+  /** Viewport-relative top-left of the caret; only emitted in typewriter mode. */
+  'cursor-coords': { x: number; y: number }
 }
 
 /** Muya-shaped selection: doc offsets plus optional (unused) block paths. */
@@ -219,6 +229,20 @@ export class WysiwygEditor {
             context: getCursorContext(update.view)
           })
         }
+        if (this.options.typewriterMode && (update.selectionSet || update.docChanged)) {
+          // Layout reads are not allowed inside an update; requestMeasure
+          // batches this one with CodeMirror's own measure pass.
+          update.view.requestMeasure({
+            key: 'wysiwyg-cursor-coords',
+            read: view => {
+              const rect = view.coordsAtPos(view.state.selection.main.head)
+              return rect ? { x: rect.left, y: rect.top } : null
+            },
+            write: coords => {
+              if (coords) this.emitter.emit('cursor-coords', coords)
+            }
+          })
+        }
         if (update.focusChanged) {
           this.emitter.emit(update.view.hasFocus ? 'focus' : 'blur')
         }
@@ -242,6 +266,9 @@ export class WysiwygEditor {
     this.view.contentDOM.classList.toggle('wysiwyg-hide-spelling', Boolean(this.options.spellcheckHideMarks))
     if (this.options.focusMode) {
       this.container.classList.add('wysiwyg-focus-mode')
+    }
+    if (this.options.typewriterMode) {
+      this.container.classList.add('wysiwyg-typewriter')
     }
   }
 
@@ -649,6 +676,18 @@ export class WysiwygEditor {
     /* Images are plain widgets; nothing to invalidate. */
   }
 
+  setTypewriterMode(enabled: boolean): void {
+    this.options.typewriterMode = enabled
+    this.container.classList.toggle('wysiwyg-typewriter', enabled)
+  }
+
+  /** Viewport-relative caret position, or null before the first layout. */
+  getCursorCoords(): { x: number; y: number } | null {
+    if (!this.view) return null
+    const rect = this.view.coordsAtPos(this.view.state.selection.main.head)
+    return rect ? { x: rect.left, y: rect.top } : null
+  }
+
   setFocusMode(enabled: boolean): void {
     this.options.focusMode = enabled
     this.container.classList.toggle('wysiwyg-focus-mode', enabled)
@@ -671,6 +710,7 @@ export class WysiwygEditor {
       ]
     })
     if (options.focusMode !== undefined) this.setFocusMode(options.focusMode)
+    if (options.typewriterMode !== undefined) this.setTypewriterMode(options.typewriterMode)
     if (options.spellcheckEnabled !== undefined) {
       this.view.contentDOM.spellcheck = options.spellcheckEnabled
     }
@@ -717,7 +757,8 @@ export class WysiwygEditor {
       htmlPreviewEnabled: opts.htmlPreviewEnabled,
       sanitizeHtml: html => DOMPurify.sanitize(html),
       codeBlockLineNumbers: opts.codeBlockLineNumbers,
-      diagramRenderer: opts.diagramRenderer ?? createDefaultDiagramRenderer(opts.plantumlServer)
+      diagramRenderer: opts.diagramRenderer ?? createDefaultDiagramRenderer(opts.plantumlServer),
+      resolveImageSrc: opts.resolveImageSrc
     }
   }
 

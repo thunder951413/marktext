@@ -19,6 +19,11 @@ export interface LivePreviewOptions {
   renderTables?: boolean
   /** Renders a diagram into the container. Defaults to muya's loaders. */
   diagramRenderer?: DiagramRenderer
+  /**
+   * Maps a Markdown image `src` to a loadable URL (the embedder knows the
+   * document directory). Return '' to show the placeholder. Identity when unset.
+   */
+  resolveImageSrc?: (src: string) => string
 }
 
 export const DEFAULT_OPTIONS: Required<Pick<LivePreviewOptions, 'revealAll' | 'mathEnabled' | 'htmlPreviewEnabled' | 'codeBlockLineNumbers' | 'renderTables'>> = {

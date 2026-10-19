@@ -1,6 +1,6 @@
 import { EditorSelection } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
-import { syntaxTree } from '@codemirror/language'
+import { ensureSyntaxTree, syntaxTree } from '@codemirror/language'
 // @ts-expect-error -- runtime-resolved muya deep import
 import { generateGithubSlug } from '@muyajs/core/utils/slug'
 
@@ -34,7 +34,12 @@ export function getTocItems(view: EditorView): TocItem[] {
   const items: Array<{ slug: string; lvl: number; text: string; line: number; pos: number }> = []
   const seen = new Map<string, number>()
 
-  syntaxTree(state).iterate({
+  // The incremental parser works through a large document in the background,
+  // so syntaxTree() alone can stop short and silently drop headings near the
+  // end. Give it a bounded budget to finish; this runs on a typing pause, not
+  // per keystroke.
+  const tree = ensureSyntaxTree(state, state.doc.length, 200) ?? syntaxTree(state)
+  tree.iterate({
     enter: node => {
       const lvl = HEADING_LEVELS[node.name]
       if (!lvl) return undefined

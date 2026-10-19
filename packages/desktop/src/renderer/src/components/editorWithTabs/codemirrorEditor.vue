@@ -86,6 +86,8 @@ import { WysiwygEditor, createDefaultDiagramRenderer, type WysiwygOptions } from
 import HtmlToMarkdown from '@muyajs/core/state/htmlToMarkdown'
 import { getHighlightHtml } from '@muyajs/core/utils/marked/getHighlightHtml'
 import DOMPurify from 'dompurify'
+import { resolveLocalImageUrl } from '@/util/localImageUrl'
+import { restrictVimKeysOnWindows } from '@/util/vim/windowsKeys'
 import { exportStyledHTML, type HeaderFooterPart } from '@/util/exportHtml'
 import { getWordCount } from '@/util/wordCountWorker'
 import { applyCursor, isIndexCursor } from '@/util/cursor'
@@ -358,6 +360,7 @@ watch(
 )
 
 watch(typewriter, (value) => {
+  editor.value?.setTypewriterMode(value)
   if (value) {
     scrollToCursor()
   }
@@ -869,29 +872,14 @@ const handleUploadedImage = (url: unknown, deletionUrl?: unknown) => {
   editorStore.SHOW_IMAGE_DELETION_URL(deletionUrl as string)
 }
 
-// `muya.domNode` is the contenteditable + scroll container (it inherits the
-// `.editor-component` class from the original mount point and `overflow:auto`).
-// The legacy engine exposed the same element as `muya.container`.
+// `.cm-scroller` is the element that actually scrolls in the CM6 engine;
+// `domNode` is the outer `.cm-editor` and never scrolls, so scroll position,
+// typewriter and reveal-element math must all go through `scrollContainer`.
 const getScrollContainer = (): HTMLElement | null =>
-  (editor.value?.domNode as HTMLElement | undefined) ?? null
+  (editor.value?.scrollContainer as HTMLElement | undefined) ?? null
 
-// Viewport-relative caret rect (mirrors the engine's `Selection.getCursorCoords`
-// / legacy `cursorCoords`). Used for typewriter + keep-cursor-visible scrolling
-// when we are not inside a `selection-change` event (which already supplies it).
-const getCursorY = (): number | null => {
-  const sel = window.getSelection()
-  if (!sel || !sel.rangeCount) return null
-  const range = sel.getRangeAt(0).cloneRange()
-  let rects = range.getClientRects()
-  if (rects.length === 0 && range.startContainer) {
-    const parent =
-      range.startContainer.nodeType === Node.ELEMENT_NODE
-        ? (range.startContainer as Element)
-        : range.startContainer.parentElement
-    rects = parent ? parent.getClientRects() : rects
-  }
-  return rects.length ? rects[0].y : null
-}
+// Viewport-relative caret top, read from the engine (CodeMirror's coordsAtPos).
+const getCursorY = (): number | null => editor.value?.getCursorCoords()?.y ?? null
 
 const scrollToCursor = (duration = 300) => {
   nextTick(() => {
@@ -1422,8 +1410,38 @@ const handleLanguageChanged = (_newLocale?: unknown) => {
 }
 const resizeObserverForEditor = new ResizeObserver(handleResetPaddingBottom)
 
+// Delay for the whole-document passes (TOC, word count) that follow an edit.
+const DERIVED_UPDATE_DELAY_MS = 250
+let derivedUpdateTimer: ReturnType<typeof setTimeout> | null = null
+
+const cancelDerivedUpdates = () => {
+  if (derivedUpdateTimer) clearTimeout(derivedUpdateTimer)
+  derivedUpdateTimer = null
+}
+
+const runDerivedUpdates = (id: string) => {
+  derivedUpdateTimer = null
+  // The user may have switched tabs or closed the editor while we waited.
+  if (componentDestroyed || !editor.value || currentFile.value?.id !== id) return
+  const markdown = editor.value.getMarkdown()
+  editorStore.UPDATE_TOC(getDesktopToc())
+  const revision = ++wordCountRevision
+  getWordCount(markdown).then((wordCount) => {
+    if (componentDestroyed || revision !== wordCountRevision) return
+    editorStore.UPDATE_WORD_COUNT({ id, markdown, wordCount })
+  })
+}
+
+const scheduleDerivedUpdates = (id: string) => {
+  cancelDerivedUpdates()
+  derivedUpdateTimer = setTimeout(() => runDerivedUpdates(id), DERIVED_UPDATE_DELAY_MS)
+}
+
 onMounted(() => {
-  if (isVimModeEnabled()) installVimExCommands(editorStore)
+  if (isVimModeEnabled()) {
+    restrictVimKeysOnWindows()
+    installVimExCommands(editorStore)
+  }
   printer = new Printer()
   const ele = editorRef.value
   if (!ele) return
@@ -1451,7 +1469,9 @@ onMounted(() => {
     imageAction: muyaImageAction,
     htmlToMarkdown: html => new HtmlToMarkdown().generate(DOMPurify.sanitize(html)),
     clipboardHtml: markdown => DOMPurify.sanitize(getHighlightHtml(markdown)),
-    diagramRenderer: createDefaultDiagramRenderer(preferencesStore.plantumlServer)
+    diagramRenderer: createDefaultDiagramRenderer(preferencesStore.plantumlServer),
+    resolveImageSrc: src => resolveLocalImageUrl(src, window.DIRNAME),
+    typewriterMode: typewriter.value
   }
 
   // `markRaw` keeps Vue from wrapping the engine in a reactive Proxy — the
@@ -1527,13 +1547,15 @@ onMounted(() => {
   // The engine emits `content-change` with the derived document snapshot on
   // every mutation; the desktop pipeline wants markdown / word count / cursor
   // / history / TOC alongside it.
-  editor.value.on('content-change', () => {
+  editor.value.on('content-change', (payload: { markdown: string }) => {
     // There is a chance that this event is fired AFTER the tab is switched. If we purely rely on this.currentFile later on
     // it can cause invalid updates. Hence, we need the id to identify changes as part of each tab
     if (!currentFile.value || !editor.value) return
     const { id } = currentFile.value
     if (!id) return
-    const markdown = (editor.value?.getMarkdown() ?? '')
+    // The engine already serialized the document for this event; asking it
+    // again would copy the whole text a second time on every keystroke.
+    const markdown = payload?.markdown ?? editor.value.getMarkdown()
     // Stash the real engine history for in-session tab-switch restoration. The
     // synthetic save-tracking id is derived from the live document content (a
     // monotonic, never-reused id — see `syntheticHistory.ts`), NOT the engine
@@ -1541,6 +1563,8 @@ onMounted(() => {
     // re-edited tab as clean (Phase G — G6).
     const engineHistory = editor.value.getHistory()
     engineHistoryByTab.set(id, engineHistory)
+    // The TOC and word count are whole-document passes, so they run once the
+    // user pauses typing instead of on every keystroke (see below).
     editorStore.LISTEN_FOR_CONTENT_CHANGE({
       id,
       markdown,
@@ -1548,14 +1572,9 @@ onMounted(() => {
       // Synthetic, desktop-shaped history so the store's save/dirty tracking
       // keeps working (the engine history shape is incompatible).
       history: makeSyntheticHistory(id, markdown),
-      toc: getDesktopToc(),
       blocks: editor.value.getState()
     })
-    const revision = ++wordCountRevision
-    getWordCount(markdown).then((wordCount) => {
-      if (componentDestroyed || revision !== wordCountRevision) return
-      editorStore.UPDATE_WORD_COUNT({ id, markdown, wordCount })
-    })
+    scheduleDerivedUpdates(id)
   })
 
   // The engine does not emit `scroll`; listen on the scroll container directly
@@ -1602,34 +1621,20 @@ onMounted(() => {
     }
   })
 
-  editor.value.on('selection-change', (changes: unknown) => {
-    // cursorCoords is a muya-era field the CM6 engine does not emit; the
-    // typewriter / keep-visible scrolling it drove is degraded until a
-    // coordinateAt-based replacement lands.
-    const y = ((changes as { cursorCoords?: { y?: number } })?.cursorCoords?.y ?? null) as number | null
-    if (y != null) {
-      if (typewriter.value) {
-        const startPosition = container.scrollTop
-        const toPosition = startPosition + y - STANDAR_Y
-
-        // Prevent micro shakes and unnecessary scrolling.
-        if (Math.abs(startPosition - toPosition) > 2) {
-          animatedScrollTo(container, toPosition, 100)
-        }
-      }
-
-      // Used to fix #628: auto scroll cursor to visible if the cursor is too low.
-      if (container.clientHeight - y < 100) {
-        // editableHeight is the lowest cursor position(till to top) that editor allowed.
-        const editableHeight = container.clientHeight - 100
-        animatedScrollTo(container, container.scrollTop + (y - editableHeight), 0)
-      } else if (y < 100) {
-        // Symmetric to #628: scroll up when the cursor rises above the top edge
-        // (e.g. Arrow-Up), otherwise the caret leaves the viewport (#3329).
-        animatedScrollTo(container, container.scrollTop + (y - 100), 0)
-      }
+  // Typewriter mode: keep the caret line at a fixed height. The engine emits
+  // `cursor-coords` (viewport-relative) only while typewriter mode is on.
+  // Ordinary keep-the-caret-visible scrolling is handled by CodeMirror itself.
+  editor.value.on('cursor-coords', ({ y }: { x: number; y: number }) => {
+    if (!typewriter.value) return
+    const startPosition = container.scrollTop
+    const toPosition = startPosition + y - STANDAR_Y
+    // Prevent micro shakes and unnecessary scrolling.
+    if (Math.abs(startPosition - toPosition) > 2) {
+      animatedScrollTo(container, toPosition, 100)
     }
+  })
 
+  editor.value.on('selection-change', (changes: unknown) => {
     selectionChange.value = changes
     // Persist the caret so a click/arrow-key move (which never fires
     // `json-change`) survives an in-session tab switch — `tab.cursor` is what
@@ -1647,6 +1652,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   componentDestroyed = true
+  cancelDerivedUpdates()
   bus.off('file-loaded', setMarkdownToEditor)
   bus.off('invalidate-image-cache', handleInvalidateImageCache)
   bus.off('undo', handleUndo)
@@ -1792,11 +1798,6 @@ onBeforeUnmount(() => {
 .editor-component .mu-container {
   padding-top: 20px;
   padding-bottom: 100vh;
-}
-
-.typewriter .editor-component {
-  padding-top: calc(50vh - 136px);
-  padding-bottom: calc(50vh - 54px);
 }
 
 .image-viewer {

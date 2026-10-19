@@ -138,15 +138,17 @@ class DiagramWidget extends KindWidget {
 
 class ImageWidget extends KindWidget {
   readonly kind = 'image'
+  /** `src` is the URL to load; `rawSrc` the Markdown source it came from. */
   constructor(
     readonly src: string,
-    readonly alt: string
+    readonly alt: string,
+    readonly rawSrc: string = src
   ) {
     super()
   }
 
   override eq(other: ImageWidget) {
-    return other.src === this.src && other.alt === this.alt
+    return other.src === this.src && other.alt === this.alt && other.rawSrc === this.rawSrc
   }
 
   override ignoreEvent() {
@@ -165,7 +167,34 @@ class ImageWidget extends KindWidget {
     img.src = this.src
     img.alt = this.alt
     img.draggable = false
+    // A missing file or blocked URL would otherwise leave a broken-image icon.
+    img.addEventListener('error', () => {
+      const fallback = document.createElement('span')
+      fallback.className = 'wysiwyg-image-placeholder'
+      fallback.textContent = `🖼 ${this.alt}`
+      img.replaceWith(fallback)
+    }, { once: true })
     return img
+  }
+}
+
+const BULLET_GLYPHS = ['•', '◦', '▪']
+
+class BulletWidget extends KindWidget {
+  readonly kind = 'bullet'
+  constructor(readonly depth: number) {
+    super()
+  }
+
+  override eq(other: BulletWidget) {
+    return other.depth === this.depth
+  }
+
+  toDOM() {
+    const el = document.createElement('span')
+    el.className = 'wysiwyg-bullet'
+    el.textContent = BULLET_GLYPHS[this.depth % BULLET_GLYPHS.length]
+    return el
   }
 }
 
@@ -385,6 +414,28 @@ export function buildLivePreviewDecorations(
         return undefined
       }
 
+      // Bullet list markers read as bullets until the caret reaches the line;
+      // ordered-list numbers and task items keep their source text.
+      if (name === 'ListMark') {
+        const item = node.node.parent
+        const list = item?.parent
+        if (
+          !reveal &&
+          list?.name === 'BulletList' &&
+          node.node.nextSibling?.name !== 'Task'
+        ) {
+          const line = state.doc.lineAt(node.from)
+          if (!selectionTouches(selection, line.from, line.to)) {
+            let depth = 0
+            for (let ancestor = list.parent; ancestor; ancestor = ancestor.parent) {
+              if (ancestor.name === 'BulletList') depth++
+            }
+            widgets.push({ from: node.from, to: node.to, widget: new BulletWidget(depth) })
+          }
+        }
+        return false
+      }
+
       if (name === 'TaskMarker') {
         if (!reveal && !selectionTouches(selection, node.from, node.to)) {
           const flag = state.doc.sliceString(node.from + 1, node.to - 1)
@@ -409,7 +460,11 @@ export function buildLivePreviewDecorations(
         widgets.push({
           from: node.from,
           to: Math.min(node.to, docLength),
-          widget: new ImageWidget(src, altMatch ? altMatch[1] : '')
+          widget: new ImageWidget(
+            opts.resolveImageSrc ? opts.resolveImageSrc(src) : src,
+            altMatch ? altMatch[1] : '',
+            src
+          )
         })
         return false
       }

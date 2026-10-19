@@ -19,25 +19,28 @@
 /* Inline formatting rendered via Decoration.mark */
 .wysiwyg-strong {
   font-weight: 600;
+  color: var(--strongColor, inherit);
 }
 .wysiwyg-em {
   font-style: italic;
+  color: var(--emColor, inherit);
 }
 .wysiwyg-del {
   text-decoration: line-through;
+  color: var(--deleteColor, inherit);
 }
 .wysiwyg-highlight {
-  background: rgba(255, 213, 0, 0.4);
+  background: var(--highlightColor, rgba(255, 213, 0, 0.4));
 }
 .wysiwyg-inline-code {
   font-family: 'SF Mono', Menlo, Consolas, monospace;
   font-size: 0.9em;
-  background: var(--editorColor10, rgba(127, 127, 127, 0.12));
+  background: var(--codeBgColor, var(--editorColor10, rgba(127, 127, 127, 0.12)));
   border-radius: 3px;
   padding: 0.1em 0.25em;
 }
 .wysiwyg-link {
-  color: #409eff;
+  color: var(--linkColor, var(--themeColor, #409eff));
   cursor: pointer;
 }
 .wysiwyg-image-placeholder {
@@ -49,40 +52,47 @@
 
 /* Heading sizing applied as line decorations */
 .cm-line.wysiwyg-line-wysiwyg-h1 {
+  color: var(--h1Color, var(--headingColor, inherit));
   font-size: 1.8em;
   font-weight: 600;
   line-height: 1.4;
 }
 .cm-line.wysiwyg-line-wysiwyg-h2 {
+  color: var(--h2Color, var(--headingColor, inherit));
   font-size: 1.5em;
   font-weight: 600;
   line-height: 1.45;
 }
 .cm-line.wysiwyg-line-wysiwyg-h3 {
+  color: var(--h3Color, var(--headingColor, inherit));
   font-size: 1.3em;
   font-weight: 600;
 }
 .cm-line.wysiwyg-line-wysiwyg-h4 {
+  color: var(--h4Color, var(--headingColor, inherit));
   font-size: 1.15em;
   font-weight: 600;
 }
 .cm-line.wysiwyg-line-wysiwyg-h5 {
+  color: var(--h5Color, var(--headingColor, inherit));
   font-size: 1.05em;
   font-weight: 600;
 }
 .cm-line.wysiwyg-line-wysiwyg-h6 {
+  color: var(--h6Color, var(--headingColor, inherit));
   font-weight: 600;
   opacity: 0.9;
 }
 
 /* Blockquote and rules */
 .cm-line.wysiwyg-quote-line {
-  border-left: 3px solid var(--editorColor30, rgba(127, 127, 127, 0.35));
+  border-left: 3px solid var(--blockquoteBorderColor, var(--editorColor30, rgba(127, 127, 127, 0.35)));
   padding-left: 0.8em;
+  color: var(--blockquoteTextColor, inherit);
 }
 hr.wysiwyg-hr {
   border: none;
-  border-top: 2px solid var(--editorColor30, rgba(127, 127, 127, 0.35));
+  border-top: 2px solid var(--hrColor, var(--editorColor30, rgba(127, 127, 127, 0.35)));
   margin: 0.6em 0;
 }
 
@@ -102,6 +112,10 @@ hr.wysiwyg-hr {
 }
 .wysiwyg-diagram svg {
   max-width: 100%;
+}
+.wysiwyg-bullet {
+  color: var(--listMarkerColor, inherit);
+  font-weight: 700;
 }
 .wysiwyg-task-checkbox {
   cursor: pointer;
@@ -190,7 +204,7 @@ hr.wysiwyg-hr {
 .wysiwyg-format-button.is-em { font-style: italic; font-family: Georgia, serif; }
 .wysiwyg-format-button.is-u { text-decoration: underline; }
 .wysiwyg-format-button.is-del { text-decoration: line-through; }
-.wysiwyg-format-button.is-mark { background: rgba(255, 213, 0, 0.35); }
+.wysiwyg-format-button.is-mark { background: var(--highlightColor, rgba(255, 213, 0, 0.35)); }
 
 /* Rendered GFM tables (decorations/tableWidget.ts) */
 .wysiwyg-table-wrap {
@@ -220,4 +234,11 @@ hr.wysiwyg-hr {
 .wysiwyg-table-image-alt {
   font-style: italic;
   opacity: 0.8;
+}
+
+/* Typewriter mode: slack above and below the text so the first and last lines
+   can also be scrolled to the caret's fixed height. */
+.wysiwyg-typewriter .cm-content {
+  padding-top: 40vh;
+  padding-bottom: 50vh;
 }
