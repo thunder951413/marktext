@@ -223,6 +223,15 @@
     "searchResultInfo": "在 {fileCount} 個檔案中找到 {matchCount} 個符合項目",
     "searchLimited": "搜尋僅限前 {count} 個結果"
   },
+  "titleBar": {
+    "themeSwitcher": {
+      "title": "主題（快速切換）",
+      "filter": "篩選主題…",
+      "followNotice": "目前跟隨系統主題，在這裡選擇會關閉「跟隨系統」。",
+      "noMatch": "沒有符合的主題",
+      "hint": "懸停或 ↑↓ 預覽 · Enter 套用 · Esc 取消"
+    }
+  },
   "sideBar": {
     "search": {
       "searchInFolder": "在資料夾中搜尋…",

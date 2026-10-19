@@ -1,5 +1,10 @@
 <template>
   <div>
+    <!-- Native title bar: no in-app toolbar, but the theme shortcut still works. -->
+    <theme-switcher
+      v-if="!showTitleBar"
+      :show-trigger="false"
+    />
     <div
       v-if="showTitleBar"
       class="title-bar-editor-bg"
@@ -54,6 +59,30 @@
         >
           <span class="text-center-vertical">&#9776;</span>
         </div>
+        <button
+          type="button"
+          class="titlebar-icon-button title-no-drag"
+          :class="{ active: tocActive }"
+          data-testid="toc-toggle"
+          :aria-pressed="tocActive"
+          :aria-label="t('sideBar.toc.title')"
+          :title="`${t('sideBar.toc.title')} (${tocShortcutLabel})`"
+          @click.stop="toggleToc"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.3"
+            stroke-linecap="round"
+            aria-hidden="true"
+          >
+            <path d="M2.5 3.5h11M5.5 6.5h8M5.5 9.5h8M2.5 12.5h11" />
+          </svg>
+        </button>
+        <theme-switcher />
         <div class="zoom-controls title-no-drag">
           <button
             type="button"
@@ -180,6 +209,7 @@ import { shouldShowInAppTitleBar } from './visibility'
 import { useEditorStore } from '@/store/editor'
 import { useI18n } from 'vue-i18n'
 import { ArrowRight } from '@element-plus/icons-vue'
+import ThemeSwitcher from './themeSwitcher.vue'
 import type { FileWordCount } from '@shared/types/files'
 import {
   DEFAULT_ZOOM_FACTOR,
@@ -248,9 +278,22 @@ onMounted(async () => {
 })
 
 const { titleBarStyle, zoom } = storeToRefs(preferencesStore)
-const { showTabBar } = storeToRefs(layoutStore)
+const { showTabBar, showSideBar, rightColumn } = storeToRefs(layoutStore)
 
 const zoomPercent = computed(() => Math.round(zoom.value * 100))
+
+// The table of contents (heading navigation) lives in the left side bar.
+const tocActive = computed(() => showSideBar.value && rightColumn.value === 'toc')
+const tocShortcutLabel = isOsx ? '⌘K' : 'Ctrl+K'
+
+const toggleToc = () => {
+  if (tocActive.value) {
+    layoutStore.SET_LAYOUT({ showSideBar: false })
+  } else {
+    layoutStore.SET_LAYOUT({ showSideBar: true, rightColumn: 'toc' })
+  }
+  layoutStore.DISPATCH_LAYOUT_MENU_ITEMS()
+}
 
 const changeZoom = (direction: -1 | 1) => {
   editorStore.EDIT_ZOOM(stepZoomFactor(zoom.value, direction))
@@ -398,7 +441,7 @@ img {
   vertical-align: top;
 }
 .title {
-  padding: 0 190px;
+  padding: 0 270px;
   height: 100%;
   line-height: var(--titleBarHeight);
   font-size: 14px;
@@ -453,7 +496,8 @@ div.title > span {
   position: absolute;
   top: 0;
   left: 0;
-  width: 145px; /* + 2*10px padding*/
+  align-items: center;
+  width: auto; /* grows with the buttons; + 2*10px padding */
   display: flex;
   flex-direction: row;
 }
@@ -472,7 +516,32 @@ div.title > span {
 }
 
 .right-toolbar.editor-tools {
-  width: 190px;
+  width: 270px;
+}
+
+.titlebar-icon-button {
+  -webkit-app-region: no-drag;
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  align-self: center;
+  width: 26px;
+  height: 24px;
+  margin: 0 4px;
+  padding: 0;
+  border: 1px solid var(--editorColor10);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--editorColor50);
+  cursor: pointer;
+}
+
+.titlebar-icon-button:hover,
+.titlebar-icon-button.active {
+  color: var(--editorColor);
+  background: var(--sideBarBgColor);
 }
 
 .zoom-controls {
@@ -525,7 +594,7 @@ div.title > span {
   }
 
   .right-toolbar.editor-tools {
-    width: 125px;
+    width: 195px;
   }
 }
 

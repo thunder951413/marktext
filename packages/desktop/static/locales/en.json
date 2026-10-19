@@ -223,6 +223,15 @@
     "searchResultInfo": "{matchCount} matches in {fileCount} files",
     "searchLimited": "Searched limited to first {count} results"
   },
+  "titleBar": {
+    "themeSwitcher": {
+      "title": "Theme (quick switch)",
+      "filter": "Filter themes…",
+      "followNotice": "Following the system theme. Picking one here turns that off.",
+      "noMatch": "No matching theme",
+      "hint": "Hover or ↑↓ to preview · Enter to apply · Esc to cancel"
+    }
+  },
   "sideBar": {
     "search": {
       "searchInFolder": "Search in folder...",

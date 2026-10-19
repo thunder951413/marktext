@@ -223,6 +223,15 @@
     "searchResultInfo": "在 {fileCount} 个文件中找到 {matchCount} 个匹配项",
     "searchLimited": "仅搜索前 {count} 个结果"
   },
+  "titleBar": {
+    "themeSwitcher": {
+      "title": "主题（快速切换）",
+      "filter": "筛选主题…",
+      "followNotice": "当前跟随系统主题，在这里选择会关闭“跟随系统”。",
+      "noMatch": "没有匹配的主题",
+      "hint": "悬停或 ↑↓ 预览 · 回车应用 · Esc 取消"
+    }
+  },
   "sideBar": {
     "search": {
       "searchInFolder": "在文件夹中搜索…",
