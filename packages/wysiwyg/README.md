@@ -1,9 +1,9 @@
 # @marktext/wysiwyg
 
-CodeMirror 6 live-preview WYSIWYG markdown editor engine for MarkText. It
-provides an optional alternative to the Muya rendering layer: the markdown source
-itself is the single source of truth, and the WYSIWYG view is derived from the
-Lezer syntax tree through decorations.
+CodeMirror 6 live-preview WYSIWYG markdown editor engine for MarkText, and the
+desktop app's default editor. The markdown source itself is the single source
+of truth, and the WYSIWYG view is derived from the Lezer syntax tree through
+decorations. Muya remains only as a fallback (see below).
 
 ## How it works
 

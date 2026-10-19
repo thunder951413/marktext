@@ -3,122 +3,113 @@
 <h1 align="center">MarkText Desktop</h1>
 
 <p align="center">
-  面向 macOS、Windows 和 Linux 的 Markdown 桌面编辑器维护分支。
+  带 Vim 的 Markdown 实时预览编辑器：写的是源码，看到的是排好版的文档。<br>
+  macOS · Windows · Linux
 </p>
 
-> 本仓库基于 [MarkText 上游项目](https://github.com/marktext/marktext) 继续维护。原项目介绍、完整功能说明、历史安装方式、贡献指南和赞助信息请查看[上游原始 README](https://github.com/marktext/marktext#readme)。
+## 这是什么
 
-## 当前状态
+一个基于 Electron 的 Markdown 桌面编辑器。它最初从 [MarkText](https://github.com/marktext/marktext) 分叉而来，现在编辑核心已经重写，两者的差别主要在这几点：
 
-| 项目 | 状态 |
+- **Obsidian 式实时预览。** 编辑内核是基于 CodeMirror 6 的 `packages/wysiwyg`：Markdown 源码始终是唯一的数据来源，预览效果由语法树的装饰层实时渲染。光标不在的地方显示排版效果，光标进入某个元素时才显示原始标记。
+- **完整的 Vim。** 实时预览模式和源码模式用同一套 [`@replit/codemirror-vim`](https://github.com/replit/codemirror-vim)：运算符加动作、文本对象、寄存器、marks、`.` 重复、搜索，以及 `:w`、`:q`、`:wq`、`:x`、`:s` 等 Ex 命令。
+- **大文档不卡。** CodeMirror 只渲染视口内的内容，超过 50 000 字符的文档只装饰视口附近的一小段。在 704 KB 的文档上，打开时间从约 8.7 秒降到约 50 毫秒，打字延迟中位数从约 400 毫秒降到约 27 毫秒（测试方法和完整数据见 [docs/ENGINE_DECISION.md](docs/ENGINE_DECISION.md)）。
+- **只面向桌面。** macOS、Windows 和 Linux，不做 Android/iOS。
+
+## 功能
+
+**写作**
+
+- CommonMark 和 GitHub Flavored Markdown：表格、任务列表、删除线、脚注、`==高亮==`、front matter。
+- 数学公式（KaTeX）、Mermaid 和 PlantUML 图表、行内 HTML 预览（经过清洗）。
+- 本地图片：相对路径、绝对路径、Windows 盘符路径和 UNC 路径都能显示；文件名里的 `#`、`%` 等字符会被正确转义，加载失败时显示占位。
+- 表格以网格渲染，光标进入时显示源码；`Alt-Shift-←/→` 移动列，`Alt-Shift-F` 对齐表格；`Alt` 加拖动可以做矩形选择。
+- 浮动格式工具栏，代码块语言和 emoji 补全。
+- 专注模式、打字机模式、源码模式；字数统计放在 Web Worker 里，不阻塞界面。
+
+**界面**
+
+- 多标签页，`Ctrl/Cmd+N` 新建文档，新文档在输入内容之前不会被视为未保存。
+- 整体显示缩放（`50%`–`200%`），标题栏、菜单、命令面板和快捷键都能操作。
+- 内置 30 多套主题，包括 Catppuccin、Dracula、Gruvbox、Kanagawa、Monokai Pro 等；列表圆点、标题、链接、引用等的颜色跟随主题。
+- 界面语言：英语、简体中文、繁体中文、日语、韩语、德语、法语、西班牙语、葡萄牙语、土耳其语。
+
+### Vim
+
+- 默认启用，状态栏显示 `NORMAL`、`INSERT`、`VISUAL`、`VISUAL LINE` 或 `SEARCH`，以及尚未完成的计数或命令。
+- 在实时预览中，`j`/`k` 可以直接移进表格和其他渲染块。
+- **Windows 上的取舍：** 菜单快捷键在 Windows 上用 `Ctrl`（`Ctrl+R` 替换、`Ctrl+V` 粘贴、`Ctrl+W` 关闭标签页……），会和 Vim 的 `Ctrl` 组合键冲突。所以 Windows 只保留 Vim 的基本功能（动作、运算符、寄存器、搜索、Ex 命令），**屏蔽除 `Ctrl-[` 以外的所有 `Ctrl` 组合键**。重做请用 `Ctrl+Shift+Z` 或 `:redo`。macOS 的菜单快捷键用 `Cmd`，不受影响。
+
+## 下载
+
+在 [Releases](https://github.com/thunder951413/marktext/releases) 页面下载，每个版本都附带 SHA-256 校验文件。
+
+| 平台 | 产物 |
 | --- | --- |
-| 当前版本 | `0.20.0-rc.7` |
-| 开发分支 | `codex/desktop-performance-foundation` |
-| 桌面平台 | macOS、Windows、Linux（不包含 Android/iOS） |
-| macOS 本地构建 | Apple Silicon (`arm64`)，通过 `pnpm build:mac:arm64` 生成 DMG、ZIP 和应用包 |
-| 上次 GitHub Release | [`v0.20.0-rc.6`](https://github.com/thunder951413/marktext/releases/tag/v0.20.0-rc.6) 已发布，含 macOS、Windows、Linux 产物与 SHA-256 |
-| 合并请求 | [thunder951413/marktext#1](https://github.com/thunder951413/marktext/pull/1) |
+| macOS | `marktext-mac-{arm64,x64}-<版本>.dmg` / `.zip` |
+| Windows | `marktext-win-{x64,arm64}-<版本>-setup.exe`（安装包）/ `.zip` |
+| Linux | `AppImage`、`deb`、`rpm`、`snap`、`tar.gz` |
 
-## 本轮修复（0.20.0-rc.7）
+当前版本为 `0.20.0-rc.7`，是候选版本（rc）。Windows 版本已在 CI 中构建，但开发主要在 macOS 上进行，Windows 上遇到问题请提交 issue。
 
-- 默认使用经过完整桌面回归的 Muya 编辑器；保留新的 CodeMirror WYSIWYG 引擎作为可选预览，避免尚未接入的浮动工具栏、选择器等功能影响日常使用。
-- 修复预览引擎的 TOC 标签、Vim 状态、HTML 清洗和开关、拼写检查、富文本剪贴板及初始偏好同步；配置改为实例独立，避免窗口间相互覆盖，并复用同一状态的装饰计算结果。
-- 恢复 Electron `webSecurity`；preload 和主进程均检查 IPC 通道，主进程验证请求来自应用主框架。移除未使用的批量删除接口，限制文件读写、移动、删除和搜索路径，并拦截危险外部 URL 和可执行文件打开。
-- Electron 升级到 `42.11.10`，修补 DOMPurify、Mermaid、Next.js 及相关传递依赖；生产依赖安全审计为 0 项已知漏洞。
-- 新编辑器加入工作区依赖、根目录测试和类型检查及 CI。修复 Node 26 测试环境、窗口标题及测试目录隔离；补齐第三方许可正文，修复网站生产构建误启动 Cloudflare 开发模拟器的问题。
+## 从源码运行
 
-## 下一版（开发中）：默认切换到 CodeMirror 引擎
+需要 Node.js ≥ 20.19 和 pnpm ≥ 10（版本固定为 `pnpm@10.33.4`）。
 
-- 所见即所得默认使用 CodeMirror 引擎（`packages/wysiwyg`）。决策过程和退出条件见 [docs/ENGINE_DECISION.md](docs/ENGINE_DECISION.md)。
-- 回退：在“偏好设置 → 编辑器 → 杂项 → 所见即所得引擎”中选择 Muya，重启后生效；也可以用 `MARKTEXT_EDITOR_ENGINE=muya` 临时指定。
-- 新引擎补齐了以下功能：
-  - 浮动格式工具栏；
-  - 表格网格渲染、列移动（`Alt-Shift-←/→`）、表格格式化（`Alt-Shift-F`）；
-  - 矩形选择（`Alt` + 拖动）；
-  - 代码块语言补全、emoji 补全；
-  - Vim 的 `:w`、`:q`、`:q!`、`:wq`、`:x`。
-- 新引擎打开大文档快得多：704 KB 文档的打开时间从约 8.7 秒降到约 50 毫秒，打字延迟中位数从约 400 毫秒降到约 27 毫秒。
-- 与上游同步的方法见 [docs/UPSTREAM_SYNC.md](docs/UPSTREAM_SYNC.md)。
+```bash
+pnpm install
+pnpm dev                 # 开发模式
+pnpm build:unpack        # 构建但不打包，用于本地检查
+pnpm build:mac:arm64     # 打包：还有 build:mac:x64、build:win:x64、build:win:arm64、build:linux
+```
 
-## 本分支修改
+安装包输出到仓库根目录的 `dist/`。
 
-### 新建文档
+## 代码结构
 
-- 文件菜单新增明确的“新建文档”入口。
-- 标签栏保留可点击的 `+`，并补充键盘操作、标题和无障碍标签。
-- 新文档以干净的 `Untitled` 标签打开；输入内容后才进入未保存状态，继续复用现有保存和关闭确认流程。
-- 标准快捷键：macOS 使用 `Command+N`，Windows/Linux 使用 `Ctrl+N`。
-- 新建窗口调整为 macOS `Command+Option+N`、Windows/Linux `Ctrl+Shift+N`，避免快捷键冲突。
+这是一个 pnpm 工作区，主要的包在 `packages/` 下：
 
-### 整体显示缩放
+| 包 | 作用 |
+| --- | --- |
+| [`desktop`](packages/desktop) | Electron 应用本体（Vue 3、Pinia、electron-vite、electron-builder） |
+| [`wysiwyg`](packages/wysiwyg) | 基于 CodeMirror 6 的实时预览编辑内核，详见[它的 README](packages/wysiwyg/README.md) |
+| [`muya`](packages/muya) | `@muyajs/core`，Muya 第二代（TypeScript）：回退用的 Muya 编辑器所依赖的核心，也是 Markdown 转换、导出、图表加载等工具库 |
+| [`muyajs`](packages/muyajs) | `@marktext/muyajs`，Muya 第一代（JavaScript，遗留包，不再新增功能） |
+| [`website`](packages/website) | 项目网站（Next.js） |
 
-- 标题栏新增 `− / 百分比 / +` 缩放控件；点击百分比可恢复 `100%`。
-- 支持窗口菜单、命令面板和快捷键操作。
-- 放大：macOS `Command+=`，Windows/Linux `Ctrl+=`。
-- 缩小：macOS `Command+-`，Windows/Linux `Ctrl+-`。
-- 恢复实际大小：macOS `Command+0`，Windows/Linux `Ctrl+0`。
-- 缩放范围为 `50%`–`200%`，步长为 `12.5%`。
-- 缩放只改变 Electron 窗口的显示比例，不改写 Markdown 内容、编辑器文本或保存文件。
+## 编辑器引擎
 
-### Vim 模式
+默认使用 CodeMirror 引擎。旧的 Muya 编辑器只作为回退，不再增加新功能，满足退出条件后会删除，决策过程见 [docs/ENGINE_DECISION.md](docs/ENGINE_DECISION.md)。
 
-- WYSIWYG 和源代码模式均默认以 `NORMAL` 打开，`i` 进入现有编辑体验，`Esc` 返回 Normal。
-- WYSIWYG 的 Normal 模式使用随字符宽度变化、跟随主题的低对比度中性块状光标，Insert 模式恢复原生细竖线；空白新文档、滚动、缩放和窗口尺寸变化时均会重新定位。
-- 状态栏持续显示 `NORMAL`、`INSERT`、`VISUAL`、`VISUAL LINE` 或 `SEARCH`，并显示尚未完成的计数/命令。
-- 标准移动：`h/j/k/l`、`w/b/e`、`0/^/$`、`gg/G`，支持 `5j`、`3w` 等数字前缀。
-- 插入位置：`i/I/a/A/o/O`。
-- 撤销与重做：`u`、`Ctrl+R`。
-- 查找：`/`、`?`、`n/N`；行内字符查找支持 `f/F/t/T` 和 `;/,` 重复。
-- 编辑操作：`x`、`D`、`dd`、`cc`、`yy`、`p/P`，以及 `d/c/y + motion`（例如 `dw`、`c$`、`y2w`）。
-- 选择操作：`v` 和 `V` 进入字符/整行 Visual 模式，可配合移动与 `d/c/y`。
-- Normal/Visual 模式拦截普通输入、粘贴、剪切、拖放和中文输入法组合事件，防止意外改写内容；应用级快捷键仍可正常使用。
-- `dd` 在列表中删除当前列表项，不会误删整个列表。
-- 源代码模式使用维护中的 CodeMirror 6 Vim 扩展；WYSIWYG 通过 Muya 的 selection、history、clipboard 和 search 接口实现结构化语义。
-- 暂不实现寄存器、marks、宏、vimrc 和完整 Ex 命令体系。
+切换回 Muya：在“偏好设置 → 编辑器 → 杂项 → 所见即所得引擎”里选择 Muya，重启后生效；也可以用环境变量临时指定：
 
-### 应用图标
+```bash
+MARKTEXT_EDITOR_ENGINE=muya pnpm dev
+```
 
-- 采用原创的浅色文档页与深色 Markdown `M` 折线，辅以少量青蓝折面，替换原黑底青色几何图标。
-- 图标外部使用透明背景，并为小尺寸保留清晰的单一轮廓。
-- 同步生成 macOS 多分辨率 ICNS、Windows 多尺寸 ICO、Linux PNG、应用内图标及 README 标识。
+### 已知限制
 
-### 编辑器与性能
+CodeMirror 引擎还没有迁移这些 Muya 的浮层功能：图片编辑工具栏（裁剪、缩放、路径选择）、链接悬浮工具、脚注工具、`@` 快速插入菜单和段落前置菜单。对应的操作可以通过应用菜单和命令面板完成，点击图片可以预览，`Ctrl/Cmd` 加点击可以打开链接。桌面端到端测试目前大部分仍然跑在 Muya 上，CodeMirror 引擎的覆盖还很少。
 
-- 源代码模式迁移到 CodeMirror 6，利用视口渲染改善大文档滚动和编辑性能。
-- 字数统计移至 Web Worker，降低主界面在大文档统计时的阻塞。
-- Muya 文档渲染采用分批调度，减少大批量节点同步插入造成的长任务。
-- 优化块链表、父子节点和行内渲染路径，减少重复遍历与布局读取。
-- 补充大文档、目录滚动、脏状态、渲染批处理及交互回归测试。
+## 开发与测试
 
-### 桌面平台与构建
+```bash
+pnpm lint            # ESLint
+pnpm typecheck       # desktop、muya、wysiwyg 的类型检查
+pnpm test            # 单元测试：desktop、muya、wysiwyg
+pnpm test:e2e        # 桌面端到端测试（Playwright，需要图形环境）
+```
 
-- 当前目标仅为 macOS、Windows 和 Linux，不规划 Android/iOS 客户端。
-- macOS 支持 `arm64` 和 `x64` 独立产物。
-- Windows 支持 `arm64` 和 `x64` 安装包。
-- Linux 保留桌面发行格式，由 GitHub Actions 统一生成发布产物。
+给仓库贡献时，另见：
 
-## 验证结果
+- [docs/ENGINE_DECISION.md](docs/ENGINE_DECISION.md)：为什么用 CodeMirror，以及 Muya 的退出条件。
+- [docs/UPSTREAM_SYNC.md](docs/UPSTREAM_SYNC.md)：如何吸收上游 MarkText 的修复，以及容易冲突的文件。
+- [CLAUDE.md](CLAUDE.md)：目录结构、技术栈和工程约定的详细说明。
 
-`0.20.0-rc.7` 本地验证：
+## 与上游的关系
 
-- 桌面、Muya、新 WYSIWYG 引擎和网站类型检查通过。
-- ESLint 无错误，保留 140 条现存警告。
-- 桌面单元测试：54 个文件、751 项通过。
-- Muya 单元测试：213 个文件、1441 项通过。
-- CodeMirror WYSIWYG 单元测试：11 个文件、96 项通过，无未处理异常。
-- 新版 Electron 上的完整桌面端到端回归：232 项通过、4 项按既有条件跳过，无失败。
-- `pnpm audit --prod`：0 项已知漏洞；第三方许可检查通过。
-- 桌面和网站生产构建通过。
-
-复查命令：`pnpm typecheck`、`pnpm test`、`pnpm lint`、`pnpm test:e2e`、`pnpm audit --prod`。网站独立检查：`pnpm --filter marktext-website build`。
-
-## 上次跨平台发布（0.20.0-rc.6）
-
-1. `0.20.0-rc.6` 完整回归通过，代码和标签已推送。
-2. macOS、Windows、Linux 五组构建均成功，GitHub Release 已发布 24 个资产。
-3. macOS `arm64` ZIP 与发布 SHA-256 一致，本地应用已由正式产物更新到 `0.20.0-rc.6`。
-4. 本地应用已验证 arm64 架构、签名完整性、正常启动以及低对比度 Normal/Insert 光标切换。
+本项目源自 [marktext/marktext](https://github.com/marktext/marktext)，感谢原作者和贡献者。最后一次合并上游是在 2026-07，之后的开发独立进行，上游的修复会按 [docs/UPSTREAM_SYNC.md](docs/UPSTREAM_SYNC.md) 的流程选择性同步。上游的功能介绍、历史安装方式和贡献指南请看[上游 README](https://github.com/marktext/marktext#readme)。`docs/i18n/` 下的多语言 README 沿用自上游，内容可能与本项目不一致。
 
 ## 许可证
 
-本项目继续使用 [MIT License](LICENSE)。
+[MIT License](LICENSE)
