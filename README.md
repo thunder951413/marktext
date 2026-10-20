@@ -52,7 +52,7 @@
 | Windows | `marktext-win-{x64,arm64}-<版本>-setup.exe`（安装包）/ `.zip` |
 | Linux | `AppImage`、`deb`、`rpm`、`snap`、`tar.gz` |
 
-当前版本为 `0.20.0`。Windows 版本已在 CI 中构建，但开发主要在 macOS 上进行，Windows 上遇到问题请提交 issue。
+当前版本为 `0.20.1`。Windows 版本已在 CI 中构建，但开发主要在 macOS 上进行，Windows 上遇到问题请提交 issue。
 
 ## 从源码运行
 
