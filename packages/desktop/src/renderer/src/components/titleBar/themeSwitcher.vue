@@ -434,9 +434,6 @@ defineExpose({ toggle })
   list-style: none;
   overflow-y: auto;
   overscroll-behavior: contain;
-  /* Windows otherwise draws a wide grey track that dominates the narrow panel. */
-  scrollbar-width: thin;
-  scrollbar-color: var(--editorColor30) transparent;
 }
 
 .theme-switcher-group {

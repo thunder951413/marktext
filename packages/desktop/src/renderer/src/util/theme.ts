@@ -204,8 +204,9 @@ export const setEditorWidth = (value: string): void => {
     // Add 100px for the container's horizontal padding. Set both the legacy
     // camelCase var (source mode) and the kebab-case var the active
     // @muyajs/core engine reads for `.mu-container` max-width (issue #4828).
+    // `--editorTextWidth` is the bare text column the CodeMirror engine centres.
     const width = `calc(100px + ${value})`
-    result = `:root { --editorAreaWidth: ${width}; --editor-area-width: ${width}; }`
+    result = `:root { --editorAreaWidth: ${width}; --editor-area-width: ${width}; --editorTextWidth: ${value}; }`
   }
   let styleEle = document.querySelector(`#${EDITOR_WIDTH_STYLE_ID}`) as HTMLStyleElement | null
   if (!styleEle) {

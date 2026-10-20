@@ -12,6 +12,19 @@
   font-family: inherit;
 }
 
+/* Typora-style page: a centred text column with breathing room on both sides.
+   The side space is padding on the content element rather than margin, so a
+   click in it still places the caret on the nearest line. `--editorTextWidth`
+   is the "max width" preference; the side padding never drops below a small
+   gutter so text does not touch the window edge on narrow windows. Three
+   classes so it outranks CodeMirror's injected `.cm-content` base padding. */
+.wysiwyg-container .cm-editor .cm-content {
+  --wysiwyg-gutter: clamp(20px, 6vw, 56px);
+  padding-top: 32px;
+  padding-bottom: max(120px, 30vh);
+  padding-inline: max(var(--wysiwyg-gutter), calc((100% - var(--editorTextWidth, 800px)) / 2));
+}
+
 .wysiwyg-hide-spelling::spelling-error {
   text-decoration: none;
 }
@@ -238,7 +251,7 @@ hr.wysiwyg-hr {
 
 /* Typewriter mode: slack above and below the text so the first and last lines
    can also be scrolled to the caret's fixed height. */
-.wysiwyg-typewriter .cm-content {
+.wysiwyg-container.wysiwyg-typewriter .cm-editor .cm-content {
   padding-top: 40vh;
   padding-bottom: 50vh;
 }

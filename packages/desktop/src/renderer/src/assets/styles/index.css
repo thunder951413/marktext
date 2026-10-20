@@ -107,21 +107,31 @@
   --notificationErrorBg: #ff6969;
 }
 
+/* Slim, trackless scrollbars (Typora-like). The transparent border plus
+   content-box clip draws a 6px rounded thumb inside a 10px hit area. */
 ::-webkit-scrollbar,
 ::-webkit-scrollbar-corner {
-  background: var(--floatHoverColor);
+  background: transparent;
 }
 
 ::-webkit-scrollbar:vertical {
-  width: 12px;
+  width: 10px;
+}
+
+::-webkit-scrollbar:horizontal {
+  height: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 5px;
   background: var(--editorColor30);
+  background-clip: content-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--editorColor50);
+  background-clip: content-box;
 }
 
 :focus {
