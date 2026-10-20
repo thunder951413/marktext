@@ -224,6 +224,7 @@
     "searchLimited": "搜尋僅限前 {count} 個結果"
   },
   "titleBar": {
+    "menu": "應用程式選單",
     "themeSwitcher": {
       "title": "主題（快速切換）",
       "filter": "篩選主題…",

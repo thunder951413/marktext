@@ -165,6 +165,7 @@ export const eventChannels = {
   'mt::keybindings-response': true,
   'mt::load-state': true,
   'mt::menu::click': true,
+  'mt::menu::application-closed': true,
   'mt::menu::closed': true,
   'mt::new-untitled-tab': true,
   'mt::open-directory': true,

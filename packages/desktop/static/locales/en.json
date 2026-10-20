@@ -224,6 +224,7 @@
     "searchLimited": "Searched limited to first {count} results"
   },
   "titleBar": {
+    "menu": "Application menu",
     "themeSwitcher": {
       "title": "Theme (quick switch)",
       "filter": "Filter themes…",

@@ -116,7 +116,18 @@ export const registerWindowHandlers = (): void => {
     try {
       const appMenu = Menu.getApplicationMenu()
       if (!appMenu) return
-      appMenu.popup({ window: win, x: position?.x, y: position?.y })
+      appMenu.popup({
+        window: win,
+        x: position?.x,
+        y: position?.y,
+        callback: () => {
+          try {
+            event.sender.send('mt::menu::application-closed')
+          } catch {
+            // The window was closed while its menu was open.
+          }
+        }
+      })
     } catch (err) {
       log.error('application menu popup failed:', err)
     }

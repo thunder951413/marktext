@@ -56,10 +56,12 @@
     <div
       v-if="open"
       class="theme-switcher-backdrop"
+      :style="backdropStyle"
       @mousedown="cancel"
     />
     <div
       v-if="open"
+      ref="panelRef"
       class="theme-switcher-panel"
       :style="panelStyle"
       role="dialog"
@@ -145,6 +147,7 @@ import { addThemeStyle } from '@/util/theme'
 import { isOsx } from '@/util'
 import { getThemeBackgroundColor } from 'common/theme'
 import { buildThemeOptions, filterThemeOptions, stepIndex } from './themeSwitcherLogic'
+import { placePopover } from './titlebarPopup'
 
 withDefaults(defineProps<{ showTrigger?: boolean }>(), { showTrigger: true })
 
@@ -158,7 +161,11 @@ const highlightedId = ref<string | null>(null)
 const triggerRef = ref<HTMLElement | null>(null)
 const filterRef = ref<HTMLInputElement | null>(null)
 const listRef = ref<HTMLElement | null>(null)
+const panelRef = ref<HTMLElement | null>(null)
 const panelStyle = ref<Record<string, string>>({})
+const backdropStyle = ref<Record<string, string>>({})
+
+const PANEL_WIDTH = 260
 
 const shortcutLabel = isOsx ? '⌘⌥T' : 'Ctrl+Alt+T'
 
@@ -179,16 +186,23 @@ const groups = computed(() =>
 const chipColor = (id: string): string => getThemeBackgroundColor(id)
 
 const positionPanel = (): void => {
-  const rect = triggerRef.value?.getBoundingClientRect()
-  const top = (rect ? rect.bottom : 32) + 6
-  // Keep the panel inside the window: right-align to the trigger when there is
-  // room on its left, otherwise stick to the window edge.
-  const right = rect ? Math.max(8, window.innerWidth - rect.right - 8) : 16
+  const rect = triggerRef.value?.getBoundingClientRect() ?? null
+  const { left, top, maxHeight } = placePopover(
+    rect,
+    PANEL_WIDTH,
+    window.innerWidth,
+    window.innerHeight
+  )
   panelStyle.value = {
+    left: `${left}px`,
     top: `${top}px`,
-    right: `${right}px`,
-    maxHeight: `${Math.max(240, window.innerHeight - top - 16)}px`
+    width: `${PANEL_WIDTH}px`,
+    maxHeight: `${maxHeight}px`
   }
+  // The backdrop starts below the in-app title bar so its other buttons (menu,
+  // TOC, zoom) and its drag area keep working while the panel is open.
+  const titleBarBottom = document.querySelector('.title-bar')?.getBoundingClientRect().bottom ?? 0
+  backdropStyle.value = { top: `${Math.max(0, titleBarBottom)}px` }
 }
 
 const preview = (id: string): void => {
@@ -301,14 +315,27 @@ const onGlobalKeydown = (event: KeyboardEvent): void => {
   }
 }
 
+// Any press outside the panel and its trigger dismisses it; the backdrop only
+// covers the editor, so this is what closes the panel when another title-bar
+// button is used.
+const onGlobalPointerdown = (event: PointerEvent): void => {
+  if (!open.value) return
+  const target = event.target as Node | null
+  if (!target) return
+  if (panelRef.value?.contains(target) || triggerRef.value?.contains(target)) return
+  cancel()
+}
+
 onMounted(() => {
   window.addEventListener('keydown', onGlobalKeydown, true)
+  window.addEventListener('pointerdown', onGlobalPointerdown, true)
   window.addEventListener('blur', cancel)
   window.addEventListener('resize', cancel)
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', onGlobalKeydown, true)
+  window.removeEventListener('pointerdown', onGlobalPointerdown, true)
   window.removeEventListener('blur', cancel)
   window.removeEventListener('resize', cancel)
   // Never leave a hover preview applied when the component goes away.
@@ -349,15 +376,16 @@ defineExpose({ toggle })
 }
 
 .theme-switcher-backdrop {
+  -webkit-app-region: no-drag;
   position: fixed;
   inset: 0;
   z-index: 2999;
 }
 
 .theme-switcher-panel {
+  -webkit-app-region: no-drag;
   position: fixed;
   z-index: 3000;
-  width: 260px;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
@@ -405,6 +433,10 @@ defineExpose({ toggle })
   padding: 0;
   list-style: none;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  /* Windows otherwise draws a wide grey track that dominates the narrow panel. */
+  scrollbar-width: thin;
+  scrollbar-color: var(--editorColor30) transparent;
 }
 
 .theme-switcher-group {

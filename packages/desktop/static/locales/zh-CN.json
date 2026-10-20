@@ -224,6 +224,7 @@
     "searchLimited": "仅搜索前 {count} 个结果"
   },
   "titleBar": {
+    "menu": "应用菜单",
     "themeSwitcher": {
       "title": "主题（快速切换）",
       "filter": "筛选主题…",

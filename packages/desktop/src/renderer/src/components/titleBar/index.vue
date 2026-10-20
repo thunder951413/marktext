@@ -52,13 +52,32 @@
         </span>
       </div>
       <div :class="showCustomTitleBar ? 'left-toolbar editor-tools title-no-drag' : 'right-toolbar editor-tools'">
-        <div
+        <button
           v-if="showCustomTitleBar"
-          class="frameless-titlebar-menu title-no-drag"
+          ref="menuButtonRef"
+          type="button"
+          class="titlebar-icon-button title-no-drag"
+          :class="{ active: appMenuOpen }"
+          data-testid="app-menu"
+          aria-haspopup="menu"
+          :aria-expanded="appMenuOpen"
+          :aria-label="t('titleBar.menu')"
+          :title="t('titleBar.menu')"
           @click.stop="handleMenuClick"
         >
-          <span class="text-center-vertical">&#9776;</span>
-        </div>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.3"
+            stroke-linecap="round"
+            aria-hidden="true"
+          >
+            <path d="M2.5 4h11M2.5 8h11M2.5 12h11" />
+          </svg>
+        </button>
         <button
           type="button"
           class="titlebar-icon-button title-no-drag"
@@ -198,6 +217,7 @@ import { useI18n } from 'vue-i18n'
 import { ArrowRight } from '@element-plus/icons-vue'
 import ThemeSwitcher from './themeSwitcher.vue'
 import WordCountBadge from './wordCountBadge.vue'
+import { menuPositionBelow } from './titlebarPopup'
 import type { FileWordCount } from '@shared/types/files'
 import {
   DEFAULT_ZOOM_FACTOR,
@@ -331,8 +351,18 @@ const handleMinimizeClick = () => {
   window.electron.windowControl.minimize()
 }
 
+const menuButtonRef = ref<HTMLElement | null>(null)
+const appMenuOpen = ref(false)
+
 const handleMenuClick = () => {
-  window.electron.windowControl.popupApplicationMenu({ x: 23, y: 20 })
+  const rect = menuButtonRef.value?.getBoundingClientRect()
+  const position = rect ? menuPositionBelow(rect, zoom.value) : { x: 10, y: 30 }
+  appMenuOpen.value = true
+  window.electron.windowControl.popupApplicationMenu(position)
+}
+
+const onApplicationMenuClosed = () => {
+  appMenuOpen.value = false
 }
 
 const rename = () => {
@@ -364,12 +394,17 @@ const offLeaveFullScreen = window.electron.ipcRenderer.on(
   'mt::window-leave-full-screen',
   onLeaveFullScreen
 )
+const offApplicationMenuClosed = window.electron.ipcRenderer.on(
+  'mt::menu::application-closed',
+  onApplicationMenuClosed
+)
 
 onBeforeUnmount(() => {
   offMaximize()
   offUnmaximize()
   offEnterFullScreen()
   offLeaveFullScreen()
+  offApplicationMenuClosed()
 })
 </script>
 
@@ -452,7 +487,7 @@ div.title > span {
   visibility: visible;
 }
 .title:hover {
-  color: var(sideBarTitleColor);
+  color: var(--sideBarTitleColor);
 }
 
 .left-toolbar {
@@ -480,8 +515,14 @@ div.title > span {
   }
 }
 
+/* macOS: keep the same left-to-right order as the Windows/Linux toolbar
+   (TOC, theme, zoom, word count) instead of the reversed window-button order. */
 .right-toolbar.editor-tools {
   width: 270px;
+  padding-right: 8px;
+  box-sizing: border-box;
+  flex-direction: row;
+  justify-content: flex-end;
 }
 
 .word-count-slot {
@@ -594,9 +635,6 @@ div.title > span {
   left: 50%;
   transform: translateX(-50%) translateY(-50%);
 }
-.frameless-titlebar-menu {
-  color: var(--sideBarColor);
-}
 .frameless-titlebar-close:hover {
   background-color: rgb(228, 79, 79);
 }
@@ -611,9 +649,4 @@ div.title > span {
   fill: #ffffff;
 }
 
-.text-center-vertical {
-  display: inline-block;
-  vertical-align: middle;
-  line-height: normal;
-}
 </style>

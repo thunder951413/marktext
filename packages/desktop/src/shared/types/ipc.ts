@@ -242,6 +242,7 @@ export interface IpcMainEventChannels {
   'mt::keybindings-response': [bindings: unknown]
   'mt::load-state': [state: BufferedStateType]
   'mt::menu::click': [menuId: string]
+  'mt::menu::application-closed': []
   'mt::menu::closed': []
   'mt::new-untitled-tab': [selected?: boolean, markdown?: string]
   'mt::open-directory': [directoryPath: string]
