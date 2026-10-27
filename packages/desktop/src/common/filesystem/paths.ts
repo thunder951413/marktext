@@ -73,16 +73,33 @@ export const DANGEROUS_EXECUTABLE_EXTENSIONS: readonly string[] = Object.freeze(
   'psm1',
   // Windows — shortcuts, registry and JVM launchers
   'lnk',
+  'url',
   'inf',
   'reg',
   'scf',
   'jar',
   'jnlp',
-  // macOS — Terminal scripts and app bundles
+  'settingcontent-ms',
+  // Windows — compiled help and packaged-app installers
+  'chm',
+  'appx',
+  'appxbundle',
+  'msix',
+  'msixbundle',
+  // macOS — Terminal scripts, app bundles and installers
   'command',
+  'tool',
+  'terminal',
   'app',
-  // Linux — desktop entries and self-contained executables
+  'pkg',
+  'mpkg',
+  // macOS — location files, which can point at a local executable
+  'fileloc',
+  'webloc',
+  'inetloc',
+  // Linux — desktop entries, shell scripts and self-contained executables
   'desktop',
+  'sh',
   'appimage',
   'run'
 ])
@@ -98,6 +115,23 @@ export const isDangerousExecutableFile = (filepath: string): boolean => {
   // before reading the extension or the guard is trivially bypassed.
   const ext = path.extname(filepath.replace(/[ .]+$/, '')).slice(1).toLowerCase()
   return !!ext && DANGEROUS_EXECUTABLE_EXTENSIONS.includes(ext)
+}
+
+/**
+ * Returns true for a regular file with no extension and an execute bit set.
+ * macOS opens such a file in Terminal and runs it, and Linux file managers
+ * may run it too, so the extension list alone misses it. Always false on
+ * Windows, where execute bits do not decide what the shell runs.
+ */
+export const isExtensionlessExecutable = (filepath: string): boolean => {
+  if (process.platform === 'win32' || !filepath || typeof filepath !== 'string') return false
+  if (path.extname(filepath)) return false
+  try {
+    const stat = fs.statSync(filepath)
+    return stat.isFile() && (stat.mode & (fs.constants.S_IXUSR | fs.constants.S_IXGRP | fs.constants.S_IXOTH)) !== 0
+  } catch {
+    return false
+  }
 }
 
 /**

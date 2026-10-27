@@ -3,7 +3,7 @@ import { shell, clipboard } from 'electron'
 import log from 'electron-log'
 import * as plist from 'plist'
 import { isSafeExternalUrl } from '@shared/security/renderer'
-import { isDangerousExecutableFile } from 'common/filesystem/paths'
+import { isDangerousExecutableFile, isExtensionlessExecutable } from 'common/filesystem/paths'
 import { checkedPath } from './fs'
 
 export const registerShellHandlers = (): void => {
@@ -30,7 +30,9 @@ export const registerShellHandlers = (): void => {
   })
   ipcMain.handle('mt::shell::open-path', async(event, fullPath: string) => {
     try {
-      if (isDangerousExecutableFile(fullPath)) return 'Opening executable files is not permitted'
+      if (isDangerousExecutableFile(fullPath) || isExtensionlessExecutable(fullPath)) {
+        return 'Opening executable files is not permitted'
+      }
       return await shell.openPath(await checkedPath(event, fullPath, false, true))
     } catch (err) {
       log.error('shell.openPath failed:', err)

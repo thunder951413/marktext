@@ -4,7 +4,12 @@ import path from 'path'
 import { BrowserWindow, app, dialog, shell, type IpcMainEvent, type MenuItem } from 'electron'
 import log from 'electron-log'
 import { isDirectory, isFile, exists } from 'common/filesystem'
-import { MARKDOWN_EXTENSIONS, isDangerousExecutableFile, isMarkdownFile } from 'common/filesystem/paths'
+import {
+  MARKDOWN_EXTENSIONS,
+  isDangerousExecutableFile,
+  isExtensionlessExecutable,
+  isMarkdownFile
+} from 'common/filesystem/paths'
 import { checkUpdates, userSetting } from './marktext'
 import { showTabBar } from './view'
 import { COMMANDS } from '../../commands'
@@ -624,7 +629,7 @@ ipcMain.on('mt::format-link-click', async(e, { data, dirname }: FormatLinkPayloa
     } else {
       // A link in an untrusted document could point at a co-located script or
       // executable; opening it via the OS shell would run code silently (#3575).
-      if (isDangerousExecutableFile(pathname)) {
+      if (isDangerousExecutableFile(pathname) || isExtensionlessExecutable(pathname)) {
         const { response } = await dialog.showMessageBox(win, {
           type: 'warning',
           buttons: [t('dialog.cancel'), t('dialog.openAnyway')],

@@ -1,5 +1,8 @@
-import { describe, expect, it } from 'vitest'
-import { isDangerousExecutableFile } from 'common/filesystem/paths'
+import fs from 'fs'
+import os from 'os'
+import path from 'path'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { isDangerousExecutableFile, isExtensionlessExecutable } from 'common/filesystem/paths'
 
 // #3575 — clicking a markdown link to a co-located script/executable used to
 // call shell.openPath() with no check, so a `.js`/`.vbs`/`.bat` next to an
@@ -20,7 +23,7 @@ describe('#3575 — isDangerousExecutableFile', () => {
   })
 
   it('flags PowerShell and shortcut/registry files', () => {
-    for (const ext of ['ps1', 'psm1', 'lnk', 'reg', 'inf', 'scf', 'jar']) {
+    for (const ext of ['ps1', 'psm1', 'lnk', 'url', 'reg', 'inf', 'scf', 'jar', 'chm', 'msix']) {
       expect(isDangerousExecutableFile(`payload.${ext}`)).toBe(true)
     }
   })
@@ -31,7 +34,18 @@ describe('#3575 — isDangerousExecutableFile', () => {
   })
 
   it('flags macOS and Linux launchers, not just Windows', () => {
-    for (const name of ['run.command', 'Foo.app', 'launch.desktop', 'App.AppImage', 'installer.run']) {
+    for (const name of [
+      'run.command',
+      'run.tool',
+      'shell.terminal',
+      'Foo.app',
+      'Setup.pkg',
+      'jump.fileloc',
+      'launch.desktop',
+      'install.sh',
+      'App.AppImage',
+      'installer.run'
+    ]) {
       expect(isDangerousExecutableFile(name)).toBe(true)
     }
   })
@@ -58,5 +72,41 @@ describe('#3575 — isDangerousExecutableFile', () => {
   it('does not flag a file with no extension or an empty input', () => {
     expect(isDangerousExecutableFile('Makefile')).toBe(false)
     expect(isDangerousExecutableFile('')).toBe(false)
+  })
+})
+
+// A markdown link to an extensionless file with an execute bit (`./setup`)
+// slipped past the extension list; macOS opens such a file in Terminal and runs it.
+describe.skipIf(process.platform === 'win32')('isExtensionlessExecutable', () => {
+  let dir: string
+
+  beforeAll(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'mt-exec-'))
+    fs.writeFileSync(path.join(dir, 'setup'), '#!/bin/sh\n', { mode: 0o755 })
+    fs.writeFileSync(path.join(dir, 'LICENSE'), 'MIT\n', { mode: 0o644 })
+    fs.writeFileSync(path.join(dir, 'photo.png'), '', { mode: 0o755 })
+    fs.mkdirSync(path.join(dir, 'bin'))
+  })
+
+  afterAll(() => {
+    fs.rmSync(dir, { recursive: true, force: true })
+  })
+
+  it('flags an extensionless file with an execute bit', () => {
+    expect(isExtensionlessExecutable(path.join(dir, 'setup'))).toBe(true)
+  })
+
+  it('does not flag an extensionless file without an execute bit', () => {
+    expect(isExtensionlessExecutable(path.join(dir, 'LICENSE'))).toBe(false)
+  })
+
+  it('leaves files with an extension to the extension list', () => {
+    expect(isExtensionlessExecutable(path.join(dir, 'photo.png'))).toBe(false)
+  })
+
+  it('does not flag directories or missing paths', () => {
+    expect(isExtensionlessExecutable(path.join(dir, 'bin'))).toBe(false)
+    expect(isExtensionlessExecutable(path.join(dir, 'missing'))).toBe(false)
+    expect(isExtensionlessExecutable('')).toBe(false)
   })
 })
