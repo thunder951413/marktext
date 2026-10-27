@@ -7,6 +7,7 @@ export {
   livePreviewDomHandlers,
   requestLivePreviewRebuild,
   livePreviewOptions,
+  mathDelimiterLines,
   relayoutEffect,
   setLivePreviewEffect as _setLivePreviewEffect,
   buildLivePreviewDecorations

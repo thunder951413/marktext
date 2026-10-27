@@ -1,14 +1,16 @@
 import { syntaxTree } from '@codemirror/language'
 import {
+  type ChangeSet,
   EditorSelection,
   EditorState,
   Facet,
   RangeSet,
   StateEffect,
-  StateField
+  StateField,
+  type Text
 } from '@codemirror/state'
 import { Decoration, type DecorationSet, EditorView, WidgetType } from '@codemirror/view'
-import type { Tree } from '@lezer/common'
+import type { SyntaxNode, Tree } from '@lezer/common'
 import { renderMathToString } from '../features/math'
 import { toggleTaskAt } from '../features/tasks'
 import { buildTableModel, TableWidget } from './tableWidget'
@@ -38,8 +40,6 @@ const INLINE_STYLE_CLASSES: Record<string, string> = {
   InlineCode: 'wysiwyg-inline-code',
   Link: 'wysiwyg-link'
 }
-
-const FENCE_CONTAINERS = new Set(['Document', 'BulletList', 'OrderedList', 'ListItem', 'Blockquote'])
 
 const HEADING_CLASSES: Record<string, string> = {
   ATXHeading1: 'wysiwyg-h1',
@@ -286,29 +286,83 @@ function caretInInnerContent(state: EditorState, from: number, to: number): bool
   return head >= innerFrom && head < innerTo
 }
 
+const isMathDelimiterLine = (text: string): boolean =>
+  text.includes('$$') && text.trim() === '$$'
+
+/** Appends the starts of `$$` lines in `[firstLine, lastLine]` (1-based). */
+function scanMathDelimiterLines(doc: Text, firstLine: number, lastLine: number, out: number[]): void {
+  let pos = doc.line(firstLine).from
+  for (const iter = doc.iterLines(firstLine, lastLine + 1); !iter.next().done; pos += iter.value.length + 1) {
+    if (isMathDelimiterLine(iter.value)) out.push(pos)
+  }
+}
+
 /**
- * Detects `$$`-delimited display-math regions outside fenced code. Scanning
- * lines instead of adding a custom block parser keeps the lezer grammar
- * untouched; fences are excluded via the syntax tree.
+ * Remaps the previous `$$` line starts through `changes` and rescans only the
+ * lines the changes touched, so a keystroke costs the number of delimiter
+ * lines plus the edited lines instead of a full-document scan. Positions
+ * outside every touched line range still start an unmodified `$$` line.
  */
-function findMathBlocks(state: EditorState, fenced: Array<[number, number]>): Array<BaseEntry> {
-  // Linear sweep: `fenced` is in document order, so a single moving pointer
-  // replaces the per-line `fenced.some(...)` scan that made this quadratic in
-  // (lines x fences) and dominated keystroke latency on large documents.
+function updateMathDelimiterLines(previous: readonly number[], changes: ChangeSet, doc: Text): number[] {
+  const touched: Array<[number, number]> = []
+  changes.iterChangedRanges((_fromA, _toA, fromB, toB) => {
+    const first = doc.lineAt(fromB).number
+    const last = doc.lineAt(toB).number
+    const tail = touched[touched.length - 1]
+    if (tail && first <= tail[1]) tail[1] = Math.max(tail[1], last)
+    else touched.push([first, last])
+  })
+  const mapped = previous.map(pos => changes.mapPos(pos))
+  const next: number[] = []
+  let i = 0
+  for (const [first, last] of touched) {
+    const from = doc.line(first).from
+    const to = doc.line(last).to
+    for (; i < mapped.length && mapped[i] < from; i++) next.push(mapped[i])
+    while (i < mapped.length && mapped[i] <= to) i++
+    scanMathDelimiterLines(doc, first, last, next)
+  }
+  for (; i < mapped.length; i++) next.push(mapped[i])
+  return next
+}
+
+/** Starts of every line whose trimmed text is `$$`, in document order. */
+export const mathDelimiterLines = StateField.define<readonly number[]>({
+  create: state => {
+    const lines: number[] = []
+    scanMathDelimiterLines(state.doc, 1, state.doc.lines, lines)
+    return lines
+  },
+  update: (lines, tr) => (tr.docChanged ? updateMathDelimiterLines(lines, tr.changes, tr.state.doc) : lines)
+})
+
+function insideFencedCode(tree: Tree, pos: number): boolean {
+  for (let node: SyntaxNode | null = tree.resolve(pos, 1); node; node = node.parent) {
+    if (node.name === 'FencedCode') return true
+  }
+  return false
+}
+
+/**
+ * Pairs `$$` delimiter lines outside fenced code into display-math regions.
+ * Reads the incrementally maintained `mathDelimiterLines` when the state has
+ * it (the editor always does) and scans the document otherwise.
+ */
+function findMathBlocks(state: EditorState, tree: Tree): Array<BaseEntry> {
+  let delimiters = state.field(mathDelimiterLines, false)
+  if (!delimiters) {
+    const scanned: number[] = []
+    scanMathDelimiterLines(state.doc, 1, state.doc.lines, scanned)
+    delimiters = scanned
+  }
   const blocks: Array<BaseEntry> = []
   let openStart = -1
-  let fenceIdx = 0
-  let pos = 0
-  for (const iter = state.doc.iterLines(); !iter.next().done; pos += iter.value.length + 1) {
-    const text = iter.value
-    while (fenceIdx < fenced.length && fenced[fenceIdx][1] <= pos) fenceIdx++
-    const fence = fenced[fenceIdx]
-    if (fence && pos >= fence[0] && pos < fence[1]) continue
-    if (text.trim() !== '$$') continue
+  for (const pos of delimiters) {
+    if (insideFencedCode(tree, pos)) continue
     if (openStart < 0) {
       openStart = pos
     } else {
-      blocks.push({ from: openStart, to: pos + text.length })
+      blocks.push({ from: openStart, to: state.doc.lineAt(pos).to })
       openStart = -1
     }
   }
@@ -357,20 +411,7 @@ export function buildLivePreviewDecorations(
   const firstLineIn = (from: number) => state.doc.lineAt(Math.max(from, winFrom)).number
   const lastLineIn = (to: number) => state.doc.lineAt(Math.max(0, Math.min(to, winTo))).number
 
-  const fenced: Array<[number, number]> = []
-  tree.iterate({
-    enter: node => {
-      if (node.name === 'FencedCode') {
-        fenced.push([node.from, node.to])
-        return false
-      }
-      // Fenced code only nests inside container blocks; skipping leaf blocks
-      // keeps this whole-document pass from walking every inline node.
-      return FENCE_CONTAINERS.has(node.name) ? undefined : false
-    }
-  })
-
-  const mathBlocks = opts.mathEnabled ? findMathBlocks(state, fenced) : []
+  const mathBlocks = opts.mathEnabled ? findMathBlocks(state, tree) : []
 
   const hides: HideEntry[] = []
   const marks: MarkEntry[] = []
@@ -721,6 +762,7 @@ export const livePreviewField = StateField.define<LivePreviewFieldValue>({
     return next
   },
   provide: field => [
+    mathDelimiterLines,
     // Block decorations MUST come from a field (plugin-provided ones throw);
     // this is also what puts the computed sets onto the view.
     EditorView.decorations.from(field, value => value.decorations),
