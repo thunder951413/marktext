@@ -506,11 +506,12 @@ export const useEditorStore = defineStore('editor', {
       }
     },
 
-    // Flush any edit still queued in the engine's rAF batch into the active
-    // tab's `currentFile` before its markdown is read to persist — otherwise an
-    // edit made in the same frame as the read is silently dropped from the
-    // written file (#3803), the way tab switching already guards (#2938). Safe
-    // no-op when nothing is pending.
+    // Flush any edit still queued in the engine (Muya's rAF batch, or the
+    // CodeMirror engine's coalesced content-change on large documents) into the
+    // active tab before its markdown or isSaved is read — otherwise a recent
+    // edit is silently dropped from the written file (#3803) or the tab reads
+    // as clean, the way tab switching already guards (#2938). Safe no-op when
+    // nothing is pending.
     flushActiveEditor(): void {
       bus.emit('flush-active-editor')
     },
@@ -652,6 +653,7 @@ export const useEditorStore = defineStore('editor', {
       const projectStore = useProjectStore()
       const preferencesStore = usePreferencesStore()
       window.electron.ipcRenderer.on('mt::ask-for-close', () => {
+        this.flushActiveEditor()
         sendBufferedState()
           .catch((err) => {
             console.error('Failed to update buffered state before closing', err)
@@ -691,6 +693,7 @@ export const useEditorStore = defineStore('editor', {
     },
 
     ASK_FOR_SAVE_ALL(closeTabs: boolean): void {
+      this.flushActiveEditor()
       const { tabs } = this
       const projectStore = useProjectStore()
       const unsavedFiles = tabs
@@ -964,6 +967,7 @@ export const useEditorStore = defineStore('editor', {
     CLOSE_TAB(file: IFileState | null = null): void {
       const target = file ?? this.currentFile
       if (target === null) return
+      this.flushActiveEditor()
 
       if (target.isSaved) {
         this.FORCE_CLOSE_TAB(target)
@@ -1675,6 +1679,8 @@ export const useEditorStore = defineStore('editor', {
         const { pathname } = change
         const tab = tabs.find((t) => window.fileUtils.isSamePathSync(t.pathname, pathname))
         if (tab) {
+          // A pending edit must count before deciding to reload over the tab.
+          this.flushActiveEditor()
           const { id, isSaved, filename } = tab
           switch (type) {
             case 'unlink': {

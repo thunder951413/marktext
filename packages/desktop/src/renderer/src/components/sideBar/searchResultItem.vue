@@ -147,6 +147,9 @@ const handleSearchResultClick = (searchMatch: SearchMatch): void => {
     if (currentFile.value !== openedTab) {
       editorStore.UPDATE_CURRENT_FILE(openedTab)
     } else {
+      // Re-emitting the tab's markdown must not revert an edit still pending
+      // in the engine.
+      editorStore.flushActiveEditor()
       const { id, markdown, history } = currentFile.value
       bus.emit('file-changed', {
         id,

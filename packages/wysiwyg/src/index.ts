@@ -1,4 +1,4 @@
-export { WysiwygEditor } from './editor'
+export { CONTENT_CHANGE_IDLE_MS, CONTENT_CHANGE_MAX_WAIT_MS, WysiwygEditor } from './editor'
 export type { WysiwygOptions, WysiwygEvents, LineChCursor } from './editor'
 export { createMarkdownLanguage, highlightExtension, inlineMathExtension } from './markdown'
 export {
@@ -7,6 +7,7 @@ export {
   livePreviewDomHandlers,
   requestLivePreviewRebuild,
   livePreviewOptions,
+  LARGE_DOCUMENT_THRESHOLD,
   mathDelimiterLines,
   relayoutEffect,
   setLivePreviewEffect as _setLivePreviewEffect,

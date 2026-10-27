@@ -1,6 +1,14 @@
 import { defaultKeymap, history, historyKeymap, undo, redo } from '@codemirror/commands'
-import { crosshairCursor, drawSelection, EditorView, highlightActiveLine, keymap, rectangularSelection } from '@codemirror/view'
-import { Compartment, EditorSelection, EditorState } from '@codemirror/state'
+import {
+  crosshairCursor,
+  drawSelection,
+  EditorView,
+  highlightActiveLine,
+  keymap,
+  rectangularSelection,
+  type ViewUpdate
+} from '@codemirror/view'
+import { Annotation, Compartment, EditorSelection, EditorState } from '@codemirror/state'
 import { indentUnit } from '@codemirror/language'
 import { markdownKeymap } from '@codemirror/lang-markdown'
 import { closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete'
@@ -14,6 +22,7 @@ import {
   requestLivePreviewRebuild,
   livePreviewField,
   livePreviewUpdateListener,
+  LARGE_DOCUMENT_THRESHOLD,
   relayoutEffect
 } from './decorations/livePreview'
 import { createDefaultDiagramRenderer } from './features/diagrams'
@@ -116,6 +125,7 @@ export interface WysiwygOptions extends ClipboardHooks {
 }
 
 export type WysiwygEvents = {
+  /** Deferred on large documents; see CONTENT_CHANGE_IDLE_MS. */
   'content-change': { markdown: string }
   'selection-change': {
     anchor: number
@@ -143,6 +153,18 @@ export interface CompatSelection {
 }
 
 /**
+ * `content-change` serializes the whole document, and the desktop hashes and
+ * stores that text, so above LARGE_DOCUMENT_THRESHOLD edits coalesce: the
+ * event fires once typing pauses this long (ms)...
+ */
+export const CONTENT_CHANGE_IDLE_MS = 300
+/** ...and at least this often (ms) during continuous typing. */
+export const CONTENT_CHANGE_MAX_WAIT_MS = 1000
+
+/** Marks setContent transactions, whose content-change must stay synchronous. */
+const contentReplacement = Annotation.define<boolean>()
+
+/**
  * CodeMirror 6 live-preview WYSIWYG editor. The markdown source is the single
  * source of truth; rendering happens through decorations derived from the
  * Lezer syntax tree. Public API intentionally mirrors the shapes the desktop
@@ -160,6 +182,8 @@ export class WysiwygEditor {
   private featureCompartment = new Compartment()
   private indentationCompartment = new Compartment()
   private toolbarCompartment = new Compartment()
+  private contentChangeTimer: ReturnType<typeof setTimeout> | null = null
+  private contentChangePendingSince: number | null = null
 
   constructor(container: HTMLElement, options: WysiwygOptions = {}) {
     this.container = container
@@ -218,9 +242,7 @@ export class WysiwygEditor {
       this.toolbarCompartment.of(this.toolbarConfig()),
       EditorView.lineWrapping,
       EditorView.updateListener.of(update => {
-        if (update.docChanged) {
-          this.emitter.emit('content-change', { markdown: this.getMarkdown() })
-        }
+        if (update.docChanged) this.scheduleContentChange(update)
         if (update.selectionSet || update.docChanged) {
           const sel = update.state.selection.main
           this.emitter.emit('selection-change', {
@@ -273,6 +295,8 @@ export class WysiwygEditor {
   }
 
   destroy(): void {
+    // Hand the last coalesced edit to the embedder before the view goes away.
+    if (this.contentChangeTimer) this.emitContentChange()
     this.view?.destroy()
     this.view = null
     this.container.classList.remove('wysiwyg-container', 'wysiwyg-focus-mode')
@@ -302,7 +326,8 @@ export class WysiwygEditor {
     }
     this.view.dispatch(
       this.view.state.update({
-        changes: { from: 0, to: this.view.state.doc.length, insert: markdown }
+        changes: { from: 0, to: this.view.state.doc.length, insert: markdown },
+        annotations: contentReplacement.of(true)
       })
     )
   }
@@ -410,6 +435,29 @@ export class WysiwygEditor {
   }
 
   flush(): void {
+    this.emitContentChange()
+  }
+
+  private scheduleContentChange(update: ViewUpdate): void {
+    const replaced = update.transactions.some(tr => tr.annotation(contentReplacement))
+    if (replaced || update.state.doc.length <= LARGE_DOCUMENT_THRESHOLD) {
+      this.emitContentChange()
+      return
+    }
+    const now = Date.now()
+    this.contentChangePendingSince ??= now
+    if (this.contentChangeTimer) clearTimeout(this.contentChangeTimer)
+    const untilMaxWait = this.contentChangePendingSince + CONTENT_CHANGE_MAX_WAIT_MS - now
+    this.contentChangeTimer = setTimeout(
+      () => this.emitContentChange(),
+      Math.max(0, Math.min(CONTENT_CHANGE_IDLE_MS, untilMaxWait))
+    )
+  }
+
+  private emitContentChange(): void {
+    if (this.contentChangeTimer) clearTimeout(this.contentChangeTimer)
+    this.contentChangeTimer = null
+    this.contentChangePendingSince = null
     if (!this.view) return
     this.emitter.emit('content-change', { markdown: this.getMarkdown() })
   }

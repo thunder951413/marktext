@@ -26,6 +26,7 @@ vi.mock('@/services/notification', () => ({
 }))
 
 import { useEditorStore } from '@/store/editor'
+import { usePreferencesStore } from '@/store/preferences'
 import bus from '@/bus'
 
 // #3803: the store snapshots `currentFile.markdown` (refreshed only on the
@@ -165,5 +166,83 @@ describe('editor store — flush pending edits before saving (#3803)', () => {
     expect(flushOrder).toBeDefined()
     expect(renameOrder).toBeDefined()
     expect(flushOrder as number).toBeLessThan(renameOrder as number)
+  })
+})
+
+// The CodeMirror engine coalesces content-change on large documents, so the
+// store can hold a stale snapshot (and a stale isSaved) for up to a second.
+// Every path that reads either to close or save tabs must flush first.
+describe('editor store — flush pending edits before closing', () => {
+  let detach: (() => void) | undefined
+
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    detach?.()
+    detach = undefined
+  })
+
+  // Seeds a saved tab whose flush commits an edit and marks it dirty, as the
+  // engine's deferred content-change does through LISTEN_FOR_CONTENT_CHANGE.
+  function seedSavedTabWithPendingEdit(store: ReturnType<typeof useEditorStore>) {
+    seedCurrentFile(store, { isSaved: true })
+    if (store.currentFile) store.tabs = [store.currentFile]
+    const handler = () => {
+      if (!store.currentFile) return
+      store.currentFile.markdown = FLUSHED
+      store.currentFile.isSaved = false
+    }
+    bus.on('flush-active-editor', handler)
+    return () => bus.off('flush-active-editor', handler)
+  }
+
+  it('CLOSE_TAB asks to save the flushed edit instead of closing a stale clean tab', () => {
+    const store = useEditorStore()
+    detach = seedSavedTabWithPendingEdit(store)
+    const sendSpy = vi.spyOn(window.electron.ipcRenderer, 'send')
+
+    store.CLOSE_TAB()
+
+    const call = sendSpy.mock.calls.find((c) => c[0] === 'mt::save-and-close-tabs')
+    expect(call).toBeDefined()
+    expect((call?.[1] as Array<{ markdown: string }>)[0]?.markdown).toBe(FLUSHED)
+  })
+
+  it('ASK_FOR_SAVE_ALL sends the flushed markdown', () => {
+    const store = useEditorStore()
+    detach = seedSavedTabWithPendingEdit(store)
+    const sendSpy = vi.spyOn(window.electron.ipcRenderer, 'send')
+
+    store.ASK_FOR_SAVE_ALL(false)
+
+    const call = sendSpy.mock.calls.find((c) => c[0] === 'mt::save-tabs')
+    expect(call).toBeDefined()
+    expect((call?.[1] as Array<{ markdown: string }>)[0]?.markdown).toBe(FLUSHED)
+  })
+
+  it('closing the window lists the flushed edit as unsaved', async() => {
+    const store = useEditorStore()
+    usePreferencesStore().startUpAction = 'openNew'
+    detach = seedSavedTabWithPendingEdit(store)
+    const ipc = window.electron.ipcRenderer as typeof window.electron.ipcRenderer & {
+      invoke?: (...a: unknown[]) => Promise<unknown>
+    }
+    ipc.invoke = vi.fn().mockResolvedValue(true)
+    let onAskForClose: (() => void) | undefined
+    vi.spyOn(ipc, 'on').mockImplementation(((channel: string, listener: () => void) => {
+      if (channel === 'mt::ask-for-close') onAskForClose = listener
+    }) as typeof ipc.on)
+    const sendSpy = vi.spyOn(ipc, 'send')
+
+    store.LISTEN_FOR_CLOSE()
+    onAskForClose?.()
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    const call = sendSpy.mock.calls.find((c) => c[0] === 'mt::close-window-confirm')
+    expect(call).toBeDefined()
+    expect((call?.[1] as Array<{ markdown: string }>)[0]?.markdown).toBe(FLUSHED)
   })
 })

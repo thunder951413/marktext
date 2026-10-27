@@ -1419,11 +1419,12 @@ const cancelDerivedUpdates = () => {
   derivedUpdateTimer = null
 }
 
-const runDerivedUpdates = (id: string) => {
+// `markdown` is the snapshot the store received with the content-change, so
+// the word count still matches `tab.markdown` if newer edits are pending.
+const runDerivedUpdates = (id: string, markdown: string) => {
   derivedUpdateTimer = null
   // The user may have switched tabs or closed the editor while we waited.
   if (componentDestroyed || !editor.value || currentFile.value?.id !== id) return
-  const markdown = editor.value.getMarkdown()
   editorStore.UPDATE_TOC(getDesktopToc())
   const revision = ++wordCountRevision
   getWordCount(markdown).then((wordCount) => {
@@ -1432,9 +1433,9 @@ const runDerivedUpdates = (id: string) => {
   })
 }
 
-const scheduleDerivedUpdates = (id: string) => {
+const scheduleDerivedUpdates = (id: string, markdown: string) => {
   cancelDerivedUpdates()
-  derivedUpdateTimer = setTimeout(() => runDerivedUpdates(id), DERIVED_UPDATE_DELAY_MS)
+  derivedUpdateTimer = setTimeout(() => runDerivedUpdates(id, markdown), DERIVED_UPDATE_DELAY_MS)
 }
 
 onMounted(() => {
@@ -1574,7 +1575,7 @@ onMounted(() => {
       history: makeSyntheticHistory(id, markdown),
       blocks: editor.value.getState()
     })
-    scheduleDerivedUpdates(id)
+    scheduleDerivedUpdates(id, markdown)
   })
 
   // The engine does not emit `scroll`; listen on the scroll container directly
