@@ -83,7 +83,7 @@ describe('theme.ts style injection helpers', () => {
         setEditorWidth(value)
 
         expect(styleHtml(WIDTH_STYLE_ID)).toBe(
-          `:root { --editorAreaWidth: calc(100px + ${value}); --editor-area-width: calc(100px + ${value}); }`
+          `:root { --editorAreaWidth: calc(100px + ${value}); --editor-area-width: calc(100px + ${value}); --editorTextWidth: ${value}; }`
         )
       }
     )
