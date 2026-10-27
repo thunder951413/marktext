@@ -3,6 +3,14 @@ productName: marktext
 directories:
   buildResources: build
   output: ../../dist
+# Feed for electron-updater (written into app-update.yml). Without it the feed
+# is inferred from package.json `repository`, which is upstream marktext, while
+# release.yml publishes this fork's builds to the fork. Builds use
+# `--publish never`; release.yml uploads the assets itself.
+publish:
+  provider: github
+  owner: thunder951413
+  repo: marktext
 files:
   - '!**/.vscode/*'
   - '!src/*'
