@@ -5,6 +5,12 @@ export const RADIAL_SECTOR_GAP_DEG = 2.4
 export const RADIAL_VIEWPORT_MARGIN = 14
 export const RADIAL_MIN_MOVE_PX = 5
 export const RADIAL_HOVER_SHIFT_PX = 2.5
+export const RADIAL_FONT_WHEEL_THRESHOLD = 28
+export const RADIAL_MIN_FONT_SIZE = 12
+export const RADIAL_DEFAULT_MARKDOWN_FONT_SIZE = 16
+export const RADIAL_MAX_MARKDOWN_FONT_SIZE = 32
+export const RADIAL_DEFAULT_CODE_FONT_SIZE = 14
+export const RADIAL_MAX_CODE_FONT_SIZE = 28
 
 export interface Point2D {
   x: number
@@ -34,6 +40,11 @@ export interface TriggerEventLike {
   ctrlKey: boolean
   altKey: boolean
   shiftKey: boolean
+}
+
+export interface WheelFontStepResult {
+  step: -1 | 0 | 1
+  nextRemainder: number
 }
 
 const roundCoord = (value: number): number => {
@@ -197,4 +208,52 @@ export const isRadialTriggerMouseEvent = (
     return event.metaKey && !event.ctrlKey
   }
   return event.ctrlKey || event.metaKey
+}
+
+/**
+ * Convert a DOM WheelEvent delta into a smooth ±1px font-size step with
+ * trackpad accumulation and discrete mouse-wheel clamping.
+ * Negative delta (scroll up) increases font size (+1); positive delta decreases (-1).
+ */
+export const consumeFontWheelDelta = (
+  deltaY: number,
+  deltaX: number,
+  deltaMode: number,
+  prevRemainder: number,
+  threshold: number = RADIAL_FONT_WHEEL_THRESHOLD
+): WheelFontStepResult => {
+  const raw = deltaY !== 0 ? deltaY : deltaX
+  if (raw === 0) {
+    return { step: 0, nextRemainder: prevRemainder }
+  }
+
+  const scale = deltaMode === 1 ? 32 : deltaMode === 2 ? 120 : 1
+  const pixelDelta = raw * scale
+
+  const alignedRemainder =
+    prevRemainder !== 0 && Math.sign(pixelDelta) !== Math.sign(prevRemainder)
+      ? 0
+      : prevRemainder
+
+  if (Math.abs(pixelDelta) >= threshold) {
+    return {
+      step: pixelDelta < 0 ? 1 : -1,
+      nextRemainder: 0
+    }
+  }
+
+  const nextTotal = alignedRemainder + pixelDelta
+  if (Math.abs(nextTotal) >= threshold) {
+    const step: -1 | 1 = nextTotal < 0 ? 1 : -1
+    const leftover = nextTotal - Math.sign(nextTotal) * threshold
+    return {
+      step,
+      nextRemainder: Math.abs(leftover) < threshold ? leftover : 0
+    }
+  }
+
+  return {
+    step: 0,
+    nextRemainder: nextTotal
+  }
 }

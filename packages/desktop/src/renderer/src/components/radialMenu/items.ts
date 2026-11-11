@@ -30,6 +30,7 @@ export type RadialIconName =
   | 'import'
   | 'undo'
   | 'settings'
+  | 'font-size'
 
 export type RadialIpcChannel =
   | 'mt::open-setting-window'
@@ -40,6 +41,7 @@ export type RadialIpcChannel =
 export type RadialActionPayload =
   | { kind: 'bus'; event: string; payload?: unknown; focusEditor?: boolean }
   | { kind: 'ipc'; channel: RadialIpcChannel }
+  | { kind: 'font-size' }
 
 export interface RadialActionItem {
   id: string
@@ -173,13 +175,10 @@ export const buildRadialMenu = (ctx: RadialContextSnapshot): ResolvedRadialMenu 
             action: { kind: 'bus', event: 'format', payload: 'clear', focusEditor: true }
           },
           {
-            id: 'command-palette',
-            commandId: 'view.command-palette',
-            labelKey: 'radialMenu.items.commandPalette',
-            icon: 'command',
-            defaultShortcutMac: '⇧⌘P',
-            defaultShortcutOther: 'Ctrl+Shift+P',
-            action: { kind: 'bus', event: 'show-command-palette' }
+            id: 'font-size',
+            labelKey: 'radialMenu.items.fontSize',
+            icon: 'font-size',
+            action: { kind: 'font-size' }
           }
         ]
       }
@@ -257,13 +256,10 @@ export const buildRadialMenu = (ctx: RadialContextSnapshot): ResolvedRadialMenu 
             action: { kind: 'bus', event: 'view:toggle-layout-entry', payload: 'showSideBar' }
           },
           {
-            id: 'export-pdf',
-            commandId: 'file.export-file.pdf',
-            labelKey: 'radialMenu.items.exportPdf',
-            icon: 'export-pdf',
-            defaultShortcutMac: '⌃⌥E',
-            defaultShortcutOther: 'Ctrl+Alt+E',
-            action: { kind: 'bus', event: 'showExportDialog', payload: 'pdf' }
+            id: 'font-size',
+            labelKey: 'radialMenu.items.fontSize',
+            icon: 'font-size',
+            action: { kind: 'font-size' }
           }
         ]
       }
@@ -343,13 +339,10 @@ export const buildRadialMenu = (ctx: RadialContextSnapshot): ResolvedRadialMenu 
             action: { kind: 'bus', event: 'view:toggle-layout-entry', payload: 'showSideBar' }
           },
           {
-            id: 'preferences',
-            commandId: 'file.preferences',
-            labelKey: 'radialMenu.items.preferences',
-            icon: 'settings',
-            defaultShortcutMac: '⌘,',
-            defaultShortcutOther: 'Ctrl+,',
-            action: { kind: 'ipc', channel: 'mt::open-setting-window' }
+            id: 'font-size',
+            labelKey: 'radialMenu.items.fontSize',
+            icon: 'font-size',
+            action: { kind: 'font-size' }
           }
         ]
       }
@@ -428,13 +421,10 @@ export const buildRadialMenu = (ctx: RadialContextSnapshot): ResolvedRadialMenu 
             action: { kind: 'bus', event: 'view:toggle-layout-entry', payload: 'showSideBar' }
           },
           {
-            id: 'preferences',
-            commandId: 'file.preferences',
-            labelKey: 'radialMenu.items.preferences',
-            icon: 'settings',
-            defaultShortcutMac: '⌘,',
-            defaultShortcutOther: 'Ctrl+,',
-            action: { kind: 'ipc', channel: 'mt::open-setting-window' }
+            id: 'font-size',
+            labelKey: 'radialMenu.items.fontSize',
+            icon: 'font-size',
+            action: { kind: 'font-size' }
           }
         ]
       }

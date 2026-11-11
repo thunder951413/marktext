@@ -34,7 +34,7 @@
               class="ag-radial-sector-group"
               :class="{
                 'is-hovered': activeIndex === idx,
-                'is-toggled': !!menuState.items[idx]?.active
+                'is-toggled': isItemToggled(menuState.items[idx])
               }"
               :style="{
                 transform:
@@ -67,7 +67,7 @@
             :aria-label="t(item.labelKey)"
             :class="{
               'is-hovered': activeIndex === idx,
-              'is-toggled': !!item.active
+              'is-toggled': isItemToggled(item)
             }"
             :style="{
               left: `${sectors[idx]?.labelX ?? svgCenter}px`,
@@ -433,6 +433,28 @@
                 <path d="M20 20v-7a4 4 0 0 0-4-4H4" />
               </svg>
 
+              <!-- Font Size (Scrollable) -->
+              <svg
+                v-else-if="item.icon === 'font-size'"
+                viewBox="0 0 24 24"
+              >
+                <path d="M3.5 18L8 6l4.5 12" />
+                <line
+                  x1="5.2"
+                  y1="14"
+                  x2="10.8"
+                  y2="14"
+                />
+                <line
+                  x1="18"
+                  y1="6.5"
+                  x2="18"
+                  y2="17.5"
+                />
+                <polyline points="15.8 8.8 18 6.5 20.2 8.8" />
+                <polyline points="15.8 15.2 18 17.5 20.2 15.2" />
+              </svg>
+
               <!-- Settings -->
               <svg
                 v-else
@@ -447,7 +469,7 @@
               </svg>
 
               <span
-                v-if="item.active"
+                v-if="isItemToggled(item)"
                 class="ag-radial-active-dot"
               />
             </span>
@@ -458,7 +480,18 @@
             class="ag-radial-center"
             :class="{ 'is-active': !!activeItem }"
           >
-            <template v-if="activeItem">
+            <template v-if="activeItem?.action.kind === 'font-size'">
+              <span
+                class="ag-radial-center-value"
+                data-testid="radial-font-size-value"
+              >{{ activeFontSize }} px</span>
+              <kbd class="ag-radial-center-kbd">{{
+                activeFontSize !== defaultFontSize
+                  ? `↺ ${defaultFontSize}px`
+                  : t('radialMenu.wheelHint')
+              }}</kbd>
+            </template>
+            <template v-else-if="activeItem">
               <span class="ag-radial-center-title">{{ t(activeItem.labelKey) }}</span>
               <kbd
                 v-if="activeShortcut"
@@ -491,12 +524,18 @@ import { useCommandCenterStore } from '@/store/commandCenter'
 import { editorSelectionState } from '@/util/editorSelectionState'
 import {
   RADIAL_DEAD_ZONE_RADIUS,
+  RADIAL_DEFAULT_CODE_FONT_SIZE,
+  RADIAL_DEFAULT_MARKDOWN_FONT_SIZE,
   RADIAL_INNER_RADIUS,
+  RADIAL_MAX_CODE_FONT_SIZE,
+  RADIAL_MAX_MARKDOWN_FONT_SIZE,
+  RADIAL_MIN_FONT_SIZE,
   RADIAL_MIN_MOVE_PX,
   RADIAL_OUTER_RADIUS,
   buildSectorGeometry,
   cartesianToPolar,
   clampMenuOrigin,
+  consumeFontWheelDelta,
   getSectorIndexAtPoint,
   isRadialTriggerMouseEvent,
   type Point2D
@@ -537,8 +576,54 @@ const menuState = ref<ResolvedRadialMenu>(
 
 let isRightButtonHeld = false
 let hasMovedFromPress = false
+let hasAdjustedFontInSession = false
+let wheelRemainder = 0
 let pressRawPoint: Point2D = { x: 0, y: 0 }
 let suppressContextMenuUntil = 0
+
+const usesCodeFont = computed(
+  () =>
+    !!editorStore.currentFile &&
+    (isTextDocument(editorStore.currentFile) || !!preferencesStore.sourceCode)
+)
+
+const activeFontSize = computed(() =>
+  usesCodeFont.value ? preferencesStore.codeFontSize : preferencesStore.fontSize
+)
+
+const defaultFontSize = computed(() =>
+  usesCodeFont.value ? RADIAL_DEFAULT_CODE_FONT_SIZE : RADIAL_DEFAULT_MARKDOWN_FONT_SIZE
+)
+
+const maxFontSize = computed(() =>
+  usesCodeFont.value ? RADIAL_MAX_CODE_FONT_SIZE : RADIAL_MAX_MARKDOWN_FONT_SIZE
+)
+
+const setFontSize = (nextSize: number): void => {
+  if (!editorStore.currentFile) return
+  const clamped = Math.min(maxFontSize.value, Math.max(RADIAL_MIN_FONT_SIZE, Math.round(nextSize)))
+  if (clamped === activeFontSize.value) return
+  preferencesStore.SET_SINGLE_PREFERENCE({
+    type: usesCodeFont.value ? 'codeFontSize' : 'fontSize',
+    value: clamped
+  })
+}
+
+const stepFontSize = (delta: -1 | 1): void => {
+  setFontSize(activeFontSize.value + delta)
+}
+
+const resetFontSize = (): void => {
+  setFontSize(defaultFontSize.value)
+}
+
+const isItemToggled = (item: RadialActionItem | undefined): boolean => {
+  if (!item) return false
+  if (item.action.kind === 'font-size') {
+    return activeFontSize.value !== defaultFontSize.value
+  }
+  return !!item.active
+}
 
 const sectors = computed(() => {
   const count = menuState.value.items.length
@@ -666,6 +751,8 @@ const openMenuAt = (clientX: number, clientY: number): void => {
   activeIndex.value = -1
   hasLeftDeadZone.value = false
   hasMovedFromPress = false
+  hasAdjustedFontInSession = false
+  wheelRemainder = 0
   isRightButtonHeld = true
   suppressContextMenuUntil = Date.now() + 1200
   visible.value = true
@@ -676,6 +763,8 @@ const closeMenu = (): void => {
   activeIndex.value = -1
   hasLeftDeadZone.value = false
   hasMovedFromPress = false
+  hasAdjustedFontInSession = false
+  wheelRemainder = 0
   isRightButtonHeld = false
 }
 
@@ -685,6 +774,11 @@ const executeItem = (item: RadialActionItem | undefined): void => {
     return
   }
   const { action } = item
+  if (action.kind === 'font-size') {
+    resetFontSize()
+    wheelRemainder = 0
+    return
+  }
   closeMenu()
 
   requestAnimationFrame(() => {
@@ -781,6 +875,9 @@ const handleWindowMouseMove = (event: MouseEvent): void => {
     menuState.value.items.length,
     RADIAL_DEAD_ZONE_RADIUS
   )
+  if (sectorIdx !== activeIndex.value) {
+    wheelRemainder = 0
+  }
   activeIndex.value = sectorIdx
   if (sectorIdx >= 0) {
     hasLeftDeadZone.value = true
@@ -798,12 +895,47 @@ const handleWindowMouseUp = (event: MouseEvent): void => {
   suppressContextMenuUntil = Date.now() + 350
 
   if (activeIndex.value >= 0) {
-    executeItem(menuState.value.items[activeIndex.value])
+    const hovered = menuState.value.items[activeIndex.value]
+    if (hovered?.action.kind === 'font-size') {
+      // If the user already scrolled the wheel while holding right-click,
+      // releasing finishes the gesture cleanly; otherwise keep the disc open
+      // so they can comfortably roll the wheel with fingers relaxed.
+      if (hasAdjustedFontInSession) {
+        closeMenu()
+      }
+      return
+    }
+    executeItem(hovered)
     return
   }
 
   if (hasLeftDeadZone.value) {
     closeMenu()
+  }
+}
+
+const handleWindowWheel = (event: WheelEvent): void => {
+  if (!visible.value) return
+
+  // Always prevent underlying document scroll and Cmd+Wheel window zoom while
+  // the radial HUD is active; adjust font size live when hovering the sector.
+  event.preventDefault()
+  event.stopPropagation()
+
+  if (activeItem.value?.action.kind !== 'font-size') {
+    return
+  }
+
+  const { step, nextRemainder } = consumeFontWheelDelta(
+    event.deltaY,
+    event.deltaX,
+    event.deltaMode,
+    wheelRemainder
+  )
+  wheelRemainder = nextRemainder
+  if (step !== 0) {
+    hasAdjustedFontInSession = true
+    stepFontSize(step)
   }
 }
 
@@ -827,6 +959,29 @@ const handleWindowKeyDown = (event: KeyboardEvent): void => {
     event.stopPropagation()
     closeMenu()
     return
+  }
+
+  if (activeItem.value?.action.kind === 'font-size') {
+    if (event.key === 'ArrowUp' || event.key === '+' || event.key === '=') {
+      event.preventDefault()
+      event.stopPropagation()
+      hasAdjustedFontInSession = true
+      stepFontSize(1)
+      return
+    }
+    if (event.key === 'ArrowDown' || event.key === '-') {
+      event.preventDefault()
+      event.stopPropagation()
+      hasAdjustedFontInSession = true
+      stepFontSize(-1)
+      return
+    }
+    if (event.key === '0') {
+      event.preventDefault()
+      event.stopPropagation()
+      resetFontSize()
+      return
+    }
   }
 
   if ((event.key === 'Enter' || event.key === ' ') && activeIndex.value >= 0) {
@@ -856,6 +1011,7 @@ onMounted(() => {
   window.addEventListener('mousedown', handleWindowMouseDown, true)
   window.addEventListener('mousemove', handleWindowMouseMove, { passive: true })
   window.addEventListener('mouseup', handleWindowMouseUp, true)
+  window.addEventListener('wheel', handleWindowWheel, { capture: true, passive: false })
   window.addEventListener('contextmenu', handleWindowContextMenu, true)
   window.addEventListener('keydown', handleWindowKeyDown, true)
   window.addEventListener('blur', handleWindowDismiss)
@@ -866,6 +1022,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('mousedown', handleWindowMouseDown, true)
   window.removeEventListener('mousemove', handleWindowMouseMove)
   window.removeEventListener('mouseup', handleWindowMouseUp, true)
+  window.removeEventListener('wheel', handleWindowWheel, true)
   window.removeEventListener('contextmenu', handleWindowContextMenu, true)
   window.removeEventListener('keydown', handleWindowKeyDown, true)
   window.removeEventListener('blur', handleWindowDismiss)
@@ -1050,6 +1207,15 @@ onBeforeUnmount(() => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.ag-radial-center-value {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--themeColor);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .ag-radial-center-kbd {

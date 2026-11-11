@@ -994,6 +994,7 @@
   "radialMenu": {
     "ariaLabel": "Quick Actions Radial Menu",
     "cancel": "Cancel",
+    "wheelHint": "↕ Scroll",
     "modes": {
       "selection": "Format",
       "markdown": "Actions",
@@ -1026,7 +1027,8 @@
       "save": "Save",
       "saveAs": "Save As",
       "undo": "Undo",
-      "preferences": "Settings"
+      "preferences": "Settings",
+      "fontSize": "Text Size"
     }
   }
 }

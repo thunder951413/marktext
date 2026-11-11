@@ -994,6 +994,7 @@
   "radialMenu": {
     "ariaLabel": "快捷扇形菜单",
     "cancel": "取消",
+    "wheelHint": "↕ 滚轮",
     "modes": {
       "selection": "选中格式",
       "markdown": "快捷操作",
@@ -1026,7 +1027,8 @@
       "save": "保存文档",
       "saveAs": "另存为",
       "undo": "撤销",
-      "preferences": "偏好设置"
+      "preferences": "偏好设置",
+      "fontSize": "文本大小"
     }
   }
 }

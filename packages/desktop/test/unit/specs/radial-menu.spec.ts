@@ -6,6 +6,7 @@ import {
   buildSectorGeometry,
   cartesianToPolar,
   clampMenuOrigin,
+  consumeFontWheelDelta,
   getSectorIndexAtPoint,
   isRadialTriggerMouseEvent,
   polarToCartesian
@@ -139,10 +140,37 @@ describe('radialMenu geometry & hit-testing', () => {
     const polar = cartesianToPolar(132, 132, east.labelX, east.labelY)
     expect(polar.angleDeg).toBeCloseTo(90, 1)
   })
+
+  it('normalizes discrete mouse wheel notches and smooth trackpad glides for font size', () => {
+    // Discrete physical wheel notch up (-120) -> exact +1px, 0 remainder
+    expect(consumeFontWheelDelta(-120, 0, 0, 0)).toEqual({ step: 1, nextRemainder: 0 })
+    // Discrete physical wheel notch down (+100) -> exact -1px, 0 remainder
+    expect(consumeFontWheelDelta(100, 0, 0, 0)).toEqual({ step: -1, nextRemainder: 0 })
+
+    // Line-mode wheel (deltaMode = 1)
+    expect(consumeFontWheelDelta(-3, 0, 1, 0)).toEqual({ step: 1, nextRemainder: 0 })
+
+    // Shift+Wheel horizontal axis conversion fallback (deltaY = 0, deltaX = -100)
+    expect(consumeFontWheelDelta(0, -100, 0, 0)).toEqual({ step: 1, nextRemainder: 0 })
+
+    // Smooth trackpad glide: four -8px frames accumulate to -32px -> step +1, remainder -4
+    let rem = 0
+    for (let i = 0; i < 3; i++) {
+      const r = consumeFontWheelDelta(-8, 0, 0, rem)
+      expect(r.step).toBe(0)
+      rem = r.nextRemainder
+    }
+    const fourth = consumeFontWheelDelta(-8, 0, 0, rem)
+    expect(fourth).toEqual({ step: 1, nextRemainder: -4 })
+
+    // Direction reversal clears stale opposite-sign remainder immediately
+    const reversed = consumeFontWheelDelta(10, 0, 0, -24)
+    expect(reversed).toEqual({ step: 0, nextRemainder: 10 })
+  })
 })
 
 describe('radialMenu context-aware item evaluation', () => {
-  it('resolves 8 formatting actions with live active flags when prose text is selected in WYSIWYG', () => {
+  it('resolves formatting actions plus NW font-size dial when prose text is selected in WYSIWYG', () => {
     const ctx = baseContext({
       hasSelection: true,
       activeFormats: { strong: true, inline_code: true }
@@ -159,11 +187,12 @@ describe('radialMenu context-aware item evaluation', () => {
       'format-highlight',
       'format-strike',
       'format-clear',
-      'command-palette'
+      'font-size'
     ])
     expect(menu.items[0]?.active).toBe(true)
     expect(menu.items[1]?.active).toBe(false)
     expect(menu.items[2]?.active).toBe(true)
+    expect(menu.items[7]?.action.kind).toBe('font-size')
   })
 
   it('falls back to markdown-default when selection is inside a code fence or disabled block', () => {
@@ -174,7 +203,7 @@ describe('radialMenu context-aware item evaluation', () => {
     expect(resolveRadialMenuMode(inDisabled)).toBe('markdown-default')
   })
 
-  it('provides 8 high-frequency editing, block, view, and export actions in default Markdown mode', () => {
+  it('provides 8 high-frequency editing, block, view, and font-size actions in default Markdown mode', () => {
     const menu = buildRadialMenu(baseContext({ showSideBar: true, isTaskList: true }))
     expect(menu.mode).toBe('markdown-default')
     expect(menu.items).toHaveLength(8)
@@ -186,23 +215,26 @@ describe('radialMenu context-aware item evaluation', () => {
       'insert-task-list',
       'edit-find',
       'toggle-sidebar',
-      'export-pdf'
+      'font-size'
     ])
     expect(menu.items[4]?.active).toBe(true) // task list active
     expect(menu.items[6]?.active).toBe(true) // sidebar active
+    expect(menu.items[7]?.action.kind).toBe('font-size')
   })
 
-  it('adapts cleanly to Source Code mode, Plain Text mode, and Empty Workspace launchpad', () => {
+  it('keeps NW font-size consistent across Source Code and Plain Text modes, and adapts Empty Workspace', () => {
     const sourceMenu = buildRadialMenu(baseContext({ sourceCode: true, hasSelection: true }))
     expect(sourceMenu.mode).toBe('markdown-source')
     expect(sourceMenu.items).toHaveLength(8)
     expect(sourceMenu.items[1]?.id).toBe('toggle-source')
     expect(sourceMenu.items[1]?.active).toBe(true)
+    expect(sourceMenu.items[7]?.id).toBe('font-size')
 
     const plainTextMenu = buildRadialMenu(baseContext({ isPlainText: true }))
     expect(plainTextMenu.mode).toBe('plain-text')
     expect(plainTextMenu.items).toHaveLength(8)
     expect(plainTextMenu.items.some((i) => i.id === 'insert-table')).toBe(false)
+    expect(plainTextMenu.items[7]?.id).toBe('font-size')
 
     const emptyMenu = buildRadialMenu(baseContext({ hasCurrentFile: false }))
     expect(emptyMenu.mode).toBe('empty')
