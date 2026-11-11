@@ -990,5 +990,43 @@
       "switchError": "Spellcheck switch error for {languageCode}, {error}",
       "title": "Spellcheck"
     }
+  },
+  "radialMenu": {
+    "ariaLabel": "Quick Actions Radial Menu",
+    "cancel": "Cancel",
+    "modes": {
+      "selection": "Format",
+      "markdown": "Actions",
+      "source": "Source",
+      "plainText": "Text",
+      "workspace": "Launch"
+    },
+    "items": {
+      "commandPalette": "Palette",
+      "sourceMode": "Source",
+      "codeBlock": "Code Block",
+      "table": "Table",
+      "taskList": "Task List",
+      "find": "Find",
+      "searchFolder": "Search All",
+      "sidebar": "Sidebar",
+      "exportPdf": "Export PDF",
+      "bold": "Bold",
+      "italic": "Italic",
+      "inlineCode": "Code",
+      "link": "Link",
+      "highlight": "Highlight",
+      "strike": "Strike",
+      "clearFormat": "Clear",
+      "newTab": "New Tab",
+      "newFile": "New File",
+      "openFile": "Open File",
+      "openFolder": "Open Folder",
+      "importFile": "Import",
+      "save": "Save",
+      "saveAs": "Save As",
+      "undo": "Undo",
+      "preferences": "Settings"
+    }
   }
 }

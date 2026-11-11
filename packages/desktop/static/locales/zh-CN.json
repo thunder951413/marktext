@@ -990,5 +990,43 @@
       "languageMissing": "拼写检查语言缺失",
       "switchError": "拼写检查切换错误"
     }
+  },
+  "radialMenu": {
+    "ariaLabel": "快捷扇形菜单",
+    "cancel": "取消",
+    "modes": {
+      "selection": "选中格式",
+      "markdown": "快捷操作",
+      "source": "源码模式",
+      "plainText": "纯文本",
+      "workspace": "工作区"
+    },
+    "items": {
+      "commandPalette": "命令面板",
+      "sourceMode": "源码模式",
+      "codeBlock": "代码块",
+      "table": "插入表格",
+      "taskList": "待办列表",
+      "find": "查找替换",
+      "searchFolder": "全局搜索",
+      "sidebar": "侧边栏",
+      "exportPdf": "导出 PDF",
+      "bold": "加粗",
+      "italic": "斜体",
+      "inlineCode": "行内代码",
+      "link": "超链接",
+      "highlight": "高亮",
+      "strike": "删除线",
+      "clearFormat": "清除格式",
+      "newTab": "新建标签",
+      "newFile": "新建文档",
+      "openFile": "打开文件",
+      "openFolder": "打开目录",
+      "importFile": "导入文档",
+      "save": "保存文档",
+      "saveAs": "另存为",
+      "undo": "撤销",
+      "preferences": "偏好设置"
+    }
   }
 }

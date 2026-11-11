@@ -24,6 +24,10 @@ import { useLayoutStore } from './layout'
 import { useMainStore } from '.'
 import { t } from '../i18n'
 import { debouncedSendBufferedState, sendBufferedState } from './bufferedState'
+import {
+  updateEditorSelectionFormats,
+  updateEditorSelectionState
+} from '../util/editorSelectionState'
 import type {
   IFileState,
   FileNotification,
@@ -1542,11 +1546,20 @@ export const useEditorStore = defineStore('editor', {
         }
       }
 
+      const menuState = createApplicationMenuState(changes)
+      updateEditorSelectionState({
+        hasSelection: start.key !== end.key || start.offset !== end.offset,
+        isDisabled: menuState.isDisabled,
+        isCodeFences: menuState.isCodeFences,
+        isTable: menuState.isTable,
+        isTaskList: menuState.isTaskList
+      })
+
       const { windowId } = window.marktext?.env ?? { windowId: -1 }
       window.electron.ipcRenderer.send(
         'mt::editor-selection-changed',
         windowId,
-        createApplicationMenuState(changes)
+        menuState
       )
     },
 
@@ -1566,11 +1579,14 @@ export const useEditorStore = defineStore('editor', {
     },
 
     SELECTION_FORMATS(formats: SelectionFormat[]): void {
+      const formatState = createSelectionFormatState(formats)
+      updateEditorSelectionFormats(formatState)
+
       const { windowId } = window.marktext?.env ?? { windowId: -1 }
       window.electron.ipcRenderer.send(
         'mt::update-format-menu',
         windowId,
-        createSelectionFormatState(formats)
+        formatState
       )
     },
 
