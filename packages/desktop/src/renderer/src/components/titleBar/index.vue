@@ -102,6 +102,43 @@
           </svg>
         </button>
         <theme-switcher />
+        <div
+          class="font-size-controls title-no-drag"
+          role="group"
+          :aria-label="fontSizeLabel"
+        >
+          <button
+            type="button"
+            data-testid="font-size-decrease"
+            :aria-label="t('titleBar.fontSizeDecrease')"
+            :title="`${fontSizeLabel}: ${t('titleBar.fontSizeDecrease')}`"
+            :disabled="!currentFile || activeFontSize <= 12"
+            @click.stop="changeFontSize(-1)"
+          >
+            A−
+          </button>
+          <button
+            type="button"
+            class="font-size-value"
+            data-testid="font-size-reset"
+            :aria-label="t('titleBar.fontSizeReset', { size: defaultFontSize })"
+            :title="`${fontSizeLabel}: ${t('titleBar.fontSizeReset', { size: defaultFontSize })}`"
+            :disabled="!currentFile"
+            @click.stop="setFontSize(defaultFontSize)"
+          >
+            {{ activeFontSize }} px
+          </button>
+          <button
+            type="button"
+            data-testid="font-size-increase"
+            :aria-label="t('titleBar.fontSizeIncrease')"
+            :title="`${fontSizeLabel}: ${t('titleBar.fontSizeIncrease')}`"
+            :disabled="!currentFile || activeFontSize >= maxFontSize"
+            @click.stop="changeFontSize(1)"
+          >
+            A+
+          </button>
+        </div>
         <div class="zoom-controls title-no-drag">
           <button
             type="button"
@@ -218,6 +255,7 @@ import { ArrowRight } from '@element-plus/icons-vue'
 import ThemeSwitcher from './themeSwitcher.vue'
 import WordCountBadge from './wordCountBadge.vue'
 import { menuPositionBelow } from './titlebarPopup'
+import { isTextDocument } from 'common/textDocument'
 import type { FileWordCount } from '@shared/types/files'
 import {
   DEFAULT_ZOOM_FACTOR,
@@ -266,8 +304,23 @@ onMounted(async () => {
   } catch {}
 })
 
-const { titleBarStyle, zoom } = storeToRefs(preferencesStore)
+const { titleBarStyle, zoom, fontSize, codeFontSize, sourceCode } = storeToRefs(preferencesStore)
 const { showTabBar, showSideBar, rightColumn } = storeToRefs(layoutStore)
+
+const { currentFile } = storeToRefs(editorStore)
+const usesCodeFont = computed(() => !!currentFile.value && (isTextDocument(currentFile.value) || sourceCode.value))
+const activeFontSize = computed(() => usesCodeFont.value ? codeFontSize.value : fontSize.value)
+const defaultFontSize = computed(() => usesCodeFont.value ? 14 : 16)
+const maxFontSize = computed(() => usesCodeFont.value ? 28 : 32)
+const fontSizeLabel = computed(() => t(usesCodeFont.value ? 'titleBar.codeFontSize' : 'titleBar.markdownFontSize'))
+const setFontSize = (value: number) => {
+  if (!currentFile.value) return
+  preferencesStore.SET_SINGLE_PREFERENCE({
+    type: usesCodeFont.value ? 'codeFontSize' : 'fontSize',
+    value: Math.min(maxFontSize.value, Math.max(12, value))
+  })
+}
+const changeFontSize = (direction: -1 | 1) => setFontSize(activeFontSize.value + direction)
 
 const zoomPercent = computed(() => Math.round(zoom.value * 100))
 
@@ -441,7 +494,7 @@ img {
   vertical-align: top;
 }
 .title {
-  padding: 0 270px;
+  padding: 0 390px;
   height: 100%;
   line-height: var(--titleBarHeight);
   font-size: 14px;
@@ -516,9 +569,9 @@ div.title > span {
 }
 
 /* macOS: keep the same left-to-right order as the Windows/Linux toolbar
-   (TOC, theme, zoom, word count) instead of the reversed window-button order. */
+   (TOC, theme, font size, zoom, word count) instead of the reversed window-button order. */
 .right-toolbar.editor-tools {
-  width: 270px;
+  width: 390px;
   padding-right: 8px;
   box-sizing: border-box;
   flex-direction: row;
@@ -564,6 +617,7 @@ div.title > span {
   background: var(--sideBarBgColor);
 }
 
+.font-size-controls,
 .zoom-controls {
   height: 24px;
   display: inline-flex;
@@ -596,6 +650,7 @@ div.title > span {
     cursor: default;
   }
 
+  & .font-size-value,
   & .zoom-value {
     min-width: 48px;
     border-left: 1px solid var(--editorColor10);
@@ -614,7 +669,7 @@ div.title > span {
   }
 
   .right-toolbar.editor-tools {
-    width: 195px;
+    width: auto;
   }
 }
 

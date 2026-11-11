@@ -224,6 +224,11 @@
     "searchLimited": "仅搜索前 {count} 个结果"
   },
   "titleBar": {
+    "markdownFontSize": "Markdown 正文字号",
+    "codeFontSize": "纯文本／代码字号",
+    "fontSizeDecrease": "缩小字号",
+    "fontSizeIncrease": "放大字号",
+    "fontSizeReset": "恢复默认字号 {size} px",
     "menu": "应用菜单",
     "themeSwitcher": {
       "title": "主题（快速切换）",

@@ -224,6 +224,11 @@
     "searchLimited": "Searched limited to first {count} results"
   },
   "titleBar": {
+    "markdownFontSize": "Markdown font size",
+    "codeFontSize": "Text / code font size",
+    "fontSizeDecrease": "Decrease font size",
+    "fontSizeIncrease": "Increase font size",
+    "fontSizeReset": "Reset font size to {size} px",
     "menu": "Application menu",
     "themeSwitcher": {
       "title": "Theme (quick switch)",

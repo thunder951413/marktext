@@ -100,6 +100,8 @@ import { languages } from '@codemirror/language-data'
 import { getCM, vim } from '@replit/codemirror-vim'
 import { isVimModeEnabled } from '@/util/vim/enabled'
 import { installVimExCommands } from '@/util/vim/exCommands'
+import { usePreferencesStore } from '@/store/preferences'
+import { DEFAULT_CODE_FONT_FAMILY } from '@/config'
 import { useEditorStore } from '@/store/editor'
 import { debouncedSendBufferedState } from '@/store/bufferedState'
 import { ENCODING_NAME_MAP, getEncodingName } from 'common/encoding'
@@ -111,6 +113,7 @@ import { t, getCurrentLanguage } from '@/i18n'
 
 const editorStore = useEditorStore()
 const { currentFile } = storeToRefs(editorStore)
+const { codeFontSize, codeFontFamily } = storeToRefs(usePreferencesStore())
 const container = ref<HTMLDivElement>()
 const wrapping = ref(false)
 const encodingChoice = ref('utf8')
@@ -127,6 +130,7 @@ const lineEndingMode = new Compartment()
 const wrapMode = new Compartment()
 const languageMode = new Compartment()
 const editable = new Compartment()
+const typography = new Compartment()
 let view: EditorView | undefined
 let activeId = ''
 let activePathname = ''
@@ -172,7 +176,16 @@ const loadLanguage = async (tab: IFileState) => {
     if (view && revision === languageRevision) view.dispatch({ effects: languageMode.reconfigure(extension) })
   } catch (error) { console.warn('Could not load syntax highlighting', error) }
 }
+const textTypography = () => EditorView.theme({
+  '&': { fontSize: `${codeFontSize.value}px` },
+  '.cm-scroller': { fontFamily: `${codeFontFamily.value}, ${DEFAULT_CODE_FONT_FAMILY}` }
+})
+watch([codeFontSize, codeFontFamily], () => {
+  view?.dispatch({ effects: typography.reconfigure(textTypography()) })
+  view?.requestMeasure()
+})
 const extensions = () => [
+  typography.of(textTypography()),
   ...(isVimModeEnabled() ? [vim()] : []),
   EditorState.phrases.of(getCurrentLanguage().startsWith('zh') ? { Find: '查找', Replace: '替换', next: '下一处', previous: '上一处', all: '全选', 'match case': '区分大小写', regexp: '正则表达式', 'by word': '全字匹配', replace: '替换', 'replace all': '全部替换', close: '关闭' } : {}),
   history(), lineNumbers(), highlightActiveLine(), highlightActiveLineGutter(),
@@ -197,7 +210,7 @@ const extensions = () => [
   }),
   EditorView.theme({
     '&': { height: '100%', backgroundColor: 'transparent', color: 'var(--editorColor)' },
-    '.cm-scroller': { overflow: 'auto', fontFamily: 'var(--codeFontFamily, monospace)' },
+    '.cm-scroller': { overflow: 'auto' },
     '.cm-content': { padding: '12px 0' },
     '.cm-gutters': { backgroundColor: 'var(--editorBgColor)', color: 'var(--iconColor)', border: 'none' },
     '.cm-activeLine, .cm-activeLineGutter': { backgroundColor: 'var(--floatHoverColor)' },
