@@ -95,40 +95,53 @@ const handleClick = (data: { slug?: unknown }): void => {
 .side-bar-toc {
   height: calc(100% - 35px);
   margin: 0;
-  padding: 0;
+  padding: 0 6px;
   list-style: none;
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
 }
 
 .side-bar-toc .title {
   color: var(--sideBarTitleColor);
   font-weight: 600;
-  font-size: 16px;
-  margin: 37px 0 10px 0;
-  padding-left: 25px;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  margin: 34px 0 8px 0;
+  padding: 0 10px 8px;
+  border-bottom: 1px solid var(--editorColor10);
 }
 
 .side-bar-toc .el-tree-node {
-  margin-top: 8px;
+  margin-top: 2px;
 }
 
 .side-bar-toc .el-tree {
   background: transparent;
   color: var(--sideBarColor);
+  font-size: 13px;
+}
+
+.side-bar-toc .el-tree-node__content {
+  height: 28px;
+  border-radius: 5px;
+  padding-right: 8px;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .side-bar-toc .el-tree-node:focus > .el-tree-node__content {
-  background-color: var(--sideBarItemHoverBgColor);
+  background-color: var(--themeColor10);
+  color: var(--themeColor);
 }
 
 .side-bar-toc .el-tree-node__content:hover {
   background: var(--sideBarItemHoverBgColor);
+  color: var(--sideBarTitleColor);
 }
 
 .side-bar-toc > li {
-  font-size: 14px;
-  margin-bottom: 15px;
+  font-size: 13px;
+  margin-bottom: 10px;
   cursor: pointer;
 }
 .side-bar-toc-overflow {
@@ -142,6 +155,9 @@ const handleClick = (data: { slug?: unknown }): void => {
 .side-bar-toc-wordwrap .el-tree-node__content {
   white-space: normal;
   height: auto;
-  min-height: 26px;
+  min-height: 28px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  line-height: 1.4;
 }
 </style>

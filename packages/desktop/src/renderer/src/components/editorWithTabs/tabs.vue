@@ -272,10 +272,18 @@ onBeforeUnmount(() => {
 <style scoped>
 .close-icon {
   cursor: pointer;
-  transition: opacity 0.15s ease-in-out;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: opacity 0.15s ease, background-color 0.15s ease, color 0.15s ease;
 }
 
 .close-icon:hover {
+  background: var(--editorColor10);
   color: var(--focusColor);
 }
 
@@ -283,9 +291,12 @@ onBeforeUnmount(() => {
   position: relative;
   display: flex;
   flex-direction: row;
-  height: 28px;
+  align-items: center;
+  height: 34px;
   user-select: none;
-  box-shadow: 0px 0px 9px 2px rgba(0, 0, 0, 0.1);
+  background: var(--editorColor04);
+  border-bottom: 1px solid var(--editorColor10);
+  box-sizing: border-box;
   overflow: hidden;
   &:hover > .new-file {
     opacity: 1 !important;
@@ -293,7 +304,7 @@ onBeforeUnmount(() => {
 }
 .scrollable-tabs {
   flex: 0 1 auto;
-  height: 28px;
+  height: 34px;
   overflow: hidden;
 }
 .tabs-container {
@@ -301,7 +312,7 @@ onBeforeUnmount(() => {
   list-style: none;
   margin: 0;
   padding: 0;
-  height: 28px;
+  height: 34px;
   position: relative;
   display: flex;
   flex-direction: row;
@@ -311,16 +322,20 @@ onBeforeUnmount(() => {
     display: none;
   }
   & > li {
-    transition: all 0.15s ease-in-out;
+    transition: background-color 0.15s ease, color 0.15s ease;
     position: relative;
-    padding: 0 8px;
+    padding: 0 12px;
+    gap: 6px;
     color: var(--editorColor50);
-    font-size: 12px;
-    line-height: 28px;
-    height: 28px;
-    max-width: 280px;
+    font-size: 12.5px;
+    line-height: 34px;
+    height: 34px;
+    max-width: 240px;
+    border-right: 1px solid var(--editorColor10);
+    box-sizing: border-box;
     display: flex;
     align-items: center;
+    cursor: pointer;
     &[aria-grabbed='true'] {
       color: var(--editorColor30) !important;
     }
@@ -331,7 +346,8 @@ onBeforeUnmount(() => {
       outline: none;
     }
     &:hover {
-      background: var(--floatBgColor) !important;
+      background: var(--sideBarItemHoverBgColor);
+      color: var(--editorColor80);
     }
     &:hover > .close-icon {
       opacity: 1;
@@ -339,16 +355,16 @@ onBeforeUnmount(() => {
     &:hover > .unsaved-dot {
       display: none;
     }
-    & > span {
+    & > span:first-child {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      margin-right: 3px;
+      flex: 1 1 auto;
     }
     & > .unsaved-dot {
       display: none;
-      width: 6px;
-      height: 6px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
       background: var(--themeColor);
       flex-shrink: 0;
@@ -369,7 +385,9 @@ onBeforeUnmount(() => {
     }
   }
   & > li.active {
-    background: var(--itemBgColor);
+    background: var(--editorBgColor);
+    color: var(--editorColor);
+    font-weight: 500;
     z-index: 3;
     &:after {
       content: '';
@@ -381,6 +399,9 @@ onBeforeUnmount(() => {
       background: var(--themeColor);
     }
     & > .close-icon {
+      opacity: 0.75;
+    }
+    & > .close-icon:hover {
       opacity: 1;
     }
     & > .unsaved-dot {
@@ -390,23 +411,28 @@ onBeforeUnmount(() => {
 }
 .editor-tabs > .new-file {
   flex: 0 0 28px;
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
+  margin: 0 4px;
+  border-radius: 6px;
   border-right: none;
   background: transparent;
   display: flex;
   align-items: center;
-  justify-content: space-around;
+  justify-content: center;
   cursor: pointer;
   color: var(--editorColor50);
-  opacity: 0;
+  opacity: 0.65;
+  transition: opacity 0.15s ease, background-color 0.15s ease, color 0.15s ease;
   &.always-visible {
     opacity: 1;
   }
 }
 
 .editor-tabs > .new-file:hover {
-  transition: all 0.15s ease-in-out;
+  opacity: 1;
+  background: var(--editorColor10);
+  color: var(--focusColor);
   & > svg {
     fill: var(--focusColor);
   }

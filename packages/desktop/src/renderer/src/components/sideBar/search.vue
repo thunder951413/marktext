@@ -62,7 +62,7 @@
     >
       <el-button
         type="primary"
-        size="mini"
+        size="small"
         @click="cancelSearcher"
       >
         {{ t('sideBar.search.cancel') }} <VideoPause />
@@ -104,7 +104,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useLayoutStore } from '@/store/layout'
 import { useProjectStore } from '@/store/project'
 import { useEditorStore } from '@/store/editor'
@@ -330,6 +330,15 @@ onMounted(() => {
     search()
   }
 })
+
+onBeforeUnmount(() => {
+  bus.off('findInFolder', handleFindInFolder)
+  stopShowSearchCancelAreaTimer()
+  if (searcherRunning.value && searcherCancelCallback) {
+    searcherCancelCallback()
+    searcherCancelCallback = null
+  }
+})
 </script>
 
 <style scoped>
@@ -340,14 +349,19 @@ onMounted(() => {
 }
 .search-wrapper {
   display: flex;
-  margin: 37px 8px 10px 8px;
-  padding: 0 6px;
-  border-radius: 4px;
-  height: 28px;
+  margin: 34px 10px 10px 10px;
+  padding: 0 6px 0 8px;
+  border-radius: 6px;
+  height: 30px;
   border: 1px solid var(--floatBorderColor);
   background: var(--inputBgColor);
   box-sizing: border-box;
   align-items: center;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  &:focus-within {
+    border-color: var(--themeColor);
+    box-shadow: 0 0 0 2px var(--themeColor20);
+  }
   & > input {
     color: var(--sideBarColor);
     background: transparent;
@@ -362,18 +376,23 @@ onMounted(() => {
   & > .controls {
     display: flex;
     flex-shrink: 0;
+    gap: 2px;
     margin-top: 0;
     & > span {
       cursor: pointer;
-      width: 18px;
-      height: 18px;
-      margin-left: 0;
-      margin-right: 0;
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
       display: flex;
       align-items: center;
       justify-content: center;
+      transition: background-color 0.15s ease;
       &:hover {
+        background: var(--sideBarItemHoverBgColor);
         color: var(--sideBarIconColor);
+      }
+      &.active {
+        background: var(--themeColor10);
       }
       & > svg {
         width: 14px;
@@ -409,10 +428,10 @@ onMounted(() => {
 }
 .search-result-info,
 .search-message-section {
-  padding-left: 15px;
-  margin-bottom: 5px;
+  padding: 0 12px 6px;
+  margin-bottom: 4px;
   font-size: 12px;
-  color: var(--sideBarColor);
+  color: var(--sideBarTextColor);
 }
 .empty,
 .search-result {
@@ -424,7 +443,7 @@ onMounted(() => {
   }
 }
 .empty {
-  font-size: 14px;
+  font-size: 13px;
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -437,6 +456,7 @@ onMounted(() => {
   }
   & .no-data .el-button {
     margin-top: 20px;
+    border-radius: 6px;
   }
   & .no-data .el-button.is-text.is-has-bg {
     background-color: var(--buttonPrimaryBgColor);

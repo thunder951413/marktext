@@ -48,7 +48,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useLayoutStore } from '@/store/layout'
 import { useProjectStore } from '@/store/project'
 import { useEditorStore } from '@/store/editor'
@@ -81,6 +81,8 @@ const finalSideBarWidth = computed<number>(() => {
   return sideBarViewWidth.value < 220 ? 220 : sideBarViewWidth.value
 })
 
+let cleanupDragBar: (() => void) | null = null
+
 onMounted(() => {
   nextTick(() => {
     const dragBarEl = dragBar.value
@@ -111,7 +113,17 @@ onMounted(() => {
     }
 
     dragBarEl.addEventListener('mousedown', mouseDownHandler, false)
+    cleanupDragBar = () => {
+      dragBarEl.removeEventListener('mousedown', mouseDownHandler, false)
+      document.removeEventListener('mousemove', mouseMoveHandler, false)
+      document.removeEventListener('mouseup', mouseUpHandler, false)
+    }
   })
+})
+
+onBeforeUnmount(() => {
+  cleanupDragBar?.()
+  cleanupDragBar = null
 })
 
 const handleLeftIconClick = (name: string): void => {
@@ -151,7 +163,7 @@ const handleLeftBottomClick = (name: string): void => {
   color: var(--sideBarColor);
   user-select: none;
   background: var(--sideBarBgColor);
-  border-right: 1px solid var(--itemBgColor);
+  border-right: 1px solid var(--editorColor10);
 }
 
 .side-bar .left-column svg {
@@ -161,10 +173,12 @@ const handleLeftBottomClick = (name: string): void => {
 .left-column {
   height: 100%;
   width: 45px;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding-top: 28px;
+  padding: 32px 0 8px;
+  border-right: 1px solid var(--editorColor10);
   box-sizing: border-box;
 }
 
@@ -176,40 +190,67 @@ const handleLeftBottomClick = (name: string): void => {
   list-style: none;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  gap: 2px;
   margin: 0;
   padding: 0;
 }
 
 .left-column ul > li {
+  position: relative;
   width: 45px;
-  height: 45px;
+  height: 40px;
   margin: 0;
   padding: 0;
   display: flex;
-  justify-content: space-around;
+  justify-content: center;
   align-items: center;
   cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.left-column ul > li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 0;
+  border-radius: 0 3px 3px 0;
+  background: var(--themeColor);
+  transition: height 0.18s ease;
+}
+
+.left-column ul > li.active::before {
+  height: 20px;
+}
+
+.left-column ul > li:hover {
+  background: var(--sideBarItemHoverBgColor);
 }
 
 .left-column ul > li > svg {
   width: 18px;
   height: 18px;
   color: var(--sideBarIconColor);
+  opacity: 0.85;
+  transition: color 0.15s ease, opacity 0.15s ease, transform 0.2s ease;
+}
+
+.left-column ul > li:hover > svg {
   opacity: 1;
-  transition: transform 0.25s ease-in-out;
+  color: var(--sideBarTitleColor);
 }
 
 .left-column ul > li.active > svg {
   color: var(--themeColor);
-}
-
-.side-bar:hover .left-column ul li svg {
   opacity: 1;
 }
 
 .right-column {
   flex: 1;
-  width: calc(100% - 50px);
+  width: calc(100% - 45px);
   overflow: hidden;
 }
 
@@ -219,11 +260,12 @@ const handleLeftBottomClick = (name: string): void => {
   right: 0;
   bottom: 0;
   height: 100%;
-  width: 3px;
+  width: 4px;
   cursor: col-resize;
+  transition: background-color 0.15s ease;
 }
 
 .drag-bar:hover {
-  border-right: 2px solid var(--iconColor);
+  background-color: var(--themeColor40);
 }
 </style>

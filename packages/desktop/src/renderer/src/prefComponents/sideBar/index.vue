@@ -163,35 +163,37 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   background: var(--sideBarBgColor);
+  border-right: 1px solid var(--editorColor10);
   width: var(--prefSideBarWidth);
   height: 100vh;
-  padding-top: 24px;
+  padding-top: 28px;
   box-sizing: border-box;
   & h3 {
     margin: 0;
-    font-size: 20px;
-    font-weight: normal;
+    font-size: 17px;
+    font-weight: 600;
     text-align: center;
-    color: var(--sideBarColor);
+    color: var(--sideBarTitleColor);
   }
 }
 .search-wrapper {
   -webkit-app-region: no-drag;
-  padding: 0 16px;
-  margin: 18px 0;
+  padding: 0 14px;
+  margin: 16px 0;
 }
 .el-autocomplete {
   width: 100%;
 
   & .el-input__wrapper {
-    background: transparent;
+    background: var(--inputBgColor);
+    border-radius: 6px;
   }
 
   & .el-input__inner {
     border: none;
     background: transparent;
-    height: 28px;
-    line-height: 28px;
+    height: 30px;
+    line-height: 30px;
     font-size: 13px;
   }
 }
@@ -228,12 +230,17 @@ onUnmounted(() => {
 .category {
   -webkit-app-region: no-drag;
   overflow-y: auto;
+  padding: 0 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   & .item {
     width: 100%;
-    height: 38px;
-    font-size: 16px;
+    height: 36px;
+    font-size: 14px;
     color: var(--sideBarColor);
-    padding-left: 16px;
+    padding: 0 12px;
+    border-radius: 6px;
     box-sizing: border-box;
     display: flex;
     flex-direction: row;
@@ -241,36 +248,39 @@ onUnmounted(() => {
     cursor: pointer;
     position: relative;
     user-select: none;
+    transition: background-color 0.15s ease, color 0.15s ease;
     & > svg {
-      width: 18px;
-      height: 18px;
+      width: 17px;
+      height: 17px;
       color: var(--sideBarColor);
-      margin-right: 12px;
+      margin-right: 10px;
+      transition: color 0.15s ease;
     }
     &.active > svg {
-      color: var(--sideBarTitleColor);
+      color: var(--themeColor);
     }
     &:hover {
       background: var(--sideBarItemHoverBgColor);
     }
     &::before {
       content: '';
-      width: 4px;
+      width: 3px;
       height: 0;
       background: var(--highlightThemeColor);
       position: absolute;
       left: 0;
-      border-top-right-radius: 3px;
-      border-bottom-right-radius: 3px;
-      transition: height 0.25s ease-in-out;
+      border-radius: 0 3px 3px 0;
+      transition: height 0.2s ease;
       top: 50%;
       transform: translateY(-50%);
     }
     &.active {
       color: var(--sideBarTitleColor);
+      background: var(--themeColor10);
+      font-weight: 500;
     }
     &.active::before {
-      height: 100%;
+      height: 18px;
     }
   }
 }

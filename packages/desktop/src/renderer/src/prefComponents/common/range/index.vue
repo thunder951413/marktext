@@ -3,21 +3,17 @@
     class="pref-range-item"
     :class="{ 'ag-underdevelop': disable }"
   >
-    <div
-      class="description"
-      style="display: flex; align-items: center; justify-content: space-between"
-    >
-      <span>{{ description }}:</span>
-      <div style="display: flex; align-items: center">
+    <div class="description">
+      <span>{{ description }}</span>
+      <div class="value-group">
         <span
-          v-if="selectValue"
+          v-if="selectValue !== undefined"
           class="value"
-        >{{ selectValue }} <span v-if="unit">{{ unit }}</span></span>
+        >{{ selectValue }}<span v-if="unit"> {{ unit }}</span></span>
         <LinkIcon
           v-if="more"
           :size="14"
           class="link-icon"
-          style="margin-left: 4px"
           @click="handleMoreClick"
         />
       </div>
@@ -79,46 +75,57 @@ const select = (value: number | number[]) => {
 }
 </script>
 
-<style>
+<style scoped>
 .pref-range-item {
-  margin: 12px 0;
-  font-size: 14px;
+  margin: 14px 0;
+  font-size: 13.5px;
   color: var(--editorColor);
   width: 100%;
-  & .value {
-    text-align: right;
-    font-style: italic;
-    float: right;
-  }
-  & .el-slider {
-    width: 100%;
-  }
-  & .el-slider__runway,
-  & .el-slider__bar {
-    height: 4px;
-  }
-  & .el-slider__button {
-    width: 12px;
-    height: 12px;
-  }
-  & .el-slider__button-wrapper {
-    width: 20px;
-    height: 20px;
-    top: -9px;
-  }
-}
-.pref-select-item .description {
-  margin-bottom: 10px;
+  --el-slider-main-bg-color: var(--themeColor);
+  --el-slider-runway-bg-color: var(--editorColor10);
+  --el-slider-button-size: 14px;
 
-  & .value {
+  & .description {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
     color: var(--editorColor80);
   }
-  & svg {
-    cursor: pointer;
-    opacity: 0.7;
-    color: var(--iconColor);
+
+  & .value-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
   }
-  & svg:hover {
+
+  & .value {
+    padding: 1px 7px;
+    border-radius: 5px;
+    background: var(--editorColor04);
+    border: 1px solid var(--editorColor10);
+    color: var(--editorColor);
+    font-size: 12px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+
+  & :deep(.el-slider) {
+    width: 100%;
+  }
+  & :deep(.el-slider__runway),
+  & :deep(.el-slider__bar) {
+    height: 4px;
+    border-radius: 2px;
+  }
+  & :deep(svg) {
+    cursor: pointer;
+    opacity: 0.65;
+    color: var(--iconColor);
+    transition: color 0.15s ease, opacity 0.15s ease;
+  }
+  & :deep(svg:hover) {
+    opacity: 1;
     color: var(--themeColor);
   }
 }

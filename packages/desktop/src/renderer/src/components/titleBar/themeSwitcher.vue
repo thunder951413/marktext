@@ -350,7 +350,7 @@ defineExpose({ toggle })
   -webkit-app-region: no-drag;
   display: inline-flex;
   align-items: center;
-  margin: 0 4px;
+  margin: 0 1px;
 }
 
 .theme-switcher-trigger {
@@ -363,16 +363,24 @@ defineExpose({ toggle })
   height: 24px;
   padding: 0;
   border: 1px solid var(--editorColor10);
-  border-radius: 4px;
-  background: transparent;
-  color: var(--editorColor50);
+  border-radius: 6px;
+  background: var(--editorColor04);
+  color: var(--editorColor60);
   cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
 .theme-switcher-trigger:hover,
 .theme-switcher-trigger.active {
   color: var(--editorColor);
   background: var(--sideBarBgColor);
+  border-color: var(--editorColor30);
+}
+
+.theme-switcher-trigger.active {
+  color: var(--themeColor);
+  border-color: var(--themeColor40);
+  background: var(--themeColor10);
 }
 
 .theme-switcher-backdrop {
@@ -389,8 +397,8 @@ defineExpose({ toggle })
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  padding: 8px;
-  border-radius: 8px;
+  padding: 10px;
+  border-radius: 10px;
   background: var(--floatBgColor);
   border: 1px solid var(--floatBorderColor);
   box-shadow: var(--floatShadow, 0 8px 24px rgba(0, 0, 0, 0.18));
@@ -402,18 +410,20 @@ defineExpose({ toggle })
 .theme-switcher-filter {
   width: 100%;
   box-sizing: border-box;
-  height: 28px;
-  padding: 0 8px;
+  height: 30px;
+  padding: 0 10px;
   border: 1px solid var(--editorColor10);
-  border-radius: 4px;
+  border-radius: 6px;
   outline: none;
-  background: transparent;
+  background: var(--inputBgColor);
   color: var(--editorColor);
   font: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .theme-switcher-filter:focus {
   border-color: var(--themeColor);
+  box-shadow: 0 0 0 2px var(--themeColor20);
 }
 
 .theme-switcher-notice {

@@ -4,11 +4,11 @@
       v-model="showCommandPalette"
       :show-close="false"
       :modal="true"
-      custom-class="ag-dialog-table"
+      class="ag-dialog-table"
       width="500px"
       @close="handleDialogClose"
     >
-      <template #title>
+      <template #header>
         <div class="search-wrapper">
           <div class="input-wrapper">
             <input
@@ -358,33 +358,41 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 500px;
+  width: 520px;
   height: auto;
   top: 0;
   left: 50%;
   transform: translateX(-50%);
-  padding: 8px;
-  margin: 0 auto;
-  margin-top: 8px;
+  padding: 10px;
+  margin: 8px auto 0;
   box-sizing: border-box;
   color: var(--editorColor);
   background: var(--floatBgColor);
   border: 1px solid var(--floatBorderColor);
-  border-radius: 4px;
-  box-shadow: 0 3px 8px 3px var(--floatShadow);
+  border-radius: 10px;
+  box-shadow: var(--floatShadow);
   z-index: 10000;
 }
 .input-wrapper {
-  display: block;
+  display: flex;
+  align-items: center;
   width: 100%;
-  border: 1px solid var(--inputBgColor);
+  box-sizing: border-box;
+  border: 1px solid var(--editorColor10);
   background: var(--inputBgColor);
-  border-radius: 3px;
+  border-radius: 6px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  &:focus-within {
+    border-color: var(--themeColor);
+    box-shadow: 0 0 0 2px var(--themeColor20);
+  }
 }
 input.search {
   width: 100%;
-  height: 30px;
-  margin: 0 10px;
+  height: 34px;
+  padding: 0 12px;
+  margin: 0;
+  box-sizing: border-box;
   font-size: 14px;
   color: var(--editorColor);
   background: transparent;
@@ -404,14 +412,15 @@ input.search {
 ul.commands {
   display: flex;
   flex-direction: column;
+  gap: 2px;
   width: 100%;
-  max-height: 300px;
+  max-height: 320px;
   padding: 0;
   margin: 8px 0 0 0;
   box-sizing: border-box;
   list-style: none;
   overflow: hidden;
-  overflow-y: scroll;
+  overflow-y: auto;
 }
 ul.commands li {
   position: relative;
@@ -420,19 +429,21 @@ ul.commands li {
   justify-content: space-between;
   align-items: center;
   max-width: 100%;
-  height: 35px;
-  padding: 0 8px;
-  font-size: 14px;
-  line-height: 35px;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 6px;
+  font-size: 13.5px;
+  line-height: 34px;
   text-overflow: ellipsis;
   cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease;
 }
 ul.commands li:hover {
   background: var(--floatHoverColor);
-  opacity: 0.9;
 }
 ul.commands li.active {
-  background: var(--floatHoverColor);
+  background: var(--themeColor10);
+  color: var(--themeColor);
 }
 ul.commands li span {
   text-overflow: ellipsis;
@@ -442,25 +453,26 @@ ul.commands li span {
 ul.commands li span.shortcut {
   font-size: 12px;
   line-height: 20px;
+  flex-shrink: 0;
 }
 ul.commands li span.shortcut > kbd {
   display: inline-block;
   margin-left: 4px;
-  padding: 1px 7px;
-  min-width: 10px;
+  padding: 1px 6px;
+  min-width: 12px;
   text-align: center;
-  font-family: inherit;
-  font-size: 12px;
+  font-family: var(--codeFontFamily, monospace);
+  font-size: 11px;
   line-height: 18px;
-  color: var(--editorColor);
-  background: var(--floatBgColor);
-  border: 1px solid var(--floatBorderColor);
+  color: var(--editorColor60);
+  background: var(--editorColor04);
+  border: 1px solid var(--editorColor10);
   border-radius: 4px;
 }
 
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.2s;
+  transition: opacity 0.15s ease;
 }
 .fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
   opacity: 0;

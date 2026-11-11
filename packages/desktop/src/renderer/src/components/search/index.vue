@@ -369,30 +369,38 @@ const noop = () => {}
 <style scoped>
 .search-bar {
   position: absolute;
-  width: 400px;
-  padding: 0;
-  top: 0;
+  width: 410px;
+  padding: 6px;
+  top: 8px;
   right: 20px;
-  border-radius: 3px;
+  z-index: 100;
+  border-radius: 8px;
+  border: 1px solid var(--floatBorderColor);
   box-shadow: var(--floatShadow);
   background: var(--floatBgColor);
   display: flex;
   flex-direction: row;
+  box-sizing: border-box;
 }
 .search-bar .left-arrow {
-  width: 20px;
+  width: 22px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 5px;
   cursor: pointer;
+  color: var(--sideBarIconColor);
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 .search-bar .left-arrow:hover {
   background: var(--floatHoverColor);
+  color: var(--editorColor);
 }
 .search-bar .left-arrow svg {
   height: 12px;
   width: 12px;
+  transition: transform 0.18s ease;
 }
 .search-bar .left-arrow .arrow-right {
   transform: rotate(-90deg);
@@ -400,13 +408,17 @@ const noop = () => {}
 
 .search-bar .right-controls {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 .search,
 .replace {
   height: 28px;
   display: flex;
-  padding: 4px 10px 0 4px;
-  margin-bottom: 5px;
+  align-items: center;
+  padding: 0 2px 0 4px;
+  margin: 0;
 }
 
 .search-bar .button {
@@ -417,34 +429,44 @@ const noop = () => {}
   width: 28px;
   text-align: center;
   padding: 5px;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-weight: 500;
   color: var(--sideBarIconColor);
   &.left {
-    margin-right: 10px;
+    margin-right: 8px;
   }
   &.right {
-    margin-left: 10px;
+    margin-left: 8px;
   }
 }
 .button.active {
   color: var(--themeColor);
 }
 .search-bar .button > svg {
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
 }
 .search-bar .button:active {
-  opacity: 0.5;
+  opacity: 0.6;
 }
 .input-wrapper {
   display: flex;
+  align-items: center;
   flex: 1;
+  height: 28px;
   position: relative;
-  border: 1px solid var(--inputBgColor);
+  border: 1px solid var(--editorColor10);
   background: var(--inputBgColor);
-  border-radius: 3px;
+  border-radius: 6px;
+  box-sizing: border-box;
   overflow: visible;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  &:focus-within {
+    border-color: var(--themeColor);
+    box-shadow: 0 0 0 2px var(--themeColor20);
+  }
 }
 .input-wrapper.error {
   border: 1px solid var(--notificationErrorBg);
@@ -453,26 +475,38 @@ const noop = () => {}
 }
 .input-wrapper .controls {
   position: absolute;
-  top: 6px;
-  right: 10px;
-  font-size: 12px;
+  top: 3px;
+  right: 6px;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
   display: flex;
-  color: var(--sideBarTitleColor);
+  align-items: center;
+  gap: 2px;
+  color: var(--editorColor50);
   & > span.search-result {
     height: 20px;
-    margin-right: 5px;
-    line-height: 17px;
+    margin-right: 4px;
+    line-height: 20px;
   }
   & > span:not(.search-result) {
     cursor: pointer;
     width: 20px;
     height: 20px;
-    margin-left: 2px;
-    margin-right: 2px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.15s ease;
     &:hover {
+      background: var(--floatHoverColor);
       color: var(--sideBarIconColor);
     }
+    &.active {
+      background: var(--themeColor10);
+    }
     & > svg {
+      width: 14px;
+      height: 14px;
       fill: var(--sideBarIconColor);
       &:hover {
         fill: var(--highlightThemeColor);
@@ -492,12 +526,12 @@ const noop = () => {}
   left: -1px;
   padding: 0 8px;
   box-sizing: border-box;
-  border-bottom-left-radius: 3px;
-  border-bottom-right-radius: 3px;
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
   background: var(--notificationErrorBg);
   line-height: 28px;
   color: #ffffff;
-  font-size: 14px;
+  font-size: 12.5px;
   z-index: 1;
 }
 
@@ -508,9 +542,8 @@ const noop = () => {}
   outline: none;
   border: none;
   box-sizing: border-box;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--editorColor);
-  padding: 0 8px;
   background: transparent;
 }
 </style>

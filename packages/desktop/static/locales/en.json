@@ -354,7 +354,15 @@
   },
   "recent": {
     "noTabsOpen": "You have no tabs open.",
-    "newFile": "New Document"
+    "newFile": "New Document",
+    "shortcutsAriaLabel": "Keyboard shortcuts"
+  },
+  "textEditor": {
+    "wrapLines": "Wrap lines",
+    "encoding": "Encoding",
+    "reopenWithEncoding": "Reopen with encoding",
+    "saveWithEncoding": "Save with encoding",
+    "lineEndings": "Line endings"
   },
   "import": {
     "title": "Import or Open",

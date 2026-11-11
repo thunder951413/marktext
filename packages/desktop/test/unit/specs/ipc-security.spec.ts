@@ -12,7 +12,10 @@ afterEach(() => { for (const dir of tempDirs.splice(0)) fs.rmSync(dir, { recursi
 describe('IPC security boundaries', () => {
   it('permits only declared renderer channels and blocks internal messages', () => {
     expect(isAllowedChannel('invoke', 'mt::fs::read-file')).toBe(true)
+    expect(isAllowedChannel('invoke', 'mt::get-recently-used-documents')).toBe(true)
     expect(isAllowedChannel('send', 'mt::cmd-open-file')).toBe(true)
+    expect(isAllowedChannel('send', 'mt::open-recently-used-document')).toBe(true)
+    expect(isAllowedChannel('send', 'mt::clear-recently-used-documents')).toBe(true)
     for (const channel of ['window-close-by-id', 'watcher-watch-file', 'set-user-preference', '__proto__', 'unknown']) {
       expect(isAllowedChannel('send', channel)).toBe(false)
     }

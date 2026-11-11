@@ -3,11 +3,8 @@
     class="pref-text-box-item"
     :class="{ 'ag-underdevelop': disable }"
   >
-    <div
-      class="description"
-      style="display: flex; align-items: center"
-    >
-      <span>{{ description }}:</span>
+    <div class="description">
+      <span>{{ description }}</span>
       <LinkIcon
         v-if="more"
         :size="14"
@@ -34,7 +31,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, onBeforeUnmount } from 'vue'
 import LinkIcon from '@/components/icons/LinkIcon.vue'
 import type { PrefControlBaseProps } from '../types'
 
@@ -96,54 +93,78 @@ const handleInput = (value: string) => {
     }, props.emitTime)
   }
 }
+
+onBeforeUnmount(() => {
+  if (inputTimer) {
+    clearTimeout(inputTimer)
+    inputTimer = null
+  }
+})
 </script>
 
-<style>
+<style scoped>
 .pref-text-box-item {
-  font-size: 14px;
+  font-size: 13.5px;
   user-select: none;
-  margin: 12px 0;
+  margin: 14px 0;
   color: var(--editorColor);
   width: 100%;
-  & div {
-    background: transparent;
-    color: var(--editorColor);
-    border-color: var(--editorColor10);
+
+  & .description {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+    color: var(--editorColor80);
   }
-  & input.el-input__inner {
-    height: 30px;
-    background: transparent;
-    border: none;
-    padding-right: 15px;
+
+  & .input {
+    width: 100%;
+  }
+
+  & :deep(.el-input__wrapper) {
+    min-height: 34px;
+    border-radius: 6px;
+    background-color: var(--editorColor04);
+    box-shadow: 0 0 0 1px var(--editorColor10) inset;
+    transition: box-shadow 0.15s ease, background-color 0.15s ease;
+  }
+
+  & :deep(.el-input__wrapper:hover) {
+    box-shadow: 0 0 0 1px var(--editorColor30) inset;
+  }
+
+  & :deep(.el-input__wrapper.is-focus) {
+    background-color: var(--editorBgColor);
+    box-shadow: 0 0 0 1px var(--themeColor) inset, 0 0 0 3px var(--themeColor10);
+  }
+
+  & :deep(.el-input__inner) {
+    height: 32px;
+    color: var(--editorColor);
     &::placeholder {
       color: var(--editorColor30);
     }
   }
-  & .input {
-    width: 100%;
+
+  & :deep(.el-input.error .el-input__wrapper) {
+    box-shadow: 0 0 0 1px var(--deleteColor, #ef4444) inset;
   }
-  & .el-input.is-active .el-input__inner,
-  & .el-input__inner:focus {
-    border-color: var(--themeColor);
+
+  & :deep(.el-input.error .el-input__inner) {
+    color: var(--deleteColor, #ef4444);
   }
-  & .el-input__icon,
-  & .el-input__inner {
-    line-height: 30px;
-  }
-  & .description {
-    margin-bottom: 10px;
-  }
-  & svg {
-    margin-left: 4px;
+
+  & :deep(svg) {
     cursor: pointer;
-    opacity: 0.7;
+    opacity: 0.65;
     color: var(--iconColor);
+    transition: color 0.15s ease, opacity 0.15s ease;
   }
-  & svg:hover {
+
+  & :deep(svg:hover) {
+    opacity: 1;
     color: var(--themeColor);
   }
-}
-.pref-text-box-item .el-input.error input {
-  color: #f56c6c;
 }
 </style>

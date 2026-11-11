@@ -354,7 +354,15 @@
   },
   "recent": {
     "noTabsOpen": "您没有打开的标签页。",
-    "newFile": "新建文档"
+    "newFile": "新建文档",
+    "shortcutsAriaLabel": "键盘快捷键"
+  },
+  "textEditor": {
+    "wrapLines": "自动换行",
+    "encoding": "编码",
+    "reopenWithEncoding": "按此编码重开",
+    "saveWithEncoding": "以此编码保存",
+    "lineEndings": "换行符"
   },
   "import": {
     "title": "导入或打开",

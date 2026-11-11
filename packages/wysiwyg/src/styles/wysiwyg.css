@@ -44,23 +44,27 @@
 }
 .wysiwyg-highlight {
   background: var(--highlightColor, rgba(255, 213, 0, 0.4));
+  border-radius: 2px;
+  padding: 0.05em 0.15em;
 }
 .wysiwyg-inline-code {
   font-family: 'SF Mono', Menlo, Consolas, monospace;
-  font-size: 0.9em;
+  font-size: 0.88em;
   background: var(--codeBgColor, var(--editorColor10, rgba(127, 127, 127, 0.12)));
-  border-radius: 3px;
-  padding: 0.1em 0.25em;
+  border: 1px solid var(--editorColor10, rgba(127, 127, 127, 0.15));
+  border-radius: 4px;
+  padding: 0.12em 0.35em;
 }
 .wysiwyg-link {
   color: var(--linkColor, var(--themeColor, #409eff));
+  text-underline-offset: 0.18em;
   cursor: pointer;
 }
 .wysiwyg-image-placeholder {
   opacity: 0.85;
   background: var(--editorColor10, rgba(127, 127, 127, 0.12));
-  border-radius: 3px;
-  padding: 0.1em 0.4em;
+  border-radius: 4px;
+  padding: 0.12em 0.45em;
 }
 
 /* Heading sizing applied as line decorations */
@@ -100,13 +104,14 @@
 /* Blockquote and rules */
 .cm-line.wysiwyg-quote-line {
   border-left: 3px solid var(--blockquoteBorderColor, var(--editorColor30, rgba(127, 127, 127, 0.35)));
-  padding-left: 0.8em;
+  background: var(--codeBlockBgColor, rgba(127, 127, 127, 0.03));
+  padding-left: 0.9em;
   color: var(--blockquoteTextColor, inherit);
 }
 hr.wysiwyg-hr {
   border: none;
-  border-top: 2px solid var(--hrColor, var(--editorColor30, rgba(127, 127, 127, 0.35)));
-  margin: 0.6em 0;
+  border-top: 1.5px solid var(--hrColor, var(--editorColor30, rgba(127, 127, 127, 0.35)));
+  margin: 0.75em 0;
 }
 
 /* Math, diagrams, tasks, front matter and HTML previews */
@@ -186,32 +191,33 @@ hr.wysiwyg-hr {
 }
 .wysiwyg-format-toolbar {
   display: flex;
-  gap: 2px;
+  gap: 3px;
   padding: 4px;
-  border-radius: 6px;
+  border-radius: 8px;
   border: 1px solid var(--floatBorderColor, rgba(127, 127, 127, 0.25));
   background: var(--floatBgColor, #fff);
   color: var(--editorColor, #333);
-  box-shadow: 0 4px 14px var(--floatShadow, rgba(15, 15, 15, 0.12));
+  box-shadow: var(--floatShadow, 0 6px 20px rgba(15, 15, 15, 0.14));
   user-select: none;
 }
 .wysiwyg-format-button {
-  min-width: 26px;
+  min-width: 28px;
   height: 26px;
-  padding: 0 6px;
+  padding: 0 7px;
   border: none;
-  border-radius: 4px;
+  border-radius: 5px;
   background: transparent;
   color: inherit;
   font: 13px/26px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease;
 }
 .wysiwyg-format-button:hover {
   background: var(--floatHoverColor, rgba(127, 127, 127, 0.15));
 }
 .wysiwyg-format-button.active {
   color: var(--themeColor, #409eff);
-  background: var(--floatHoverColor, rgba(64, 158, 255, 0.12));
+  background: var(--themeColor10, var(--floatHoverColor, rgba(64, 158, 255, 0.12)));
 }
 .wysiwyg-format-button.is-strong { font-weight: 700; }
 .wysiwyg-format-button.is-em { font-style: italic; font-family: Georgia, serif; }
@@ -222,24 +228,26 @@ hr.wysiwyg-hr {
 /* Rendered GFM tables (decorations/tableWidget.ts) */
 .wysiwyg-table-wrap {
   overflow-x: auto;
-  padding: 4px 0;
+  padding: 6px 0;
 }
 .wysiwyg-table {
   border-collapse: collapse;
   border-spacing: 0;
   min-width: 40%;
   cursor: text;
+  border-radius: 6px;
+  overflow: hidden;
 }
 .wysiwyg-table th,
 .wysiwyg-table td {
   border: 1px solid var(--tableBorderColor, rgba(127, 127, 127, 0.35));
-  padding: 4px 12px;
+  padding: 6px 14px;
   min-width: 2em;
   vertical-align: top;
 }
 .wysiwyg-table th {
   font-weight: 600;
-  background: var(--tableHeaderBgColor, rgba(127, 127, 127, 0.08));
+  background: var(--tableHeaderBgColor, var(--editorColor04, rgba(127, 127, 127, 0.08)));
 }
 .wysiwyg-table tbody tr:nth-child(2n) {
   background: var(--tableStripeColor, rgba(127, 127, 127, 0.04));

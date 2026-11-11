@@ -228,12 +228,12 @@
           <el-input
             v-model="cliScript"
             :placeholder="t('preferences.image.uploader.scriptPath')"
-            size="mini"
+            size="small"
           />
         </div>
         <div class="form-group">
           <el-button
-            size="mini"
+            size="small"
             :disabled="cliScriptDisable"
             @click="save()"
           >

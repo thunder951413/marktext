@@ -27,14 +27,25 @@
           prop="accelerator"
           :label="t('preferences.keybindings.table.keyCombination')"
           min-width="160"
-        />
+        >
+          <template #default="scope">
+            <kbd
+              v-if="scope.row.accelerator"
+              class="accel-pill"
+            >{{ scope.row.accelerator }}</kbd>
+            <span
+              v-else
+              class="accel-empty"
+            >—</span>
+          </template>
+        </el-table-column>
         <el-table-column
           :label="t('preferences.keybindings.table.options')"
           min-width="90"
         >
           <template #default="scope">
             <el-button
-              type="text"
+              link
               size="small"
               :title="t('preferences.keybindings.table.edit')"
               @click="handleEditClick(scope.$index, scope.row)"
@@ -45,7 +56,7 @@
               />
             </el-button>
             <el-button
-              type="text"
+              link
               size="small"
               :title="t('preferences.keybindings.table.reset')"
               @click="handleResetClick(scope.$index, scope.row)"
@@ -56,7 +67,7 @@
               />
             </el-button>
             <el-button
-              type="text"
+              link
               size="small"
               :title="t('preferences.keybindings.table.unbind')"
               @click="handleUnbindClick(scope.$index, scope.row)"
@@ -73,13 +84,13 @@
     <section class="footer">
       <separator />
       <el-button
-        size="medium"
+        size="default"
         @click="saveKeybindings"
       >
         {{ t('preferences.keybindings.save') }}
       </el-button>
       <el-button
-        size="medium"
+        size="default"
         @click="restoreDefaults"
       >
         {{ t('preferences.keybindings.restoreDefaults') }}
@@ -94,7 +105,7 @@
         <strong>{{ t('preferences.keybindings.debugOptions') }}:</strong>
       </div>
       <el-button
-        size="medium"
+        size="default"
         @click="dumpKeyboardInformation"
       >
         {{ t('preferences.keybindings.dumpKeyboardInfo') }}
@@ -278,6 +289,20 @@ const dumpKeyboardInformation = (): void => {
   }
   & button.el-button {
     font-size: 13px;
+  }
+  & .accel-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 7px;
+    border-radius: 5px;
+    border: 1px solid var(--editorColor10);
+    background: var(--editorColor04);
+    color: var(--editorColor80);
+    font-family: var(--codeFontFamily, monospace);
+    font-size: 11.5px;
+  }
+  & .accel-empty {
+    color: var(--editorColor30);
   }
 }
 .el-table,

@@ -4,10 +4,10 @@
       v-model="showRename"
       :show-close="false"
       :modal="true"
-      custom-class="ag-dialog-table"
+      class="ag-dialog-table"
       width="410px"
     >
-      <template #title>
+      <template #header>
         <div class="search-wrapper">
           <div class="input-wrapper">
             <input
@@ -92,13 +92,24 @@ onBeforeUnmount(() => {
   align-items: center;
   box-shadow: none;
   border: none;
-  border-radius: 3px;
+  border-radius: 8px;
   margin: 0;
-  padding: 0 8px;
+  padding: 4px 10px;
 
   & .input-wrapper {
     display: flex;
+    align-items: center;
     width: 100%;
+    padding: 0 6px;
+    border-radius: 6px;
+    border: 1px solid var(--editorColor10);
+    background: var(--inputBgColor);
+    box-sizing: border-box;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    &:focus-within {
+      border-color: var(--themeColor);
+      box-shadow: 0 0 0 2px var(--themeColor20);
+    }
     & input {
       background: transparent;
     }
@@ -106,21 +117,21 @@ onBeforeUnmount(() => {
 }
 .search {
   width: 100%;
-  height: 30px;
+  height: 32px;
   outline: none;
   border: none;
-  font-size: 14px;
-  padding: 0 8px;
-  margin: 0 10px;
-  color: var(--sideBarColor);
+  font-size: 13.5px;
+  padding: 0 6px;
+  margin: 0;
+  color: var(--editorColor);
 }
 .search-wrapper svg {
   cursor: pointer;
-  margin: 0 5px;
-  width: 30px;
-  height: 30px;
+  margin: 0 4px;
+  width: 24px;
+  height: 24px;
   color: var(--iconColor);
-  transition: all 0.3s ease-in-out;
+  transition: color 0.15s ease;
 }
 .search-wrapper svg:hover {
   color: var(--themeColor);

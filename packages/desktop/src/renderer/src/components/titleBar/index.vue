@@ -21,19 +21,31 @@
       ]"
     >
       <div
+        v-if="isOsx && !isFullScreen"
+        class="osx-traffic-spacer"
+        aria-hidden="true"
+      />
+      <div
         class="title"
         @dblclick.stop="toggleMaxmizeOnMacOS"
       >
-        <span v-if="!filename">MarkText</span>
-        <span v-else>
+        <span
+          v-if="!filename"
+          class="app-brand"
+        >MarkText</span>
+        <span
+          v-else
+          class="title-breadcrumb"
+        >
           <span
             v-for="(path, index) of paths"
             :key="index"
+            class="path-segment"
           >
             {{ path }}
             <el-icon
               class="path-arrow"
-              :size="12"
+              :size="11"
             >
               <ArrowRight />
             </el-icon>
@@ -66,16 +78,47 @@
           @click.stop="handleMenuClick"
         >
           <svg
-            width="16"
-            height="16"
+            width="15"
+            height="15"
             viewBox="0 0 16 16"
             fill="none"
             stroke="currentColor"
-            stroke-width="1.3"
+            stroke-width="1.35"
             stroke-linecap="round"
             aria-hidden="true"
           >
             <path d="M2.5 4h11M2.5 8h11M2.5 12h11" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          class="titlebar-icon-button title-no-drag"
+          :class="{ active: showSideBar }"
+          data-testid="sidebar-toggle"
+          :aria-pressed="showSideBar"
+          :aria-label="t('menu.view.toggleSidebar')"
+          :title="`${t('menu.view.toggleSidebar')} (${sidebarShortcutLabel})`"
+          @click.stop="toggleSidebar"
+        >
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.35"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <rect
+              x="2"
+              y="2.5"
+              width="12"
+              height="11"
+              rx="1.8"
+            />
+            <path d="M6 2.5v11" />
           </svg>
         </button>
         <button
@@ -89,87 +132,118 @@
           @click.stop="toggleToc"
         >
           <svg
-            width="16"
-            height="16"
+            width="15"
+            height="15"
             viewBox="0 0 16 16"
             fill="none"
             stroke="currentColor"
-            stroke-width="1.3"
+            stroke-width="1.35"
             stroke-linecap="round"
             aria-hidden="true"
           >
             <path d="M2.5 3.5h11M5.5 6.5h8M5.5 9.5h8M2.5 12.5h11" />
           </svg>
         </button>
-        <theme-switcher />
-        <div
-          class="font-size-controls title-no-drag"
-          role="group"
-          :aria-label="fontSizeLabel"
+        <button
+          v-if="canToggleSourceCode"
+          type="button"
+          class="titlebar-icon-button title-no-drag"
+          :class="{ active: sourceCode }"
+          data-testid="source-mode-toggle"
+          :aria-pressed="sourceCode"
+          :aria-label="t('menu.view.sourceCodeMode')"
+          :title="`${t('menu.view.sourceCodeMode')} (${sourceShortcutLabel})`"
+          @click.stop="toggleSourceCodeMode"
         >
-          <button
-            type="button"
-            data-testid="font-size-decrease"
-            :aria-label="t('titleBar.fontSizeDecrease')"
-            :title="`${fontSizeLabel}: ${t('titleBar.fontSizeDecrease')}`"
-            :disabled="!currentFile || activeFontSize <= 12"
-            @click.stop="changeFontSize(-1)"
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.35"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
           >
-            A−
-          </button>
-          <button
-            type="button"
-            class="font-size-value"
-            data-testid="font-size-reset"
-            :aria-label="t('titleBar.fontSizeReset', { size: defaultFontSize })"
-            :title="`${fontSizeLabel}: ${t('titleBar.fontSizeReset', { size: defaultFontSize })}`"
-            :disabled="!currentFile"
-            @click.stop="setFontSize(defaultFontSize)"
+            <path d="M5.25 4.75 2 8l3.25 3.25M10.75 4.75 14 8l-3.25 3.25M9 3.5 7 12.5" />
+          </svg>
+        </button>
+        <theme-switcher />
+        <div class="view-scale-cluster title-no-drag">
+          <div
+            class="font-size-controls title-no-drag"
+            role="group"
+            :aria-label="fontSizeLabel"
           >
-            {{ activeFontSize }} px
-          </button>
-          <button
-            type="button"
-            data-testid="font-size-increase"
-            :aria-label="t('titleBar.fontSizeIncrease')"
-            :title="`${fontSizeLabel}: ${t('titleBar.fontSizeIncrease')}`"
-            :disabled="!currentFile || activeFontSize >= maxFontSize"
-            @click.stop="changeFontSize(1)"
-          >
-            A+
-          </button>
-        </div>
-        <div class="zoom-controls title-no-drag">
-          <button
-            type="button"
-            data-testid="zoom-out"
-            :aria-label="t('commands.window.zoomOut')"
-            :title="t('commands.window.zoomOut')"
-            :disabled="zoom <= MIN_ZOOM_FACTOR"
-            @click.stop="changeZoom(-1)"
-          >
-            −
-          </button>
-          <button
-            type="button"
-            class="zoom-value"
-            data-testid="zoom-reset"
-            :aria-label="t('commands.view.actualSize')"
-            :title="t('commands.view.actualSize')"
-            @click.stop="resetDisplayZoom"
-          >
-            {{ zoomPercent }}%
-          </button>
-          <button
-            type="button"
-            data-testid="zoom-in"
-            :aria-label="t('commands.window.zoomIn')"
-            :title="t('commands.window.zoomIn')"
-            :disabled="zoom >= MAX_ZOOM_FACTOR"
-            @click.stop="changeZoom(1)"
-          >
-            +
-          </button>
+            <button
+              type="button"
+              data-testid="font-size-decrease"
+              :aria-label="t('titleBar.fontSizeDecrease')"
+              :title="`${fontSizeLabel}: ${t('titleBar.fontSizeDecrease')}`"
+              :disabled="!currentFile || activeFontSize <= 12"
+              @click.stop="changeFontSize(-1)"
+            >
+              A−
+            </button>
+            <button
+              type="button"
+              class="font-size-value"
+              data-testid="font-size-reset"
+              :aria-label="t('titleBar.fontSizeReset', { size: defaultFontSize })"
+              :title="`${fontSizeLabel}: ${t('titleBar.fontSizeReset', { size: defaultFontSize })}`"
+              :disabled="!currentFile"
+              @click.stop="setFontSize(defaultFontSize)"
+            >
+              {{ activeFontSize }} px
+            </button>
+            <button
+              type="button"
+              data-testid="font-size-increase"
+              :aria-label="t('titleBar.fontSizeIncrease')"
+              :title="`${fontSizeLabel}: ${t('titleBar.fontSizeIncrease')}`"
+              :disabled="!currentFile || activeFontSize >= maxFontSize"
+              @click.stop="changeFontSize(1)"
+            >
+              A+
+            </button>
+          </div>
+          <span
+            class="scale-divider"
+            aria-hidden="true"
+          />
+          <div class="zoom-controls title-no-drag">
+            <button
+              type="button"
+              data-testid="zoom-out"
+              :aria-label="t('commands.window.zoomOut')"
+              :title="t('commands.window.zoomOut')"
+              :disabled="zoom <= MIN_ZOOM_FACTOR"
+              @click.stop="changeZoom(-1)"
+            >
+              −
+            </button>
+            <button
+              type="button"
+              class="zoom-value"
+              data-testid="zoom-reset"
+              :aria-label="t('commands.view.actualSize')"
+              :title="t('commands.view.actualSize')"
+              @click.stop="resetDisplayZoom"
+            >
+              {{ zoomPercent }}%
+            </button>
+            <button
+              type="button"
+              data-testid="zoom-in"
+              :aria-label="t('commands.window.zoomIn')"
+              :title="t('commands.window.zoomIn')"
+              :disabled="zoom >= MAX_ZOOM_FACTOR"
+              @click.stop="changeZoom(1)"
+            >
+              +
+            </button>
+          </div>
         </div>
         <!-- Frameless Windows/Linux keep the count on the right (below); elsewhere it stays in this toolbar. -->
         <word-count-badge
@@ -251,6 +325,7 @@ import { isOsx as isOsxPlatform } from '@/util'
 import { shouldShowInAppTitleBar } from './visibility'
 import { useEditorStore } from '@/store/editor'
 import { useI18n } from 'vue-i18n'
+import bus from '@/bus'
 import { ArrowRight } from '@element-plus/icons-vue'
 import ThemeSwitcher from './themeSwitcher.vue'
 import WordCountBadge from './wordCountBadge.vue'
@@ -326,7 +401,18 @@ const zoomPercent = computed(() => Math.round(zoom.value * 100))
 
 // The table of contents (heading navigation) lives in the left side bar.
 const tocActive = computed(() => showSideBar.value && rightColumn.value === 'toc')
+const sidebarShortcutLabel = isOsx ? '⌘J' : 'Ctrl+J'
 const tocShortcutLabel = isOsx ? '⌘K' : 'Ctrl+K'
+const sourceShortcutLabel = isOsx ? '⌘E' : 'Ctrl+E'
+const canToggleSourceCode = computed(() => !!currentFile.value && !isTextDocument(currentFile.value))
+
+const toggleSidebar = () => {
+  bus.emit('view:toggle-layout-entry', 'showSideBar')
+}
+
+const toggleSourceCodeMode = () => {
+  bus.emit('view:toggle-view-entry', 'sourceCode')
+}
 
 const toggleToc = () => {
   if (tocActive.value) {
@@ -482,11 +568,19 @@ onBeforeUnmount(() => {
   top: 0;
   right: 0;
   z-index: 2;
-  transition: color 0.4s ease-in-out;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: color 0.25s ease, background-color 0.25s ease;
   cursor: default;
 }
 .active {
   color: var(--editorColor);
+}
+.osx-traffic-spacer {
+  order: 1;
+  flex: 0 0 74px;
+  height: 100%;
 }
 img {
   height: 90%;
@@ -494,49 +588,81 @@ img {
   vertical-align: top;
 }
 .title {
-  padding: 0 390px;
+  order: 2;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0 8px;
   height: 100%;
   line-height: var(--titleBarHeight);
-  font-size: 14px;
+  font-size: 13px;
   text-align: center;
-  transition: all 0.25s ease-in-out;
-  & .filename {
-    transition: all 0.25s ease-in-out;
+  overflow: hidden;
+  transition: color 0.2s ease;
+  & .app-brand {
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    opacity: 0.75;
   }
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    height: 1px;
-    width: 100%;
-    z-index: 1;
-    -webkit-app-region: no-drag;
+  & .title-breadcrumb {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: top;
+  }
+  & .path-segment {
+    display: inline-flex;
+    align-items: center;
+    color: var(--editorColor40);
+    font-size: 12px;
+    flex-shrink: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  & .path-arrow {
+    margin: 0 3px;
+    opacity: 0.65;
+    flex-shrink: 0;
+  }
+  & .filename {
+    font-weight: 500;
+    color: var(--editorColor80);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition: color 0.15s ease;
   }
 }
-div.title > span {
-  /* Workaround for GH#339 */
-  display: block;
-  direction: rtl;
-  overflow: hidden;
-  text-overflow: clip;
-  white-space: nowrap;
+
+.title-bar .title .filename.isOsx {
+  cursor: pointer;
 }
 
 .title-bar .title .filename.isOsx:hover {
   color: var(--themeColor);
 }
 
-.active .save-dot {
-  margin-right: 0.25rem;
-  width: 8px;
-  height: 8px;
+.save-dot {
+  margin-left: 6px;
+  width: 7px;
+  height: 7px;
+  flex-shrink: 0;
   display: inline-block;
   border-radius: 50%;
   background: var(--highlightThemeColor);
-  opacity: 0.7;
+  opacity: 0;
+  transform: scale(0.6);
   visibility: hidden;
+  transition: opacity 0.18s ease, transform 0.18s ease;
 }
-.active .save-dot.show {
+.active .save-dot.show,
+.save-dot.show {
+  opacity: 0.85;
+  transform: scale(1);
   visibility: visible;
 }
 .title:hover {
@@ -544,21 +670,19 @@ div.title > span {
 }
 
 .left-toolbar {
-  padding: 0 10px;
+  order: 1;
+  flex: 0 0 auto;
+  padding-left: 8px;
   height: 100%;
-  position: absolute;
-  top: 0;
-  left: 0;
   align-items: center;
-  width: auto; /* grows with the buttons; + 2*10px padding */
+  gap: 3px;
   display: flex;
   flex-direction: row;
 }
 .right-toolbar {
+  order: 4;
+  flex: 0 0 138px;
   height: 100%;
-  position: absolute;
-  top: 0;
-  right: 0;
   width: 138px;
   display: flex;
   align-items: center;
@@ -569,27 +693,29 @@ div.title > span {
 }
 
 /* macOS: keep the same left-to-right order as the Windows/Linux toolbar
-   (TOC, theme, font size, zoom, word count) instead of the reversed window-button order. */
+   (Sidebar, TOC, Source, Theme, Scale, Word count) instead of the reversed window-button order. */
 .right-toolbar.editor-tools {
-  width: 390px;
-  padding-right: 8px;
+  order: 3;
+  flex: 0 0 auto;
+  width: auto;
+  padding-right: 10px;
+  gap: 3px;
   box-sizing: border-box;
   flex-direction: row;
   justify-content: flex-end;
 }
 
 .word-count-slot {
-  position: absolute;
-  top: 0;
-  right: 12px;
+  order: 3;
+  flex: 0 0 auto;
+  padding-right: 8px;
   height: 100%;
   display: flex;
   align-items: center;
 }
 
-/* Sit just left of the minimize / maximize / close buttons (3 x 46px). */
 .word-count-slot.with-window-controls {
-  right: 146px;
+  padding-right: 4px;
 }
 
 .titlebar-icon-button {
@@ -600,44 +726,74 @@ div.title > span {
   justify-content: center;
   flex: 0 0 auto;
   align-self: center;
-  width: 26px;
+  width: 24px;
   height: 24px;
-  margin: 0 4px;
+  margin: 0;
   padding: 0;
   border: 1px solid var(--editorColor10);
-  border-radius: 4px;
-  background: transparent;
-  color: var(--editorColor50);
+  border-radius: 6px;
+  background: var(--editorColor04);
+  color: var(--editorColor60);
   cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
 .titlebar-icon-button:hover,
 .titlebar-icon-button.active {
   color: var(--editorColor);
   background: var(--sideBarBgColor);
+  border-color: var(--editorColor30);
 }
 
-.font-size-controls,
-.zoom-controls {
+.titlebar-icon-button.active {
+  color: var(--themeColor);
+  border-color: var(--themeColor40);
+  background: var(--themeColor10);
+}
+
+.view-scale-cluster {
   height: 24px;
   display: inline-flex;
   align-items: stretch;
   flex: 0 0 auto;
   border: 1px solid var(--editorColor10);
-  border-radius: 4px;
+  border-radius: 6px;
+  background: var(--editorColor04);
   overflow: hidden;
-  margin: 0 4px;
+  opacity: 0.8;
+  transition: opacity 0.15s ease, border-color 0.15s ease;
+
+  &:hover {
+    opacity: 1;
+    border-color: var(--editorColor30);
+  }
+
+  & .scale-divider {
+    width: 1px;
+    background: var(--editorColor10);
+    flex: 0 0 1px;
+  }
+}
+
+.font-size-controls,
+.zoom-controls {
+  height: 100%;
+  display: inline-flex;
+  align-items: stretch;
+  flex: 0 0 auto;
 
   & button {
     appearance: none;
     border: 0;
     background: transparent;
-    color: var(--editorColor50);
-    min-width: 23px;
-    padding: 0 5px;
+    color: var(--editorColor60);
+    min-width: 19px;
+    padding: 0 4px;
     cursor: pointer;
     font: inherit;
+    font-size: 10.5px;
     line-height: 22px;
+    transition: background-color 0.15s ease, color 0.15s ease;
   }
 
   & button:hover:not(:disabled) {
@@ -646,30 +802,25 @@ div.title > span {
   }
 
   & button:disabled {
-    opacity: 0.35;
+    opacity: 0.32;
     cursor: default;
   }
 
   & .font-size-value,
   & .zoom-value {
-    min-width: 48px;
-    border-left: 1px solid var(--editorColor10);
-    border-right: 1px solid var(--editorColor10);
-    font-size: 12px;
+    min-width: 39px;
+    padding: 0 4px;
+    border-left: 1px solid var(--editorColor04);
+    border-right: 1px solid var(--editorColor04);
+    font-size: 11px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
   }
 }
 
-@media (max-width: 700px) {
-  .title {
+@media (max-width: 620px) {
+  .title .path-segment {
     display: none;
-  }
-
-  .word-count-slot {
-    display: none;
-  }
-
-  .right-toolbar.editor-tools {
-    width: auto;
   }
 }
 
@@ -682,6 +833,8 @@ div.title > span {
   display: block;
   width: 46px;
   height: var(--titleBarHeight);
+  color: var(--editorColor60);
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 .frameless-titlebar-button > div {
   position: absolute;
@@ -692,16 +845,17 @@ div.title > span {
 }
 .frameless-titlebar-close:hover {
   background-color: rgb(228, 79, 79);
+  color: #ffffff;
 }
 .frameless-titlebar-minimize:hover,
 .frameless-titlebar-toggle:hover {
-  background-color: rgba(0, 0, 0, 0.1);
+  background-color: var(--sideBarItemHoverBgColor);
+  color: var(--editorColor);
 }
 .frameless-titlebar-button svg {
-  fill: #000000;
+  fill: currentColor;
 }
 .frameless-titlebar-close:hover svg {
   fill: #ffffff;
 }
-
 </style>

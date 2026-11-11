@@ -3,11 +3,8 @@
     class="pref-switch-item"
     :class="{ 'ag-underdevelop': disable }"
   >
-    <div
-      class="description"
-      style="display: flex; align-items: center"
-    >
-      <span>{{ description }}:</span>
+    <div class="description">
+      <span class="label-text">{{ description }}</span>
       <LinkIcon
         v-if="more"
         :size="14"
@@ -83,56 +80,45 @@ const handleSwitchChange = (value: boolean | string | number) => {
 }
 </script>
 
-<style>
+<style scoped>
 .pref-switch-item {
-  font-size: 14px;
+  font-size: 13.5px;
   user-select: none;
-  margin: 12px 0;
+  margin: 10px 0;
+  padding: 6px 0;
   color: var(--editorColor);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
+  --el-switch-on-color: var(--themeColor);
+  --el-switch-off-color: var(--editorColor30);
 
   & .description {
-    & svg {
-      margin-left: 4px;
-      cursor: pointer;
-      opacity: 0.7;
-      color: var(--iconColor);
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    line-height: 1.45;
+    & .label-text {
+      color: var(--editorColor);
     }
-    & svg:hover {
+    & :deep(svg) {
+      cursor: pointer;
+      opacity: 0.65;
+      color: var(--iconColor);
+      transition: color 0.15s ease, opacity 0.15s ease;
+    }
+    & :deep(svg:hover) {
+      opacity: 1;
       color: var(--themeColor);
     }
     & > .notes {
       display: inline;
-      margin: 0 0 0 8px;
+      margin: 0 0 0 4px;
+      color: var(--editorColor50);
+      font-size: 12px;
     }
   }
-}
-
-span.el-switch__core::after {
-  top: 3px;
-  left: 7px;
-  width: 10px;
-  height: 10px;
-}
-
-.el-switch .el-switch__core {
-  border: 2px solid var(--iconColor);
-  background: transparent;
-  box-sizing: border-box;
-}
-
-span.el-switch__label {
-  color: var(--editorColor50);
-}
-
-.el-switch:not(.is-checked) .el-switch__core::after {
-  background: var(--iconColor);
-}
-
-.el-switch.is-checked .el-switch__core {
-  border-color: var(--themeColor);
-  background-color: var(--themeColor);
 }
 </style>

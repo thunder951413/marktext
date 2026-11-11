@@ -171,23 +171,33 @@ const handleSearchResultClick = (searchMatch: SearchMatch): void => {
 .search-result-item {
   position: relative;
   user-select: none;
-  padding: 0 10px 8px 10px;
+  padding: 2px 8px 6px 8px;
   color: var(--sideBarColor);
-  font-size: 14px;
+  font-size: 13px;
 }
 .search-result-item > .search-result {
   display: flex;
   align-items: center;
+  height: 26px;
+  padding: 0 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  &:hover {
+    background: var(--sideBarItemHoverBgColor);
+  }
 }
 .search-result-item > .search-result > svg:first-child {
-  margin-right: 3px;
+  margin-right: 4px;
 }
 .search-result-item > .search-result > .file-info {
   flex: 1;
   overflow: hidden;
 }
 .search-result-item .title .filename {
-  font-size: 12px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--sideBarTitleColor);
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
@@ -195,34 +205,38 @@ const handleSearchResultClick = (searchMatch: SearchMatch): void => {
 }
 .search-result-item .matches ul {
   padding-left: 0;
+  margin: 2px 0 0;
   list-style-type: none;
 }
 .search-result-item .matches ul li {
   display: block;
-  padding: 2px 16px;
-  padding-right: 0;
+  padding: 3px 8px 3px 16px;
+  border-radius: 4px;
   cursor: pointer;
   /* Hide space between inline spans */
   font-size: 0;
+  transition: background-color 0.12s ease;
 }
 .search-result-item .matches ul li .highlight {
   background: var(--highlightColor);
   line-height: 16px;
   height: 16px;
+  padding: 0 2px;
   display: inline-block;
-  color: var(--sideBarTextColor);
-  border-radius: 1px;
+  color: var(--sideBarTitleColor);
+  font-weight: 600;
+  border-radius: 2px;
 }
 .search-result-item .matches ul li:hover {
   background: var(--sideBarItemHoverBgColor);
 }
 .search-result-item .matches ul li span {
-  font-size: 13px;
+  font-size: 12.5px;
   white-space: pre;
 }
 .search-result-item .matches .button {
   width: 130px;
-  margin: 0 auto;
+  margin: 4px auto 0;
   text-align: center;
 }
 .search-result-item.active {
@@ -245,19 +259,22 @@ const handleSearchResultClick = (searchMatch: SearchMatch): void => {
 .title .filename .extension {
   color: var(--sideBarTextColor);
   font-size: 12px;
+  font-weight: 400;
 }
 .title .match-count {
   display: inline-block;
-  font-size: 10px;
+  font-size: 10.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
   line-height: 16px;
   text-align: center;
-  min-width: 16px;
+  min-width: 18px;
   height: 16px;
   padding: 0 5px;
-  border-radius: 3px;
+  border-radius: 8px;
   flex-shrink: 0;
-  background: var(--itemBgColor);
-  color: var(--sideBarTextColor);
+  background: var(--editorColor10);
+  color: var(--sideBarColor);
 }
 
 .folder-path {
@@ -267,7 +284,7 @@ const handleSearchResultClick = (searchMatch: SearchMatch): void => {
 .folder-path > span,
 .matches {
   width: 100%;
-  margin-top: 5px;
+  margin-top: 2px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -275,7 +292,8 @@ const handleSearchResultClick = (searchMatch: SearchMatch): void => {
 }
 
 .icon-arrow {
-  transition: transform 0.25s ease-out;
+  margin-right: 4px;
+  transition: transform 0.2s ease-out;
   transform: rotate(90deg);
   color: var(--sideBarTextColor);
   cursor: pointer;

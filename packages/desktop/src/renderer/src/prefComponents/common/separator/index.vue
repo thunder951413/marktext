@@ -2,10 +2,10 @@
   <div class="pref-separator" />
 </template>
 
-<style>
+<style scoped>
 .pref-separator {
-  margin: 12px 0;
-  height: 2px;
-  background: var(--editorColor04);
+  margin: 18px 0;
+  height: 1px;
+  background: var(--editorColor10);
 }
 </style>

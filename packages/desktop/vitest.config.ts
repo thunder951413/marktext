@@ -6,6 +6,11 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
 export default defineConfig({
+  server: {
+    fs: {
+      allow: [resolve(__dirname, '../..')]
+    }
+  },
   test: {
     environment: 'jsdom',
     include: ['test/unit/specs/**/*.spec.ts'],

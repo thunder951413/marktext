@@ -44,6 +44,10 @@ export interface IpcInvokeChannels {
   'mt::clipboard::read-text': { args: []; ret: string }
   'mt::cmd::exists': { args: [name: string]; ret: boolean }
   'mt::fonts::list': { args: []; ret: string[] }
+  'mt::get-recently-used-documents': {
+    args: []
+    ret: Array<{ pathname: string; isDirectory: boolean }>
+  }
   'mt::fs-trash-item': { args: [pathname: string]; ret: void }
   'mt::fs::copy': { args: [src: string, dest: string]; ret: void }
   'mt::fs::ensure-dir': { args: [path: string]; ret: void }
@@ -128,7 +132,9 @@ export interface IpcSendChannels {
   'mt::open-file': [filePath: string, options?: unknown]
   'mt::open-file-by-window-id': [windowId: number, filePath: string, options?: unknown]
   'mt::open-keybindings-config': []
+  'mt::open-recently-used-document': [pathname: string]
   'mt::open-setting-window': []
+  'mt::clear-recently-used-documents': []
   'mt::rename': [payload: { id: string; pathname: string; newPathname: string; currentFile?: unknown }]
   'mt::request-keybindings': []
   'mt::set-editor-format-menus-enabled': [windowId: number, enabled: boolean]

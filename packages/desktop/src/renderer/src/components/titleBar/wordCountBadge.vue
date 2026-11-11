@@ -55,26 +55,33 @@ const cycle = () => {
 .word-count {
   -webkit-app-region: no-drag;
   cursor: pointer;
-  font-size: 14px;
-  color: var(--editorColor30);
+  font-size: 11.5px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--editorColor50);
   text-align: center;
-  line-height: 24px;
-  padding: 0 5px;
+  height: 24px;
+  line-height: 22px;
+  padding: 0;
+  margin: 0 1px;
   box-sizing: border-box;
-  /* Keep "W 123" on one line; it used to wrap, dropping the number below. */
   white-space: nowrap;
   flex: 0 0 auto;
-  transition: all 0.25s ease-in-out;
   & > .text-center-vertical {
-    display: inline-block;
-    vertical-align: middle;
-    line-height: normal;
-    padding: 2px 5px;
-    border-radius: 3px;
+    display: inline-flex;
+    align-items: center;
+    height: 24px;
+    padding: 0 7px;
+    border-radius: 6px;
+    border: 1px solid var(--editorColor10);
+    background: var(--editorColor04);
+    box-sizing: border-box;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
   }
   &:hover > span {
     background: var(--sideBarBgColor);
-    color: var(--sideBarTitleColor);
+    color: var(--editorColor);
+    border-color: var(--editorColor30);
   }
 }
 
@@ -88,13 +95,21 @@ const cycle = () => {
 <style>
 /* The tooltip content is teleported to <body>, so these cannot be scoped. */
 .title-item {
-  height: 28px;
-  line-height: 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  height: 24px;
+  line-height: 24px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
   & .front {
-    opacity: 0.7;
+    color: var(--editorColor50);
   }
   & .text {
     margin-left: 10px;
+    font-weight: 600;
+    color: var(--editorColor);
   }
 }
 </style>

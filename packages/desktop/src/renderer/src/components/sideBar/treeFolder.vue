@@ -59,7 +59,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useProjectStore } from '@/store/project'
 import { showContextMenu } from '../../contextMenu/sideBar'
@@ -142,22 +142,29 @@ onMounted(() => {
   bus.on('SIDEBAR::show-new-input', handleInputFocus)
   bus.on('SIDEBAR::show-rename-input', focusRenameInput)
 })
+
+onBeforeUnmount(() => {
+  bus.off('SIDEBAR::show-new-input', handleInputFocus)
+  bus.off('SIDEBAR::show-rename-input', focusRenameInput)
+})
 </script>
 
 <style scoped>
 .side-bar-folder {
   & > .folder-name {
-    cursor: default;
+    cursor: pointer;
     user-select: none;
     display: flex;
     align-items: center;
-    height: 30px;
-    padding-right: 15px;
+    height: 28px;
+    font-size: 13px;
+    padding-right: 12px;
+    transition: background-color 0.15s ease;
     & > .icon-arrow {
       flex-shrink: 0;
       color: var(--sideBarIconColor);
-      margin-right: 5px;
-      transition: transform 0.25s ease-out;
+      margin-right: 6px;
+      transition: transform 0.2s ease-out;
       transform: rotate(90deg);
     }
     & > .icon-arrow.fold {
@@ -172,12 +179,13 @@ onMounted(() => {
 input.rename {
   outline: none;
   height: 22px;
-  margin: 5px 0;
-  padding: 0 6px;
+  margin: 3px 0;
+  padding: 0 8px;
   color: var(--sideBarColor);
-  border: 1px solid var(--floatBorderColor);
-  background: var(--floatBorderColor);
+  border: 1px solid var(--themeColor);
+  background: var(--inputBgColor);
   width: 70%;
-  border-radius: 3px;
+  border-radius: 4px;
+  font-size: 12.5px;
 }
 </style>

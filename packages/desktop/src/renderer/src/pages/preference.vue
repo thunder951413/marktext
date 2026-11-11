@@ -83,24 +83,32 @@ onMounted(() => {
   }
 
   & h4 {
-    margin: 0;
-    font-size: 18px;
+    margin: 0 0 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--editorColor10);
+    font-size: 19px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
   }
 
   & h5 {
-    font-size: 15px;
+    font-size: 14px;
+    font-weight: 600;
   }
 
   & h6 {
-    font-size: 15px;
+    margin: 0 0 8px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--editorColor80);
   }
 
   & .notes {
     display: block;
-    margin: 8px 0 0;
-    font-style: italic;
+    margin: 6px 0 0;
     font-size: 12px;
-    color: var(--editorColor80);
+    line-height: 1.5;
+    color: var(--editorColor50);
   }
 
   & .pref-content {
@@ -118,11 +126,15 @@ onMounted(() => {
       -webkit-app-region: drag;
     }
     & .pref-setting {
-      padding: 50px 40px;
-      padding-top: var(--titleBarHeight);
+      padding: 36px 44px 56px;
+      padding-top: calc(var(--titleBarHeight) + 24px);
       flex: 1;
       height: calc(100vh - var(--titleBarHeight));
       overflow: auto;
+      box-sizing: border-box;
+      & > * {
+        max-width: 740px;
+      }
     }
     & span,
     & div,
@@ -138,7 +150,7 @@ onMounted(() => {
   & .pref-content.frameless .pref-setting {
     /* Move the scrollbar below the titlebar */
     margin-top: var(--titleBarHeight);
-    padding-top: 0;
+    padding-top: 28px;
   }
 }
 </style>

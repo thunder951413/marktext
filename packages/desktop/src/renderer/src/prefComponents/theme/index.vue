@@ -142,23 +142,29 @@ const onSelectChange = (type: keyof PreferencesState, value: unknown): void => {
 
 <style>
 .offcial-themes {
-  margin-top: 12px;
+  margin-top: 16px;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
   & .theme {
     cursor: pointer;
     width: 100%;
-    height: 110px;
+    height: 108px;
     margin: 0;
-    padding: 16px 18px 16px 32px;
+    padding: 14px 16px 14px 30px;
     overflow: hidden;
     background: var(--editorBgColor);
     color: var(--editorColor);
     box-sizing: border-box;
-    box-shadow: 0 9px 28px -9px rgba(0, 0, 0, 0.4);
-    border-radius: 5px;
-    transition: opacity 0.2s ease;
+    border: 1px solid rgba(128, 128, 128, 0.22);
+    box-shadow: 0 4px 14px -6px rgba(0, 0, 0, 0.28);
+    border-radius: 8px;
+    transition: opacity 0.2s ease, transform 0.16s ease, box-shadow 0.16s ease;
+
+    &:hover:not(.disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px -8px rgba(0, 0, 0, 0.36);
+    }
 
     &.dark {
       color: rgba(255, 255, 255, 0.7);
@@ -453,20 +459,23 @@ const onSelectChange = (type: keyof PreferencesState, value: unknown): void => {
   }
   & .custom-css-input {
     width: 100%;
-    background: transparent;
+    background: var(--editorColor04);
     color: var(--editorColor);
     border: 1px solid var(--editorColor10);
-    border-radius: 4px;
-    padding: 8px 10px;
-    font-family: 'DejaVu Sans Mono', 'Source Code Pro', 'Droid Sans Mono', Consolas, monospace;
-    font-size: 12px;
-    line-height: 1.5;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-family: var(--codeFontFamily, 'DejaVu Sans Mono', 'Source Code Pro', Consolas, monospace);
+    font-size: 12.5px;
+    line-height: 1.55;
     box-sizing: border-box;
     resize: vertical;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
   }
   & .custom-css-input:focus {
     outline: none;
+    background: var(--editorBgColor);
     border-color: var(--themeColor);
+    box-shadow: 0 0 0 3px var(--themeColor10);
   }
 }
 

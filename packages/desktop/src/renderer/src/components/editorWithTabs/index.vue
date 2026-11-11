@@ -21,7 +21,7 @@
       />
     </div>
     <div
-      v-if="vimEnabled"
+      v-if="vimEnabled && !plainText"
       class="vim-status"
       data-testid="vim-status"
       :class="`mode-${vimMode}`"
@@ -104,30 +104,54 @@ onBeforeUnmount(() => bus.off('vim-mode-change', handleVimModeChange))
 
   & > .vim-status {
     box-sizing: border-box;
-    height: 24px;
-    flex: 0 0 24px;
+    height: 26px;
+    flex: 0 0 26px;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     padding: 0 12px;
-    border-top: 1px solid var(--floatBorderColor);
-    background: var(--editorBgColor);
+    border-top: 1px solid var(--editorColor10);
+    background: var(--editorColor04);
     color: var(--editorColor);
     font-family: var(--codeFontFamily, monospace);
     font-size: 11px;
     user-select: none;
 
-    &.mode-insert {
-      color: var(--primaryColor);
+    & > span:first-child {
+      display: inline-flex;
+      align-items: center;
+      height: 18px;
+      padding: 0 7px;
+      border-radius: 4px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      background: var(--editorColor10);
+      color: var(--editorColor80);
+      transition: background-color 0.15s ease, color 0.15s ease;
     }
 
-    &.mode-visual,
-    &.mode-visual-line {
-      color: var(--warningColor, #d97706);
+    &.mode-insert > span:first-child {
+      background: var(--themeColor20);
+      color: var(--themeColor);
+    }
+
+    &.mode-visual > span:first-child,
+    &.mode-visual-line > span:first-child {
+      background: color-mix(in srgb, var(--highlightThemeColor, var(--themeColor)) 18%, transparent);
+      color: var(--highlightThemeColor, var(--themeColor));
+    }
+
+    &.mode-search > span:first-child {
+      background: var(--editorColor10);
+      color: var(--focusColor);
     }
 
     & .vim-pending {
-      opacity: 0.7;
+      padding: 1px 6px;
+      border-radius: 3px;
+      background: var(--editorColor10);
+      color: var(--editorColor80);
+      font-weight: 500;
     }
   }
 }

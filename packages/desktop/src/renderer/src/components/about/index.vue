@@ -4,38 +4,28 @@
       v-model="showAboutDialog"
       :show-close="false"
       :modal="true"
-      custom-class="ag-dialog-table"
-      width="400px"
+      class="ag-dialog-table"
+      width="380px"
     >
-      <img
-        class="logo"
-        :src="MarkTextLogo"
-      >
-      <el-row>
-        <el-col :span="24">
-          <h3 class="title">
-            {{ name }}
-          </h3>
-        </el-col>
-        <el-col :span="24">
+      <div class="about-card">
+        <img
+          class="logo"
+          :src="MarkTextLogo"
+          alt="MarkText"
+        >
+        <h3 class="title">
+          {{ name }}
+        </h3>
+        <span class="version-pill">{{ store.appVersion }}</span>
+        <div class="copyright-group">
           <div class="text">
-            {{ store.appVersion }}
-          </div>
-        </el-col>
-        <el-col :span="24">
-          <div
-            class="text"
-            style="min-height: auto"
-          >
             {{ copyright }}
           </div>
-        </el-col>
-        <el-col :span="24">
-          <div class="text">
+          <div class="text contributors">
             {{ copyrightContributors }}
           </div>
-        </el-col>
-      </el-row>
+        </div>
+      </div>
     </el-dialog>
   </div>
 </template>
@@ -70,30 +60,58 @@ onBeforeUnmount(() => {
 })
 </script>
 
-<style>
-.about-dialog el-row,
-.about-dialog el-col {
-  display: block;
-}
-
-.about-dialog img.logo {
-  width: 80px;
-  height: 80px;
-  display: inherit;
-  margin: 0 auto;
-}
-
-.about-dialog .title,
-.about-dialog .text {
-  min-height: 32px;
+<style scoped>
+.about-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0 4px;
   text-align: center;
+  user-select: none;
 }
 
-.about-dialog .title {
+.logo {
+  width: 72px;
+  height: 72px;
+  margin-bottom: 12px;
+}
+
+.title {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 600;
   color: var(--floatFontColor);
 }
 
-.about-dialog .text {
-  color: var(--floatFontColor);
+.version-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--editorColor04);
+  border: 1px solid var(--editorColor10);
+  color: var(--editorColor80);
+  font-family: var(--codeFontFamily, monospace);
+  font-size: 12px;
+  margin-bottom: 16px;
+}
+
+.copyright-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 14px;
+  width: 100%;
+  border-top: 1px solid var(--editorColor10);
+}
+
+.text {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--editorColor60);
+}
+
+.contributors {
+  color: var(--editorColor50);
 }
 </style>

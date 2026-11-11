@@ -6,9 +6,8 @@
     <div
       v-if="description"
       class="description"
-      style="display: flex; align-items: center"
     >
-      <span>{{ description }}:</span>
+      <span>{{ description }}</span>
       <LinkIcon
         v-if="more"
         :size="14"
@@ -82,45 +81,58 @@ const select = (value: SelectValue) => {
 
 <style>
 .pref-select-item {
-  margin: 12px 0;
-  font-size: 14px;
+  margin: 14px 0;
+  font-size: 13.5px;
   color: var(--editorColor);
   & .el-select {
     width: 100%;
   }
-  & div {
-    background: transparent;
-    color: var(--editorColor);
-    border-color: var(--editorColor10);
+  & .el-select__wrapper {
+    min-height: 34px;
+    border-radius: 6px;
+    background-color: var(--editorColor04);
+    box-shadow: 0 0 0 1px var(--editorColor10) inset;
+    transition: box-shadow 0.15s ease, background-color 0.15s ease;
   }
-  & input.el-input__inner {
-    height: 30px;
-    background: transparent;
-    color: var(--editorColor);
-    border-color: var(--editorColor10);
+  & .el-select__wrapper:hover {
+    box-shadow: 0 0 0 1px var(--editorColor30) inset;
   }
-  & .el-input__icon,
-  & .el-input__inner {
-    line-height: 30px;
+  & .el-select__wrapper.is-focused {
+    background-color: var(--editorBgColor);
+    box-shadow: 0 0 0 1px var(--themeColor) inset, 0 0 0 3px var(--themeColor10);
+  }
+  & .el-select__selected-item,
+  & .el-select__placeholder {
+    color: var(--editorColor);
   }
 }
 .pref-select-item .description {
-  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  color: var(--editorColor80);
   & svg {
-    margin-left: 4px;
     cursor: pointer;
-    opacity: 0.7;
+    opacity: 0.65;
     color: var(--iconColor);
+    transition: color 0.15s ease, opacity 0.15s ease;
   }
   & svg:hover {
+    opacity: 1;
     color: var(--themeColor);
   }
 }
 li.el-select-dropdown__item {
   color: var(--editorColor);
-  height: 30px;
+  height: 32px;
+  line-height: 32px;
+  border-radius: 5px;
+  margin: 1px 4px;
+  padding: 0 10px;
 }
 li.el-select-dropdown__item.hover,
+li.el-select-dropdown__item.is-hovering,
 li.el-select-dropdown__item:hover {
   background: var(--floatHoverColor);
 }
@@ -128,15 +140,16 @@ li.el-select-dropdown__item.selected,
 li.el-select-dropdown__item.is-selected {
   color: var(--themeColor);
   background: var(--themeColor10);
+  font-weight: 500;
 }
 div.el-select-dropdown {
   background: var(--floatBgColor);
   border-color: var(--floatBorderColor);
-  & .popper__arrow {
+  border-radius: 8px;
+  padding: 4px 0;
+  & .popper__arrow,
+  & .el-popper__arrow {
     display: none;
   }
-}
-.el-select__wrapper.is-focused {
-  box-shadow: 0 0 0 1px var(--themeColor) inset;
 }
 </style>

@@ -149,7 +149,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useProjectStore } from '@/store/project'
 import { useEditorStore } from '@/store/editor'
@@ -248,34 +248,39 @@ const handleInputEnter = (): void => {
   projectStore.CREATE_FILE_DIRECTORY(createName.value)
 }
 
+const clearOutsideEditCaches = (event: MouseEvent): void => {
+  const target = event.target as HTMLElement | null
+  if (target && target.tagName !== 'INPUT') {
+    if (event.type === 'click') {
+      projectStore.CHANGE_ACTIVE_ITEM({})
+    }
+    projectStore.createCache = {}
+    projectStore.renameCache = null
+  }
+}
+
+const clearCachesOnEscape = (event: KeyboardEvent): void => {
+  if (event.key === 'Escape') {
+    projectStore.createCache = {}
+    projectStore.renameCache = null
+  }
+}
+
 onMounted(() => {
   bus.on('SIDEBAR::show-new-input', handleInputFocus)
 
   // Hide rename / create inputs on outside clicks. Buttons that open these
   // inputs must use @click.stop so their click never reaches this listener.
-  document.addEventListener('click', (event) => {
-    const target = event.target as HTMLElement | null
-    if (target && target.tagName !== 'INPUT') {
-      projectStore.CHANGE_ACTIVE_ITEM({})
-      projectStore.createCache = {}
-      projectStore.renameCache = null
-    }
-  })
+  document.addEventListener('click', clearOutsideEditCaches)
+  document.addEventListener('contextmenu', clearOutsideEditCaches)
+  document.addEventListener('keydown', clearCachesOnEscape)
+})
 
-  document.addEventListener('contextmenu', (event) => {
-    const target = event.target as HTMLElement | null
-    if (target && target.tagName !== 'INPUT') {
-      projectStore.createCache = {}
-      projectStore.renameCache = null
-    }
-  })
-
-  document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') {
-      projectStore.createCache = {}
-      projectStore.renameCache = null
-    }
-  })
+onBeforeUnmount(() => {
+  bus.off('SIDEBAR::show-new-input', handleInputFocus)
+  document.removeEventListener('click', clearOutsideEditCaches)
+  document.removeEventListener('contextmenu', clearOutsideEditCaches)
+  document.removeEventListener('keydown', clearCachesOnEscape)
 })
 </script>
 
@@ -295,24 +300,24 @@ onMounted(() => {
   transform: translateX(-50px);
 }
 .tree-view {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--sideBarColor);
   display: flex;
   flex-direction: column;
   height: 100%;
 }
 .tree-view > .title {
-  height: 35px;
-  line-height: 35px;
-  padding: 0 15px;
+  height: 32px;
+  line-height: 32px;
+  padding: 0 12px;
   display: flex;
   flex-shrink: 0;
   flex-direction: row-reverse;
 }
 
 .icon-arrow {
-  margin-right: 5px;
-  transition: transform 0.25s ease-out;
+  margin-right: 6px;
+  transition: transform 0.2s ease-out;
   transform: rotate(90deg);
   color: var(--sideBarTextColor);
   cursor: pointer;
@@ -324,15 +329,16 @@ onMounted(() => {
 
 .opened-files > .title,
 .project-tree > .title {
-  height: 30px;
-  line-height: 30px;
-  font-size: 14px;
-}
-
-.opened-files .title {
-  padding-right: 15px;
+  height: 28px;
+  line-height: 28px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--sideBarTitleColor);
+  padding: 0 12px 0 10px;
   display: flex;
   align-items: center;
+  border-bottom: 1px solid var(--editorColor04);
 }
 
 .opened-files .title > span {
@@ -357,14 +363,16 @@ onMounted(() => {
 .opened-files {
   display: flex;
   flex-direction: column;
+  margin-bottom: 4px;
 }
 .default-cursor {
   cursor: pointer;
 }
 .opened-files .opened-files-list {
-  max-height: 112px;
+  max-height: 120px;
   overflow: auto;
   flex: 1;
+  padding: 2px 0;
 }
 
 .opened-files .opened-files-list::-webkit-scrollbar:vertical {
@@ -376,12 +384,6 @@ onMounted(() => {
   flex-direction: column;
   overflow: auto;
   flex: 1;
-}
-
-.project-tree > .title {
-  padding-right: 15px;
-  display: flex;
-  align-items: center;
 }
 
 .project-tree > .title > span {
@@ -408,6 +410,7 @@ onMounted(() => {
 .project-tree > .tree-wrapper {
   overflow: auto;
   flex: 1;
+  padding: 4px 0;
 }
 
 .project-tree > .tree-wrapper::-webkit-scrollbar:vertical {
@@ -433,6 +436,7 @@ onMounted(() => {
 
 .open-project .el-button {
   margin-top: 20px;
+  border-radius: 6px;
 }
 .open-project .el-button.is-text.is-has-bg,
 .empty-project .el-button.is-text.is-has-bg {
@@ -449,27 +453,28 @@ onMounted(() => {
 }
 .new-input {
   outline: none;
-  height: 22px;
-  margin: 5px 0;
-  padding: 0 6px;
+  height: 24px;
+  margin: 4px 0;
+  padding: 0 8px;
   color: var(--sideBarColor);
-  border: 1px solid var(--floatBorderColor);
+  border: 1px solid var(--themeColor);
   background: var(--inputBgColor);
   width: calc(100% - 45px);
-  border-radius: 3px;
+  border-radius: 4px;
+  font-size: 12.5px;
 }
 .tree-wrapper {
   position: relative;
 }
 .empty-project {
-  font-size: 14px;
+  font-size: 13px;
   display: flex;
   flex-direction: column;
   padding-top: 40px;
   align-items: center;
   color: var(--sideBarTextColor);
   & button {
-    margin-top: 10px;
+    margin-top: 12px;
   }
 }
 

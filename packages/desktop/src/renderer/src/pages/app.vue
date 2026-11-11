@@ -39,7 +39,7 @@
 
 <script setup lang="ts">
 import { isTextDocument } from 'common/textDocument'
-import { computed, watch, nextTick, onMounted, ref } from 'vue'
+import { computed, watch, nextTick, onMounted, onBeforeUnmount, ref } from 'vue'
 import { useMainStore } from '@/store'
 import { storeToRefs } from 'pinia'
 import { addStyles, addThemeStyle, addCustomStyle, type AddStylesOptions } from '@/util/theme'
@@ -120,42 +120,48 @@ watch(zoom, (zoomValue) => {
   bus.emit('mt::window-zoom', zoomValue)
 })
 
-const setupDragDropHandler = (): void => {
-  window.addEventListener(
-    'dragover',
-    (e: DragEvent) => {
-      if (!e.dataTransfer || !e.dataTransfer.types.length) return
+const handleWindowDragOver = (e: DragEvent): void => {
+  if (!e.dataTransfer || !e.dataTransfer.types.length) return
 
-      if (e.dataTransfer.types.indexOf('Files') >= 0) {
-        if (
-          e.dataTransfer.items.length === 1 &&
-          e.dataTransfer.items[0]!.type.indexOf('image') > -1
-        ) {
-          // Do nothing
-        } else {
-          e.preventDefault()
-          if (timer.value) {
-            clearTimeout(timer.value)
-          }
-          timer.value = setTimeout(() => {
-            bus.emit('importDialog', false)
-          }, 300)
-          bus.emit('importDialog', true)
-        }
-        e.dataTransfer.dropEffect = 'copy'
-      } else if (e.dataTransfer.types.indexOf('text/uri-list') >= 0) {
-        // A web-link / web-image drag (e.g. an <img> dragged from a browser).
-        // The muya editor's own dragover/drop handlers accept these and insert
-        // an image block, so leave the drop enabled — forcing dropEffect='none'
-        // here would clobber the editor's 'copy' and suppress the drop event.
-      } else {
-        e.stopPropagation()
-        e.dataTransfer.dropEffect = 'none'
+  if (e.dataTransfer.types.indexOf('Files') >= 0) {
+    if (
+      e.dataTransfer.items.length === 1 &&
+      e.dataTransfer.items[0]!.type.indexOf('image') > -1
+    ) {
+      // Do nothing
+    } else {
+      e.preventDefault()
+      if (timer.value) {
+        clearTimeout(timer.value)
       }
-    },
-    false
-  )
+      timer.value = setTimeout(() => {
+        bus.emit('importDialog', false)
+      }, 300)
+      bus.emit('importDialog', true)
+    }
+    e.dataTransfer.dropEffect = 'copy'
+  } else if (e.dataTransfer.types.indexOf('text/uri-list') >= 0) {
+    // A web-link / web-image drag (e.g. an <img> dragged from a browser).
+    // The muya editor's own dragover/drop handlers accept these and insert
+    // an image block, so leave the drop enabled — forcing dropEffect='none'
+    // here would clobber the editor's 'copy' and suppress the drop event.
+  } else {
+    e.stopPropagation()
+    e.dataTransfer.dropEffect = 'none'
+  }
 }
+
+const setupDragDropHandler = (): void => {
+  window.addEventListener('dragover', handleWindowDragOver, false)
+}
+
+onBeforeUnmount(() => {
+  window.removeEventListener('dragover', handleWindowDragOver, false)
+  if (timer.value) {
+    clearTimeout(timer.value)
+    timer.value = null
+  }
+})
 onMounted(async () => {
   if (window.marktext?.initialState) {
     preferencesStore.SET_USER_PREFERENCE(window.marktext.initialState)

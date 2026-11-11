@@ -4,10 +4,12 @@
       v-model="showExportSettingsDialog"
       :show-close="false"
       :modal="true"
-      custom-class="ag-dialog-table"
-      width="500px"
+      class="ag-dialog-table"
+      width="520px"
     >
-      <h3>{{ t('exportSettings.title') }}</h3>
+      <h3 class="dialog-title">
+        {{ t('exportSettings.title') }}
+      </h3>
       <el-tabs v-model="activeName">
         <el-tab-pane
           :label="t('exportSettings.info.label')"
@@ -46,13 +48,13 @@
                 <div>{{ t('exportSettings.page.widthHeight') }}</div>
                 <el-input-number
                   v-model="pageSizeWidth"
-                  size="mini"
+                  size="small"
                   controls-position="right"
                   :min="100"
                 />
                 <el-input-number
                   v-model="pageSizeHeight"
-                  size="mini"
+                  size="small"
                   controls-position="right"
                   :min="100"
                 />
@@ -65,47 +67,53 @@
               />
             </div>
 
-            <div class="row">
+            <div class="row margin-section">
               <div class="description">
                 {{ t('exportSettings.page.pageMargin') }}
               </div>
-              <div>
-                <div class="label">
-                  {{ t('exportSettings.page.topBottom') }}
+              <div class="margin-grid">
+                <div class="margin-pair">
+                  <div class="label">
+                    {{ t('exportSettings.page.topBottom') }}
+                  </div>
+                  <div class="margin-inputs">
+                    <el-input-number
+                      v-model="pageMarginTop"
+                      size="small"
+                      controls-position="right"
+                      :min="0"
+                      :max="100"
+                    />
+                    <el-input-number
+                      v-model="pageMarginBottom"
+                      size="small"
+                      controls-position="right"
+                      :min="0"
+                      :max="100"
+                    />
+                  </div>
                 </div>
-                <el-input-number
-                  v-model="pageMarginTop"
-                  size="mini"
-                  controls-position="right"
-                  :min="0"
-                  :max="100"
-                />
-                <el-input-number
-                  v-model="pageMarginBottom"
-                  size="mini"
-                  controls-position="right"
-                  :min="0"
-                  :max="100"
-                />
-              </div>
-              <div>
-                <div class="label">
-                  {{ t('exportSettings.page.leftRight') }}
+                <div class="margin-pair">
+                  <div class="label">
+                    {{ t('exportSettings.page.leftRight') }}
+                  </div>
+                  <div class="margin-inputs">
+                    <el-input-number
+                      v-model="pageMarginLeft"
+                      size="small"
+                      controls-position="right"
+                      :min="0"
+                      :max="100"
+                    />
+                    <el-input-number
+                      v-model="pageMarginRight"
+                      size="small"
+                      controls-position="right"
+                      :min="0"
+                      :max="100"
+                    />
+                  </div>
                 </div>
-                <el-input-number
-                  v-model="pageMarginLeft"
-                  size="mini"
-                  controls-position="right"
-                  :min="0"
-                  :max="100"
-                />
-                <el-input-number
-                  v-model="pageMarginRight"
-                  size="mini"
-                  controls-position="right"
-                  :min="0"
-                  :max="100"
-                />
               </div>
             </div>
           </div>
@@ -554,32 +562,67 @@ const loadThemesFromDisk = async () => {
 .print-settings-dialog {
   user-select: none;
 }
+.dialog-title {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--editorColor);
+}
 .row {
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 .description {
-  margin-bottom: 10px;
+  margin-bottom: 8px;
+  font-size: 13.5px;
+  color: var(--editorColor80);
   white-space: pre-wrap;
   word-break: break-word;
 }
+.margin-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.margin-inputs {
+  display: flex;
+  gap: 10px;
+}
 .label {
   margin-bottom: 5px;
-}
-.label ~ div {
-  margin-right: 20px;
+  font-size: 12px;
+  color: var(--editorColor60);
 }
 .text {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--editorColor80);
   white-space: pre-wrap;
   word-break: break-word;
 }
 
 .button-controlls {
-  margin-top: 8px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--editorColor10);
   text-align: right;
 }
 
 .button-controlls .button-primary {
-  font-size: 14px;
+  height: 34px;
+  padding: 0 20px;
+  border-radius: 6px;
+  border: none;
+  background-color: var(--buttonPrimaryBgColor);
+  color: var(--buttonPrimaryFontColor);
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.button-controlls .button-primary:hover {
+  background-color: var(--buttonPrimaryBgColorHover);
+  color: var(--buttonPrimaryFontColorHover);
 }
 
 .el-tab-pane section:first-child {

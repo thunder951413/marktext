@@ -8,12 +8,12 @@
       v-model="showKeyInputDialog"
       :show-close="false"
       :modal="false"
-      custom-class="ag-dialog-table"
+      class="ag-dialog-table"
       width="350px"
       @close="cancelKeybinding"
       @opened="handleFocusOnShow"
     >
-      <template #title>
+      <template #header>
         <div class="key-input-wrapper">
           <div class="input-wrapper">
             <input

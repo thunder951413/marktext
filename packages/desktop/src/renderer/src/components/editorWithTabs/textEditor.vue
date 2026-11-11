@@ -15,67 +15,89 @@
       class="text-editor-content"
     />
     <div class="text-status">
-      <span>{{ position }}</span>
-      <button @click="find">
+      <div
+        v-if="vimEnabled"
+        class="vim-inline-status"
+        data-testid="vim-status"
+        :class="`mode-${vimMode}`"
+      >
+        <span class="vim-pill">{{ vimModeLabel }}</span>
+        <span
+          v-if="vimPending"
+          class="vim-pending"
+        >{{ vimPending }}</span>
+      </div>
+      <span class="cursor-position">{{ position }}</span>
+      <button
+        type="button"
+        @click="find"
+      >
         {{ t('menu.edit.find') }}
       </button>
       <button
+        type="button"
         :class="{ active: wrapping }"
         @click="toggleWrapping"
       >
-        {{ labels.wrap }}
+        {{ t('textEditor.wrapLines') }}
       </button>
-      <label>{{ labels.encoding }}
+      <div class="status-right-group">
         <select
-          v-model="encodingChoice"
-          :disabled="busy"
-          aria-label="Encoding"
+          :value="currentFile?.isMixedLineEndings ? 'mixed' : currentFile?.lineEnding"
+          aria-label="Line endings"
+          :title="t('textEditor.lineEndings')"
+          @change="changeLineEnding"
         >
           <option
-            v-for="(name, key) in ENCODING_NAME_MAP"
-            :key="key"
-            :value="key"
-          >{{ name }}</option>
+            disabled
+            value="mixed"
+          >
+            Mixed
+          </option>
+          <option value="lf">
+            LF
+          </option>
+          <option value="crlf">
+            CRLF
+          </option>
+          <option value="cr">
+            CR
+          </option>
         </select>
-      </label>
-      <button
-        :disabled="busy || !currentFile?.pathname"
-        @click="reopen"
-      >
-        {{ labels.reopen }}
-      </button>
-      <button
-        :disabled="busy"
-        @click="convertEncoding"
-      >
-        {{ labels.convert }}
-      </button>
-      <label><input
-        type="checkbox"
-        :checked="currentFile?.encoding.isBom"
-        :disabled="!unicodeEncoding"
-        @change="toggleBom"
-      >BOM</label>
-      <select
-        :value="currentFile?.isMixedLineEndings ? 'mixed' : currentFile?.lineEnding"
-        aria-label="Line endings"
-        @change="changeLineEnding"
-      >
-        <option
-          disabled
-          value="mixed"
+        <label class="encoding-label">{{ t('textEditor.encoding') }}
+          <select
+            v-model="encodingChoice"
+            :disabled="busy"
+            aria-label="Encoding"
+          >
+            <option
+              v-for="(name, key) in ENCODING_NAME_MAP"
+              :key="key"
+              :value="key"
+            >{{ name }}</option>
+          </select>
+        </label>
+        <button
+          type="button"
+          :disabled="busy || !currentFile?.pathname"
+          @click="reopen"
         >
-          Mixed
-        </option>
-        <option value="lf">
-          LF
-        </option><option value="crlf">
-          CRLF
-        </option><option value="cr">
-          CR
-        </option>
-      </select>
-      <span>{{ getEncodingName(currentFile?.encoding ?? { encoding: 'utf8' }) }}</span>
+          {{ t('textEditor.reopenWithEncoding') }}
+        </button>
+        <button
+          type="button"
+          :disabled="busy"
+          @click="convertEncoding"
+        >
+          {{ t('textEditor.saveWithEncoding') }}
+        </button>
+        <label class="bom-toggle"><input
+          type="checkbox"
+          :checked="currentFile?.encoding.isBom"
+          :disabled="!unicodeEncoding"
+          @change="toggleBom"
+        >BOM</label>
+      </div>
     </div>
   </div>
 </template>
@@ -101,10 +123,11 @@ import { getCM, vim } from '@replit/codemirror-vim'
 import { isVimModeEnabled } from '@/util/vim/enabled'
 import { installVimExCommands } from '@/util/vim/exCommands'
 import { usePreferencesStore } from '@/store/preferences'
+import { useVimStore } from '@/store/vim'
 import { DEFAULT_CODE_FONT_FAMILY } from '@/config'
 import { useEditorStore } from '@/store/editor'
 import { debouncedSendBufferedState } from '@/store/bufferedState'
-import { ENCODING_NAME_MAP, getEncodingName } from 'common/encoding'
+import { ENCODING_NAME_MAP } from 'common/encoding'
 import { isTextDocument } from 'common/textDocument'
 import type { IFileState } from '@shared/types/files'
 import bus from '@/bus'
@@ -114,16 +137,15 @@ import { t, getCurrentLanguage } from '@/i18n'
 const editorStore = useEditorStore()
 const { currentFile } = storeToRefs(editorStore)
 const { codeFontSize, codeFontFamily } = storeToRefs(usePreferencesStore())
+const vimStore = useVimStore()
+const { mode: vimMode, pending: vimPending } = storeToRefs(vimStore)
+const vimModeLabel = computed(() => vimMode.value.replace('-', ' ').toUpperCase())
+const vimEnabled = isVimModeEnabled()
 const container = ref<HTMLDivElement>()
 const wrapping = ref(false)
 const encodingChoice = ref('utf8')
 const busy = ref(false)
 const position = ref('Ln 1, Col 1')
-const labels = computed(() => getCurrentLanguage().startsWith('zh')
-  ? {
-      wrap: '自动换行', encoding: '编码', reopen: '按此编码重开', convert: '以此编码保存'
-    }
-  : { wrap: 'Wrap lines', encoding: 'Encoding', reopen: 'Reopen with encoding', convert: 'Save with encoding' })
 const unicodeEncoding = computed(() => /^utf(?:8|16le|16be|32le|32be)$/.test(currentFile.value?.encoding.encoding ?? ''))
 const selectedLineEnding = () => currentFile.value?.lineEnding === 'crlf' ? '\r\n' : currentFile.value?.lineEnding === 'cr' ? '\r' : '\n'
 const lineEndingMode = new Compartment()
@@ -214,9 +236,9 @@ const extensions = () => [
     '.cm-content': { padding: '12px 0' },
     '.cm-gutters': { backgroundColor: 'var(--editorBgColor)', color: 'var(--iconColor)', border: 'none' },
     '.cm-activeLine, .cm-activeLineGutter': { backgroundColor: 'var(--floatHoverColor)' },
-    '.cm-panels': { backgroundColor: 'var(--editorBgColor)', color: 'inherit', fontSize: '13px' },
-    '.cm-search': { padding: '8px 12px' },
-    '.cm-button, .cm-textfield': { background: 'var(--editorBgColor)', color: 'inherit', border: '1px solid var(--floatBorderColor)', borderRadius: '3px', padding: '3px 6px' },
+    '.cm-panels': { backgroundColor: 'var(--editorColor04)', color: 'inherit', fontSize: '12.5px', borderBottom: '1px solid var(--editorColor10)' },
+    '.cm-search': { padding: '8px 12px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px' },
+    '.cm-button, .cm-textfield': { background: 'var(--editorBgColor)', color: 'inherit', border: '1px solid var(--editorColor10)', borderRadius: '5px', padding: '3px 8px' },
     '.cm-cursor': { borderLeftColor: 'var(--editorColor)' },
     '&.cm-focused .cm-selectionBackground, .cm-selectionBackground': { backgroundColor: 'var(--selectionBgColor, #80808055)' }
   })
@@ -359,10 +381,131 @@ onBeforeUnmount(() => {
 <style scoped>
 .text-editor { display: flex; flex-direction: column; height: 100%; min-height: 0; }
 .text-editor-content { flex: 1; min-height: 0; overflow: hidden; }
-.text-status { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 6px 12px; font-size: 12px; border-top: 1px solid var(--floatBorderColor); }
-.text-status button, .text-status select { color: inherit; background: var(--editorBgColor); border: 1px solid var(--floatBorderColor); border-radius: 3px; padding: 3px 5px; }
-.text-status select { max-width: 180px; }
-.text-status label { display: inline-flex; align-items: center; gap: 4px; }
-.text-status .active { background: var(--floatHoverColor); }
-.text-warning { padding: 8px 12px; background: #a66b1922; }
+.text-status {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 4px 12px;
+  min-height: 28px;
+  box-sizing: border-box;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  background: var(--editorColor04);
+  border-top: 1px solid var(--editorColor10);
+  color: var(--editorColor80);
+  user-select: none;
+}
+.vim-inline-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--codeFontFamily, monospace);
+  font-size: 11px;
+  margin-right: 2px;
+}
+.vim-inline-status .vim-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 7px;
+  border-radius: 4px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  background: var(--editorColor10);
+  color: var(--editorColor80);
+}
+.vim-inline-status.mode-insert .vim-pill {
+  background: var(--themeColor20);
+  color: var(--themeColor);
+}
+.vim-inline-status.mode-visual .vim-pill,
+.vim-inline-status.mode-visual-line .vim-pill {
+  background: color-mix(in srgb, var(--highlightThemeColor, var(--themeColor)) 18%, transparent);
+  color: var(--highlightThemeColor, var(--themeColor));
+}
+.vim-inline-status.mode-search .vim-pill {
+  background: var(--editorColor10);
+  color: var(--focusColor);
+}
+.vim-inline-status .vim-pending {
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: var(--editorColor10);
+  color: var(--editorColor80);
+}
+.cursor-position {
+  font-family: var(--codeFontFamily, monospace);
+  color: var(--editorColor60);
+  margin-right: 2px;
+}
+.status-right-group {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.text-status button,
+.text-status select {
+  color: inherit;
+  background: var(--editorBgColor);
+  border: 1px solid var(--editorColor10);
+  border-radius: 5px;
+  padding: 2px 8px;
+  height: 22px;
+  font-size: 11.5px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.text-status button:hover:not(:disabled),
+.text-status select:hover:not(:disabled) {
+  background: var(--sideBarBgColor);
+  border-color: var(--editorColor30);
+  color: var(--editorColor);
+}
+.text-status button:disabled,
+.text-status select:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.text-status select {
+  max-width: 175px;
+  outline: none;
+}
+.text-status select:focus {
+  border-color: var(--themeColor);
+}
+.text-status label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--editorColor60);
+  font-size: 11.5px;
+}
+.text-status .bom-toggle {
+  padding: 0 7px;
+  height: 22px;
+  border-radius: 5px;
+  border: 1px solid var(--editorColor10);
+  background: var(--editorBgColor);
+  cursor: pointer;
+}
+.text-status .bom-toggle input {
+  margin: 0;
+  accent-color: var(--themeColor);
+}
+.text-status .active {
+  background: var(--themeColor10);
+  border-color: var(--themeColor40);
+  color: var(--themeColor);
+  font-weight: 500;
+}
+.text-warning {
+  padding: 8px 14px;
+  font-size: 12.5px;
+  background: color-mix(in srgb, var(--highlightThemeColor, var(--themeColor)) 14%, var(--editorBgColor));
+  border-bottom: 1px solid var(--editorColor10);
+  color: var(--editorColor);
+}
 </style>

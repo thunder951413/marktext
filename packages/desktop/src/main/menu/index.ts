@@ -1,7 +1,7 @@
 import { ipcMain } from '../utils/secureIpc'
 import fs from 'fs'
 import path from 'path'
-import { app, Menu, type BrowserWindow } from 'electron'
+import { app, BrowserWindow, Menu } from 'electron'
 import log from 'electron-log'
 import { ensureDirSync, isDirectory2, isFile2 } from 'common/filesystem'
 import { isLinux, isOsx, isWindows } from '../config'
@@ -84,7 +84,6 @@ class AppMenu {
     const { isOsxOrWindows, RECENTS_PATH } = this
 
     if (isOsxOrWindows) app.addRecentDocument(filePath)
-    if (isOsx) return
 
     const recentDocuments = this.getRecentlyUsedDocuments()
     const index = recentDocuments.indexOf(filePath)
@@ -104,7 +103,9 @@ class AppMenu {
       )
     }
 
-    this.updateAppMenu(recentDocuments)
+    if (!isOsx) {
+      this.updateAppMenu(recentDocuments)
+    }
 
     if (needSave) {
       ensureDirSync(this._userDataPath)
@@ -146,10 +147,11 @@ class AppMenu {
   clearRecentlyUsedDocuments(): void {
     const { isOsxOrWindows, RECENTS_PATH } = this
     if (isOsxOrWindows) app.clearRecentDocuments()
-    if (isOsx) return
 
     const recentDocuments: string[] = []
-    this.updateAppMenu(recentDocuments)
+    if (!isOsx) {
+      this.updateAppMenu(recentDocuments)
+    }
     const json = JSON.stringify(recentDocuments, null, 2)
     ensureDirSync(this._userDataPath)
     fs.writeFileSync(RECENTS_PATH, json, 'utf-8')
@@ -471,6 +473,29 @@ class AppMenu {
   }
 
   _listenForIpcMain(): void {
+    ipcMain.removeHandler?.('mt::get-recently-used-documents')
+    ipcMain.handle('mt::get-recently-used-documents', () => {
+      return this.getRecentlyUsedDocuments().map((pathname) => ({
+        pathname,
+        isDirectory: isDirectory2(pathname)
+      }))
+    })
+    ipcMain.on('mt::open-recently-used-document', (e, pathname: string) => {
+      if (typeof pathname !== 'string' || !pathname) return
+      const allowed = this.getRecentlyUsedDocuments()
+      if (!allowed.includes(pathname)) return
+      const win = BrowserWindow?.fromWebContents?.(e.sender)
+      if (!win) return
+      const resolvedPath = path.resolve(pathname)
+      if (isFile2(resolvedPath)) {
+        ipcMain.emit('app-open-file-by-id', win.id, resolvedPath)
+      } else if (isDirectory2(resolvedPath)) {
+        ipcMain.emit('app-open-directory-by-id', win.id, resolvedPath)
+      }
+    })
+    ipcMain.on('mt::clear-recently-used-documents', () => {
+      this.clearRecentlyUsedDocuments()
+    })
     ipcMain.on('mt::add-recently-used-document', (_e, pathname: string) => {
       this.addRecentlyUsedDocument(pathname)
     })

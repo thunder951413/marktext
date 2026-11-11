@@ -4,7 +4,7 @@
       v-model="showImport"
       :show-close="false"
       :modal="true"
-      custom-class="ag-dialog-table"
+      class="ag-dialog-table"
       width="450px"
     >
       <div class="body">
@@ -96,9 +96,12 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .drop-container {
-  border-radius: 5px;
+  border-radius: 8px;
+  padding: 16px;
   color: var(--sideBarColor);
-  border: 1px dashed var(--sideBarTextColor);
+  border: 1.5px dashed var(--editorColor30);
+  background: var(--editorColor04);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
   -webkit-app-region: no-drag;
   app-region: no-drag;
   & div,
@@ -106,31 +109,35 @@ onBeforeUnmount(() => {
     text-align: center;
   }
   &.active {
-    border: 1px dashed var(--themeColor);
-    background-color: var(--itemBgColor);
+    border: 1.5px dashed var(--themeColor);
+    background-color: var(--themeColor10);
   }
 }
 .img-wrapper {
   width: 50px;
   height: 70px;
-  margin: 40px auto 0 auto;
+  margin: 24px auto 8px auto;
   & img {
     width: 100%;
     height: 100%;
   }
 }
 .file-list {
-  margin-top: 20px;
+  margin-top: 16px;
   display: flex;
   justify-content: space-between;
+  gap: 8px;
   & div {
-    width: 70px;
-    height: 70px;
-    border: 1px solid var(--sideBarTextColor);
-    border-radius: 3px;
+    flex: 1;
+    height: 54px;
+    border: 1px solid var(--editorColor10);
+    background: var(--editorColor04);
+    border-radius: 6px;
     text-align: center;
-    font-size: 18px;
-    line-height: 70px;
+    font-family: var(--codeFontFamily, monospace);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 54px;
     color: var(--sideBarTitleColor);
   }
 }
