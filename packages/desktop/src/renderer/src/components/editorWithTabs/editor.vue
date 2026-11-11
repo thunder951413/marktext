@@ -80,6 +80,7 @@
 </template>
 
 <script setup lang="ts">
+import { isTextDocument } from 'common/textDocument'
 import { ref, reactive, watch, onMounted, onBeforeUnmount, nextTick, markRaw } from 'vue'
 import log from 'electron-log'
 import {
@@ -1618,6 +1619,7 @@ interface FileLoadedPayload {
 
 // listen for `open-single-file` event, it will call this method only when open a new file.
 const setMarkdownToEditor = (payload: unknown) => {
+  if (editorStore.currentFile && isTextDocument(editorStore.currentFile)) return
   const { id, markdown: newMarkdown, cursor: newCursor } = (payload ?? {}) as FileLoadedPayload
   if (editor.value) {
     vimController?.reset()
@@ -1664,6 +1666,7 @@ interface FileChangePayload {
 
 // listen for markdown change form source mode or change tabs etc
 const handleFileChange = (payload: unknown) => {
+  if (editorStore.currentFile && isTextDocument(editorStore.currentFile)) return
   const {
     id,
     markdown: newMarkdown,

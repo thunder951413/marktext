@@ -8,7 +8,7 @@ import {
   rectangularSelection,
   type ViewUpdate
 } from '@codemirror/view'
-import { Annotation, Compartment, EditorSelection, EditorState } from '@codemirror/state'
+import { Annotation, Compartment, EditorSelection, EditorState, StateEffect, type Extension } from '@codemirror/state'
 import { indentUnit } from '@codemirror/language'
 import { markdownKeymap } from '@codemirror/lang-markdown'
 import { closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete'
@@ -174,6 +174,7 @@ const contentReplacement = Annotation.define<boolean>()
 export class WysiwygEditor {
   private emitter = new Emitter()
   private view: EditorView | null = null
+  private extensions: Extension[] = []
   private container: HTMLElement
   private options: WysiwygOptions
   private themeCompartment = new Compartment()
@@ -270,6 +271,7 @@ export class WysiwygEditor {
         }
       })
     ]
+    this.extensions = exts
     const state = EditorState.create({
       doc: this.options.markdown ?? '',
       extensions: exts
@@ -695,13 +697,20 @@ export class WysiwygEditor {
    */
   getHistory(): unknown {
     if (!this.view) return null
-    return { __wysiwygStateToken: true as const, state: this.view.state }
+    return { __wysiwygStateToken: true as const, state: this.view.state, owner: this }
   }
 
   setHistory(token: unknown): void {
-    const candidate = token as { __wysiwygStateToken?: boolean; state?: EditorState } | null
+    const candidate = token as { __wysiwygStateToken?: boolean; state?: EditorState; owner?: WysiwygEditor } | null
     if (!candidate?.__wysiwygStateToken || !candidate.state || !this.view) return
-    this.view.setState(candidate.state)
+    // A token may outlive its editor when switching to a plain-text tab.
+    // Rebind callbacks/compartments to this instance while retaining history.
+    const state = candidate.owner === this
+      ? candidate.state
+      : candidate.state.update({
+        effects: StateEffect.reconfigure.of(this.extensions)
+      }).state
+    this.view.setState(state)
     this.attachVimModeListener()
   }
 

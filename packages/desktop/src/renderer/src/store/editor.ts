@@ -1,4 +1,6 @@
 import equal from 'deep-equal'
+import { isTextDocument } from 'common/textDocument'
+import type { TextDocumentMetadata } from '@shared/types/files'
 import bus from '../bus'
 import { getUniqueId, deepClone } from '../util'
 import listToTree, { type ListItem, type TreeNode } from '../util/listToTree'
@@ -64,7 +66,7 @@ interface PushTabNotificationPayload {
 
 interface FileChangePayload {
   pathname: string
-  data: {
+  data: TextDocumentMetadata & {
     isMixedLineEndings?: boolean
     lineEnding?: LineEnding | string
     adjustLineEndingOnSave?: boolean
@@ -320,6 +322,7 @@ export const useEditorStore = defineStore('editor', {
       } = data
       // Create a new document and update few entires later.
       const newFileState = createDocumentState({
+        ...data,
         markdown,
         filename,
         pathname,
@@ -367,6 +370,7 @@ export const useEditorStore = defineStore('editor', {
 
       // Update file content and restore some entries.
       Object.assign(tab, newFileState)
+      tab.decodingWarning = data.decodingWarning
       tab.id = oldId
       tab.notifications = oldNotifications
       tab.scrollTop = oldScrollTop
@@ -374,7 +378,7 @@ export const useEditorStore = defineStore('editor', {
         tab.history = oldHistory
       }
 
-      if (isMixedLineEndings && typeof lineEnding === 'string') {
+      if (isMixedLineEndings && !isTextDocument(tab) && typeof lineEnding === 'string') {
         this.pushTabNotification({
           tabId: tab.id,
           msg: t('store.editor.mixedLineEndingsNormalized', {
@@ -873,6 +877,7 @@ export const useEditorStore = defineStore('editor', {
       // Delay load runtime commands and initialize commands.
       setTimeout(() => {
         bus.emit('cmd::register-command', new FileEncodingCommand(this))
+        bus.emit('cmd::register-command', new FileEncodingCommand(this, true))
         bus.emit(
           'cmd::register-command',
           new QuickOpenCommand({
@@ -1343,7 +1348,7 @@ export const useEditorStore = defineStore('editor', {
         debouncedSendBufferedState()
       }
 
-      if (isMixedLineEndings) {
+      if (isMixedLineEndings && !isTextDocument(docState)) {
         const { filename, lineEnding } = markdownDocument
         if (typeof lineEnding === 'string') {
           this.pushTabNotification({
@@ -1424,10 +1429,10 @@ export const useEditorStore = defineStore('editor', {
 
       const { filename, pathname, markdown: oldMarkdown, trimTrailingNewline } = tab
 
-      markdown = adjustTrailingNewlines(markdown, trimTrailingNewline)
+      if (!isTextDocument(tab)) markdown = adjustTrailingNewlines(markdown, trimTrailingNewline)
       tab.markdown = markdown
 
-      if (oldMarkdown.length === 0 && markdown.length === 1 && markdown[0] === '\n') {
+      if (!isTextDocument(tab) && oldMarkdown.length === 0 && markdown.length === 1 && markdown[0] === '\n') {
         debouncedSendBufferedState()
         return
       }
@@ -1485,7 +1490,7 @@ export const useEditorStore = defineStore('editor', {
       // handoff. Never let a statistic for an older snapshot mutate the live
       // document; update only the derived field when the snapshot still
       // matches after the tab's trailing-newline normalization.
-      const normalizedMarkdown = adjustTrailingNewlines(markdown, tab.trimTrailingNewline)
+      const normalizedMarkdown = isTextDocument(tab) ? markdown : adjustTrailingNewlines(markdown, tab.trimTrailingNewline)
       if (tab.markdown !== normalizedMarkdown) return
       tab.wordCount = wordCount
       debouncedSendBufferedState()
@@ -1628,10 +1633,12 @@ export const useEditorStore = defineStore('editor', {
     SET_LINE_ENDING(lineEnding: LineEnding | string): void {
       if (!this.currentFile) return
       const { lineEnding: oldLineEnding } = this.currentFile
-      if (lineEnding !== oldLineEnding) {
+      if (lineEnding !== oldLineEnding || this.currentFile.isMixedLineEndings) {
         this.currentFile.lineEnding = lineEnding
         this.currentFile.adjustLineEndingOnSave = lineEnding !== 'lf'
-        this.currentFile.isSaved = true
+        this.currentFile.textLineEndings = undefined
+        this.currentFile.isMixedLineEndings = false
+        this.currentFile.isSaved = false
         this.UPDATE_LINE_ENDING_MENU()
         debouncedSendBufferedState()
       }
@@ -1646,14 +1653,32 @@ export const useEditorStore = defineStore('editor', {
       })
     },
 
+    async REOPEN_WITH_ENCODING(encoding: string): Promise<void> {
+      this.flushActiveEditor()
+      const tab = this.currentFile
+      if (!tab?.pathname) return
+      const original = tab.markdown
+      try {
+        const data = await window.electron.ipcRenderer.invoke('mt::fs::reopen-text', tab.pathname, encoding, !tab.isSaved)
+        if (data && this.tabs.includes(tab) && tab.markdown === original) {
+          this.loadChange({ pathname: tab.pathname, data: data as unknown as IFileState })
+        }
+      } catch (error) {
+        this.pushTabNotification({ tabId: tab.id, msg: String(error), style: 'error' })
+      }
+    },
+
     LISTEN_FOR_SET_ENCODING(): void {
       bus.on('mt::set-file-encoding', (encodingName) => {
         if (!this.currentFile) return
-        const { encoding } = this.currentFile.encoding
-        if (encoding !== encodingName) {
-          this.currentFile.encoding.encoding = encodingName as string
-          this.currentFile.encoding.isBom = false
-          this.currentFile.isSaved = true
+        const selected = String(encodingName)
+        const isBom = selected.endsWith('-bom')
+        const nextEncoding = selected.replace(/-bom$/, '')
+        const { encoding, isBom: previousBom } = this.currentFile.encoding
+        if (encoding !== nextEncoding || previousBom !== isBom) {
+          this.currentFile.encoding.encoding = nextEncoding
+          this.currentFile.encoding.isBom = isBom
+          this.currentFile.isSaved = false
           debouncedSendBufferedState()
         }
       })
@@ -1701,8 +1726,15 @@ export const useEditorStore = defineStore('editor', {
               // that left the content byte-identical) — there is nothing to
               // reload and no reason to warn the user (#1861).
               const newMarkdown = (change as unknown as FileChangePayload).data?.markdown
-              if (typeof newMarkdown === 'string' && newMarkdown === tab.markdown) {
+              const newData = (change as unknown as FileChangePayload).data
+              const sameTextFormat = !isTextDocument(tab) || (equal(newData?.encoding, tab.encoding) && equal(newData?.textLineEndings, tab.textLineEndings) && newData?.decodingWarning === tab.decodingWarning)
+              if (typeof newMarkdown === 'string' && newMarkdown === tab.markdown && sameTextFormat) {
                 break
+              }
+
+              if (isTextDocument(tab) && isSaved) {
+                this.loadChange(change as unknown as FileChangePayload)
+                return
               }
 
               const { autoSave } = preferencesStore
@@ -2031,7 +2063,7 @@ function toSerializableValue<T>(value: T | null | undefined, fallback: T | null 
   }
 }
 
-interface BufferedTabState {
+interface BufferedTabState extends TextDocumentMetadata {
   id: string
   pathname: string
   filename: string
@@ -2050,6 +2082,9 @@ interface BufferedTabState {
 const createBufferedTabState = (tab: Partial<IFileState> & { id: string }): BufferedTabState => {
   return {
     id: tab.id,
+    documentKind: tab.documentKind,
+    textLineEndings: toSerializableValue(tab.textLineEndings, undefined),
+    decodingWarning: tab.decodingWarning,
     pathname: tab.pathname ?? defaultFileState.pathname,
     filename: tab.filename ?? defaultFileState.filename,
     markdown: typeof tab.markdown === 'string' ? tab.markdown : defaultFileState.markdown,

@@ -5,19 +5,8 @@ import { minimatch } from 'minimatch'
 
 const isOsx = process.platform === 'darwin'
 
-export const MARKDOWN_EXTENSIONS: readonly string[] = Object.freeze([
-  'markdown',
-  'mdown',
-  'mkdn',
-  'md',
-  'mkd',
-  'mdwn',
-  'mdtxt',
-  'mdtext',
-  'mdx',
-  'text',
-  'txt'
-])
+export { MARKDOWN_FILE_EXTENSIONS as MARKDOWN_EXTENSIONS } from '../textDocument'
+import { MARKDOWN_FILE_EXTENSIONS as MARKDOWN_EXTENSIONS } from '../textDocument'
 
 export const MARKDOWN_INCLUSIONS: readonly string[] = Object.freeze(
   MARKDOWN_EXTENSIONS.map((x) => '*.' + x)

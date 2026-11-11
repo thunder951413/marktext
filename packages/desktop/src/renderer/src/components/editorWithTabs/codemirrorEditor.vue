@@ -79,7 +79,16 @@
   </div>
 </template>
 
+<script lang="ts">
+import { SyntheticHistory } from './syntheticHistory'
+// These survive unmounting while a plain-text tab uses its own editor.
+const engineHistoryByTab = new Map<string, unknown>()
+const engineContentByTab = new Map<string, string>()
+const syntheticHistoryByTab = new Map<string, SyntheticHistory>()
+</script>
+
 <script setup lang="ts">
+import { isTextDocument } from 'common/textDocument'
 import { ref, shallowRef, reactive, watch, onMounted, onBeforeUnmount, nextTick, markRaw } from 'vue'
 import log from 'electron-log'
 import { WysiwygEditor, createDefaultDiagramRenderer, type WysiwygOptions } from '@marktext/wysiwyg'
@@ -108,7 +117,7 @@ import { useVimStore } from '@/store/vim'
 import { useProjectStore } from '@/store/project'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
-import { SyntheticHistory, type IFileHistoryLike } from './syntheticHistory'
+import type { IFileHistoryLike } from './syntheticHistory'
 
 // The wysiwyg engine injects its own stylesheet on import.
 import '@/assets/themes/codemirror/one-dark.css'
@@ -210,7 +219,6 @@ let componentDestroyed = false
 // is migrated separately). We therefore keep the real engine history in a
 // per-tab map here for restoration across in-session tab switches, and feed the
 // store a SYNTHETIC desktop-shaped history.
-const engineHistoryByTab = new Map<string, unknown>()
 
 // Per-tab monotonic save-tracking id allocator. The synthetic history entry id
 // is a MONOTONIC, never-reused id keyed on the live document content (see
@@ -220,7 +228,6 @@ const engineHistoryByTab = new Map<string, unknown>()
 // reloads the document via `setContent` (which clears the engine history), so
 // the reloaded content is the id-0 baseline matching the store's seeded
 // `lastSavedHistoryId: 0`.
-const syntheticHistoryByTab = new Map<string, SyntheticHistory>()
 const getSyntheticHistory = (id: string, baselineContent: string): SyntheticHistory => {
   let tracker = syntheticHistoryByTab.get(id)
   if (!tracker) {
@@ -243,7 +250,10 @@ const makeSyntheticHistory = (id: string, content: string): IFileHistoryLike => 
 // closed. Driven by a watcher on the store's live tab id set.
 const pruneClosedTabState = (liveTabIds: Set<string>): void => {
   for (const id of engineHistoryByTab.keys()) {
-    if (!liveTabIds.has(id)) engineHistoryByTab.delete(id)
+    if (!liveTabIds.has(id)) {
+      engineHistoryByTab.delete(id)
+      engineContentByTab.delete(id)
+    }
   }
   for (const id of syntheticHistoryByTab.keys()) {
     if (!liveTabIds.has(id)) syntheticHistoryByTab.delete(id)
@@ -1178,6 +1188,7 @@ interface FileLoadedPayload {
 
 // listen for `open-single-file` event, it will call this method only when open a new file.
 const setMarkdownToEditor = (payload: unknown) => {
+  if (editorStore.currentFile && isTextDocument(editorStore.currentFile)) return
   const { id, markdown: newMarkdown, cursor: newCursor } = (payload ?? {}) as FileLoadedPayload
   if (editor.value) {
     // `setContent` resets the document and clears the undo history; only set a
@@ -1223,6 +1234,7 @@ interface FileChangePayload {
 
 // listen for markdown change form source mode or change tabs etc
 const handleFileChange = (payload: unknown) => {
+  if (editorStore.currentFile && isTextDocument(editorStore.currentFile)) return
   const {
     id,
     markdown: newMarkdown,
@@ -1493,6 +1505,10 @@ onMounted(() => {
   // undoing back to the on-disk content can never read as clean again (PG15).
   if (currentFile.value?.id) {
     getSyntheticHistory(currentFile.value.id, engine.getMarkdown())
+    if (engineContentByTab.get(currentFile.value.id)?.replace(/[\r\n]+$/, '') === engine.getMarkdown().replace(/[\r\n]+$/, '')) {
+      const history = engineHistoryByTab.get(currentFile.value.id)
+      if (history) engine.setHistory(history)
+    }
   }
 
   const container = getScrollContainer()!
@@ -1564,6 +1580,7 @@ onMounted(() => {
     // re-edited tab as clean (Phase G — G6).
     const engineHistory = editor.value.getHistory()
     engineHistoryByTab.set(id, engineHistory)
+    engineContentByTab.set(id, markdown)
     // The TOC and word count are whole-document passes, so they run once the
     // user pauses typing instead of on every keystroke (see below).
     editorStore.LISTEN_FOR_CONTENT_CHANGE({

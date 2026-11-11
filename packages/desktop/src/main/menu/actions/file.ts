@@ -193,8 +193,6 @@ const handleResponseForSave = async(
   }
 
   filePath = path.resolve(filePath)
-  const extension = path.extname(filePath) || '.md'
-  filePath = !filePath.endsWith(extension) ? (filePath += extension) : filePath
   // The original JS passed `win` here; writeMarkdownFile only takes 3 args
   // (the 4th was silently ignored). Drop it explicitly under strict mode.
   // The IPC `SaveOptions` has every field optional, but writeMarkdownFile
@@ -465,7 +463,8 @@ ipcMain.on('mt::window::drop', async(e, fileList: string[]) => {
     return
   }
   for (const file of fileList) {
-    if (isMarkdownFile(file)) {
+    const requiresImport = ['.docx', '.odt', '.epub'].includes(path.extname(file).toLowerCase())
+    if (!requiresImport && await isFile(file)) {
       openFileOrFolder(win, file)
       continue
     }
@@ -621,7 +620,7 @@ ipcMain.on('mt::format-link-click', async(e, { data, dirname }: FormatLinkPayloa
   if (pathname) {
     // decodeURIComponent() CommonMark #503, allow percent encoded path names to open files. https://github.com/marktext/marktext/issues/57
     pathname = path.normalize(decodeURIComponent(pathname))
-    if (isMarkdownFile(pathname)) {
+    if (isMarkdownFile(pathname) || (/\.(?:txt|text|log)$/i.test(pathname) && await isFile(pathname))) {
       const innerWin = BrowserWindow.fromWebContents(e.sender)
       if (innerWin) {
         openFileOrFolder(innerWin, pathname)
@@ -726,6 +725,11 @@ export const openFile = async(win: BrowserWindow | null): Promise<void> => {
   const { filePaths } = await dialog.showOpenDialog(win, {
     properties: ['openFile', 'multiSelections'],
     filters: [
+      { name: 'All files', extensions: ['*'] },
+      {
+        name: 'Text and code files',
+        extensions: ['txt', 'text', 'log', 'json', 'yaml', 'yml', 'xml', 'csv', 'ini', 'conf', ...MARKDOWN_EXTENSIONS]
+      },
       {
         name: 'Markdown document',
         extensions: [...MARKDOWN_EXTENSIONS]

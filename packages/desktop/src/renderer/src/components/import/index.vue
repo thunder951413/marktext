@@ -27,10 +27,10 @@
         </div>
         <div class="file-list">
           <div>.md</div>
-          <div>.html</div>
+          <div>.txt</div>
           <div>.docx</div>
-          <div>.tex</div>
-          <div>.wiki</div>
+          <div>.log</div>
+          <div>.json</div>
         </div>
       </div>
     </el-dialog>
@@ -81,6 +81,7 @@ const dropHandler = (e: DragEvent) => {
       }
     }
   }
+  showImport.value = false
   window.electron.ipcRenderer.send('mt::window::drop', fileList)
 }
 

@@ -6,6 +6,7 @@
 </template>
 
 <script setup lang="ts">
+import { isTextDocument } from 'common/textDocument'
 import { ref, shallowRef, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useEditorStore } from '@/store/editor'
 import { usePreferencesStore } from '@/store/preferences'
@@ -132,6 +133,7 @@ interface FileChangePayloadLike {
 }
 
 const handleFileChange = (payload: unknown) => {
+  if (currentTab.value && isTextDocument(currentTab.value)) return
   const { id, markdown: newMarkdown, muyaIndexCursor } = payload as FileChangePayloadLike
   if (!editor.value) return
   bus.emit('vim-mode-change', 'normal')

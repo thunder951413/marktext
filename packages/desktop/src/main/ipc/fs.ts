@@ -1,5 +1,8 @@
 import { ipcMain } from '../utils/secureIpc'
 import fs from 'fs-extra'
+import { BrowserWindow, dialog } from 'electron'
+import { loadMarkdownFile } from '../filesystem/markdown'
+import { ENCODING_NAME_MAP } from 'common/encoding'
 import { statSync, constants, type Stats } from 'fs'
 
 import { isFile as commonIsFile, isDirectory as commonIsDirectory } from 'common/filesystem'
@@ -56,6 +59,23 @@ const toBuffer = (data: unknown): unknown => {
 }
 
 export const registerFsHandlers = (): void => {
+  ipcMain.handle('mt::fs::reopen-text', async(e, p: string, encoding: string, dirty: boolean) => {
+    const pathname = await checkedPath(e, p)
+    if (!Object.hasOwn(ENCODING_NAME_MAP, encoding)) throw new Error('Unsupported encoding')
+    if (dirty) {
+      const win = BrowserWindow.fromWebContents(e.sender)
+      if (!win) return null
+      const { response } = await dialog.showMessageBox(win, {
+        type: 'warning',
+        buttons: ['Reopen', 'Cancel'],
+        defaultId: 1,
+        cancelId: 1,
+        message: 'Discard unsaved changes and reopen with the selected encoding?'
+      })
+      if (response !== 0) return null
+    }
+    return loadMarkdownFile(pathname, 'lf', true, 3, false, encoding)
+  })
   ipcMain.handle('mt::fs::is-file', (_e, p: string) => commonIsFile(p))
   ipcMain.handle('mt::fs::is-directory', (_e, p: string) => commonIsDirectory(p))
   ipcMain.handle('mt::fs::copy', async(e, src: string, dest: string) =>

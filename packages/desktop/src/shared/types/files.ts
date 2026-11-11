@@ -4,7 +4,13 @@
 // commits. Until then, these are intentionally open structures — better an
 // imperfect surface than a placeholder that's wrong.
 
-export type LineEnding = 'lf' | 'crlf'
+export type LineEnding = 'lf' | 'crlf' | 'cr'
+
+export interface TextDocumentMetadata {
+  documentKind?: 'text' | 'markdown'
+  textLineEndings?: Array<'\n' | '\r\n' | '\r'>
+  decodingWarning?: string
+}
 
 export interface SerializedStat {
   size: number
@@ -14,7 +20,7 @@ export interface SerializedStat {
   isSymbolicLink?: boolean
 }
 
-export interface MarkdownDocument {
+export interface MarkdownDocument extends TextDocumentMetadata {
   markdown: string
   filename: string
   pathname: string | null
@@ -65,7 +71,7 @@ export interface FileSearchMatches {
  * cross-process IPC payloads. Mirrors `defaultFileState` in
  * `src/renderer/src/store/help.ts`.
  */
-export interface IFileState {
+export interface IFileState extends TextDocumentMetadata {
   id: string
   filename: string
   // Falsy (`''`) for untitled buffers; pre-migration this was sometimes
@@ -115,7 +121,7 @@ export interface TabOptions {
   [key: string]: unknown
 }
 
-export interface SaveOptions {
+export interface SaveOptions extends TextDocumentMetadata {
   // Encoding is the `FileEncoding` object at runtime (`{ encoding, isBom }`).
   // String form is accepted for legacy callers that haven't been updated.
   encoding?: FileEncoding | string

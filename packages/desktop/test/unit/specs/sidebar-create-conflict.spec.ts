@@ -59,7 +59,7 @@ describe('CREATE_FILE_DIRECTORY — name conflict guard (#1946)', () => {
 
     await store.CREATE_FILE_DIRECTORY('fresh')
 
-    expect(create).toHaveBeenCalledWith('/docs/fresh.md', 'file')
+    expect(create).toHaveBeenCalledWith('/docs/fresh', 'file')
     expect(notice.notify).not.toHaveBeenCalled()
   })
 })

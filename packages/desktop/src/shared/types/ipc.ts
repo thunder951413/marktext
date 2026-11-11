@@ -53,6 +53,7 @@ export interface IpcInvokeChannels {
   'mt::fs::move': { args: [src: string, dest: string]; ret: void }
   'mt::fs::output-file': { args: [path: string, data: string | Uint8Array]; ret: void }
   'mt::fs::path-exists': { args: [path: string]; ret: boolean }
+  'mt::fs::reopen-text': { args: [path: string, encoding: string, dirty: boolean]; ret: MarkdownDocument | null }
   'mt::fs::read-file': { args: [path: string, encoding?: string]; ret: string | Uint8Array }
   'mt::fs::readdir': { args: [path: string]; ret: string[] }
   'mt::fs::stat': { args: [path: string]; ret: SerializedStat }

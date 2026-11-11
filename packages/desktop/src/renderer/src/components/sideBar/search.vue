@@ -227,7 +227,7 @@ const search = (): void => {
     followSymlinks: searchFollowSymlinks.value,
 
     // Only search markdown files
-    inclusions: window.fileUtils.MARKDOWN_INCLUSIONS
+    inclusions: ['*']
   })
 
   cancellable

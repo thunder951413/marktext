@@ -38,6 +38,7 @@
 </template>
 
 <script setup lang="ts">
+import { isTextDocument } from 'common/textDocument'
 import { computed, watch, nextTick, onMounted, ref } from 'vue'
 import { useMainStore } from '@/store'
 import { storeToRefs } from 'pinia'
@@ -89,7 +90,7 @@ const isSaved = computed(() => currentFile.value?.isSaved)
 // type is `string`. The `<editor-with-tabs>` mount is still gated.
 const markdown = computed<string>(() => currentFile.value?.markdown ?? '')
 const cursor = computed(() => currentFile.value?.cursor)
-const wordCount = computed(() => currentFile.value?.wordCount)
+const wordCount = computed(() => currentFile.value && !isTextDocument(currentFile.value) ? currentFile.value.wordCount : undefined)
 // `muyaIndexCursor` is loosely typed as `unknown` on the editor store; the
 // downstream prop expects `Object | undefined`. Cast at the boundary.
 const muyaIndexCursor = computed<Record<string, unknown> | undefined>(

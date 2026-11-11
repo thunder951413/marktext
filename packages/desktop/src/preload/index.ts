@@ -134,8 +134,7 @@ const MARKDOWN_EXTENSIONS = [
   'mdtxt',
   'mdtext',
   'mdx',
-  'text',
-  'txt'
+  'mmd'
 ] as const
 
 const hasMarkdownExtension = (filename: string): boolean => {

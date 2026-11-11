@@ -3,7 +3,8 @@ import fsPromises from 'fs/promises'
 import log from 'electron-log'
 import chokidar, { type FSWatcher } from 'chokidar'
 import { exists } from 'common/filesystem'
-import { hasMarkdownExtension, checkPathExcludePattern } from 'common/filesystem/paths'
+import { isKnownBinaryName } from 'common/textDocument'
+import { checkPathExcludePattern } from 'common/filesystem/paths'
 import { getUniqueId } from '../utils'
 import { loadMarkdownFile } from '../filesystem/markdown'
 import { isLinux, isOsx } from '../config'
@@ -54,7 +55,6 @@ const add = async(
   const stats = await fsPromises.stat(pathname)
   const birthTime = stats.birthtime
   const mtimeMs = stats.mtimeMs
-  const isMarkdown = hasMarkdownExtension(pathname)
   const file: {
     pathname: string
     name: string
@@ -71,35 +71,37 @@ const add = async(
     isDirectory: false,
     birthTime,
     mtimeMs,
-    isMarkdown
+    // Legacy tree flag: an entry that can be opened in the document editor.
+    isMarkdown: true
   }
-  if (isMarkdown) {
-    // HACK: But this should be removed completely in #1034/#1035.
-    try {
-      const data = await loadMarkdownFile(
-        pathname,
-        endOfLine,
-        autoGuessEncoding,
-        trimTrailingNewline,
-        autoNormalizeLineEndings
-      )
-      file.data = data
-    } catch (err) {
-      // Only notify user about opened files.
-      if (type === 'file') {
-        win.webContents.send('mt::show-notification', {
-          title: 'Watcher I/O error',
-          type: 'error',
-          message: err instanceof Error ? err.message : String(err)
-        })
-        return
-      }
+  if (type === 'dir') {
+    win.webContents.send(EVENT_NAME[type], { type: 'add', change: file })
+    return
+  }
+  try {
+    const data = await loadMarkdownFile(
+      pathname,
+      endOfLine,
+      autoGuessEncoding,
+      trimTrailingNewline,
+      autoNormalizeLineEndings
+    )
+    file.data = data
+  } catch (err) {
+    // Only notify user about opened files.
+    if (type === 'file') {
+      win.webContents.send('mt::show-notification', {
+        title: 'Watcher I/O error',
+        type: 'error',
+        message: err instanceof Error ? err.message : String(err)
+      })
+      return
     }
-    win.webContents.send(EVENT_NAME[type], {
-      type: 'add',
-      change: file
-    })
   }
+  win.webContents.send(EVENT_NAME[type], {
+    type: 'add',
+    change: file
+  })
 }
 
 const unlink = (win: BrowserWindow, pathname: string, type: WatchType): void => {
@@ -133,26 +135,23 @@ const change = async(
     return
   }
 
-  const isMarkdown = hasMarkdownExtension(pathname)
-  if (isMarkdown) {
-    try {
-      const [data, stats] = await Promise.all([
-        loadMarkdownFile(pathname, endOfLine, autoGuessEncoding, trimTrailingNewline, autoNormalizeLineEndings),
-        fsPromises.stat(pathname)
-      ])
-      const file = { pathname, data, mtimeMs: stats.mtimeMs }
-      win.webContents.send('mt::update-file', {
-        type: 'change',
-        change: file
+  try {
+    const [data, stats] = await Promise.all([
+      loadMarkdownFile(pathname, endOfLine, autoGuessEncoding, trimTrailingNewline, autoNormalizeLineEndings),
+      fsPromises.stat(pathname)
+    ])
+    const file = { pathname, data, mtimeMs: stats.mtimeMs }
+    win.webContents.send('mt::update-file', {
+      type: 'change',
+      change: file
+    })
+  } catch (err) {
+    if (type === 'file') {
+      win.webContents.send('mt::show-notification', {
+        title: 'Watcher I/O error',
+        type: 'error',
+        message: err instanceof Error ? err.message : String(err)
       })
-    } catch (err) {
-      if (type === 'file') {
-        win.webContents.send('mt::show-notification', {
-          title: 'Watcher I/O error',
-          type: 'error',
-          message: err instanceof Error ? err.message : String(err)
-        })
-      }
     }
   }
 }
@@ -227,7 +226,7 @@ class Watcher {
         if (fileInfo.isDirectory()) {
           return false
         }
-        return !hasMarkdownExtension(pathname)
+        return type === 'dir' && isKnownBinaryName(pathname)
       },
       ignoreInitial: type === 'file',
       persistent: true,

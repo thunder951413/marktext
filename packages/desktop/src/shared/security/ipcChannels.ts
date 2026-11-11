@@ -16,6 +16,7 @@ export const invokeChannels = {
   'mt::fs::move': true,
   'mt::fs::output-file': true,
   'mt::fs::path-exists': true,
+  'mt::fs::reopen-text': true,
   'mt::fs::read-file': true,
   'mt::fs::readdir': true,
   'mt::fs::stat': true,

@@ -2,8 +2,12 @@ import { ENCODING_NAME_MAP, getEncodingName, type Encoding } from 'common/encodi
 import { delay } from '@/util'
 import bus from '../bus'
 import getCommandDescriptionById from './descriptions'
-import { t } from '../i18n'
+import { t, getCurrentLanguage } from '../i18n'
 import type { EditorState } from '@/store/editor'
+
+interface EncodingEditorState extends EditorState {
+  REOPEN_WITH_ENCODING(encoding: string): Promise<void>
+}
 
 interface EncodingSubcommand {
   id: string
@@ -16,11 +20,11 @@ class FileEncodingCommand {
   placeholder: string
   subcommands: EncodingSubcommand[]
   subcommandSelectedIndex: number
-  private _editorState: EditorState
+  private _editorState: EncodingEditorState
 
-  constructor(editorState: EditorState) {
-    this.id = 'file.change-encoding'
-    this.description = getCommandDescriptionById('file.change-encoding')
+  constructor(editorState: EncodingEditorState, private readonly reopen = false) {
+    this.id = reopen ? 'file.reopen-encoding' : 'file.change-encoding'
+    this.description = reopen ? (getCurrentLanguage().startsWith('zh') ? '按指定编码重新打开文件' : 'Reopen file with encoding') : getCommandDescriptionById('file.change-encoding')
     this.placeholder = t('commandPalette.placeholders.selectOption')
 
     this.subcommands = []
@@ -38,30 +42,19 @@ class FileEncodingCommand {
     const encodingObj = this._getCurrentEncoding()
     const { encoding, isBom } = encodingObj
 
-    // NOTE: We support UTF-BOM encodings but don't allow to set them.
-    if (isBom) {
-      this.subcommandSelectedIndex = 0
-      this.subcommands.push({
-        id: `${encoding}-bom`,
-        description: `${getEncodingName(encodingObj)} - current`
-      })
-    }
-
-    let i = 0
     for (const [key, value] of Object.entries(ENCODING_NAME_MAP)) {
-      const isTabEncoding = !isBom && key === encoding
-      const item: EncodingSubcommand = {
-        id: key,
-        description: isTabEncoding ? `${value} - current` : value
+      this.subcommands.push({ id: key, description: value })
+      if (!this.reopen && /^utf(?:8|16le|16be|32le|32be)$/.test(key)) {
+        this.subcommands.push({ id: `${key}-bom`, description: `${value} with BOM` })
       }
-      if (isTabEncoding) {
-        // Highlight current encoding and set it as first entry.
-        this.subcommandSelectedIndex = i
-        this.subcommands.unshift(item)
-      } else {
-        this.subcommands.push(item)
-      }
-      ++i
+    }
+    const currentId = !this.reopen && isBom ? `${encoding}-bom` : encoding
+    const currentIndex = this.subcommands.findIndex(item => item.id === currentId)
+    if (currentIndex >= 0) {
+      const [item] = this.subcommands.splice(currentIndex, 1)
+      item.description = `${getEncodingName(encodingObj)} - current`
+      this.subcommands.unshift(item)
+      this.subcommandSelectedIndex = 0
     }
   }
 
@@ -72,8 +65,9 @@ class FileEncodingCommand {
   }
 
   executeSubcommand = async(id: string): Promise<void> => {
-    // NOTE: We support UTF-BOM encodings but don't allow to set them.
-    if (!id.endsWith('-bom')) {
+    if (this.reopen) {
+      await this._editorState.REOPEN_WITH_ENCODING(id)
+    } else {
       bus.emit('mt::set-file-encoding', id)
     }
   }

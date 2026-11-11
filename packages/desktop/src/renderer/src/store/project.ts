@@ -6,7 +6,6 @@ import bus from '../bus'
 import { create, paste, rename, type FileCreateType, type PasteOptions } from '../util/fileSystem'
 import { PATH_SEPARATOR } from '../config'
 import notice from '../services/notification'
-import { getFileStateFromData } from './help'
 import { useLayoutStore } from './layout'
 import { useEditorStore } from './editor'
 import { debouncedSendBufferedState } from './bufferedState'
@@ -163,11 +162,10 @@ export const useProjectStore = defineStore('project', () => {
     const editorStore = useEditorStore()
     switch (type) {
       case 'add': {
-        const { pathname, data, isMarkdown } = change
+        const { pathname, isMarkdown } = change
         addFile(projectTree.value!, change as Parameters<typeof addFile>[1], String(preferencesStore.fileSortBy), String(preferencesStore.fileSortOrder))
         if (isMarkdown && newFileNameCache.value && pathname === newFileNameCache.value) {
-          const fileState = getFileStateFromData(data as Record<string, unknown>)
-          editorStore.UPDATE_CURRENT_FILE(fileState)
+          window.electron.ipcRenderer.send('mt::open-file', pathname, {})
           newFileNameCache.value = ''
         }
         break
@@ -272,10 +270,6 @@ export const useProjectStore = defineStore('project', () => {
   async function CREATE_FILE_DIRECTORY(name: string): Promise<void> {
     const cache = createCache.value as CreateCacheEntry
     const { dirname, type } = cache
-
-    if (type === 'file' && !window.fileUtils.hasMarkdownExtension(name)) {
-      name += '.md'
-    }
 
     const fullName = `${dirname}/${name}`
 

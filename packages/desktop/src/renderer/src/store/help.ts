@@ -1,3 +1,4 @@
+import { isTextDocument } from 'common/textDocument'
 import type { IFileState } from '@shared/types/files'
 import { getUniqueId, deepClone } from '../util'
 
@@ -16,6 +17,9 @@ export type IDocumentState = IFileState
 export type { IFileState }
 
 const defaultFileStateWithoutId = {
+  documentKind: undefined,
+  textLineEndings: undefined,
+  decodingWarning: undefined,
   isSaved: true,
   pathname: '',
   filename: 'Untitled-1',
@@ -63,12 +67,27 @@ export const getOptionsFromState = (
   lineEnding: IFileState['lineEnding']
   adjustLineEndingOnSave: boolean
   trimTrailingNewline: number
+  documentKind?: 'text' | 'markdown'
+  textLineEndings?: IFileState['textLineEndings']
+  decodingWarning?: string
 } => {
   const { encoding, lineEnding, adjustLineEndingOnSave, trimTrailingNewline } = file
-  return { encoding, lineEnding, adjustLineEndingOnSave, trimTrailingNewline }
+  return {
+    encoding,
+    lineEnding,
+    adjustLineEndingOnSave,
+    trimTrailingNewline,
+    documentKind: isTextDocument(file) ? 'text' : 'markdown',
+    textLineEndings: file.textLineEndings,
+    decodingWarning: file.decodingWarning
+  }
 }
 
 const documentStateKeys = [
+  'documentKind',
+  'textLineEndings',
+  'decodingWarning',
+  'isMixedLineEndings',
   'isSaved',
   'pathname',
   'filename',

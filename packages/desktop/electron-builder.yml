@@ -62,6 +62,11 @@ electronLanguages: # Avoid packaging all chromium locales since our app has in-b
 asarUnpack:
   - resources/**
 fileAssociations:
+  - ext: [txt, text, log, json, yaml, yml, xml, csv, ini, conf, toml, js, ts, py, css, html, sh]
+    name: Text
+    description: Text and source code
+    role: Editor
+    rank: Alternate
   - ext: md
     name: Markdown
     description: Markdown document
@@ -145,6 +150,7 @@ linux:
   category: 'Office;TextEditor;Utility'
   mimeTypes:
     - 'text/markdown'
+    - 'text/plain'
   icon: 'static/icon.png'
   desktop:
     entry:
@@ -157,6 +163,9 @@ linux:
     - rpm
     - tar.gz
   fileAssociations:
+    - ext: [txt, text, log, json, yaml, yml, xml, csv, ini, conf, toml, js, ts, py, css, html, sh]
+      name: Text
+      description: Text and source code
     - ext: 'md'
       name: 'Markdown'
       description: 'Markdown document'

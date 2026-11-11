@@ -125,6 +125,24 @@ describe('muya contract odds and ends', () => {
     expect(editorA.getMarkdown()).toBe('# A\n\nmore text\n')
   })
 
+  it('restores history into a new editor without retaining destroyed event callbacks', () => {
+    const first = new WysiwygEditor(document.createElement('div'), { markdown: 'original' })
+    first.init()
+    first.replaceContent('edited')
+    const token = first.getHistory()
+    first.destroy()
+    const second = new WysiwygEditor(document.createElement('div'), { markdown: 'edited' })
+    second.init()
+    let changed = ''
+    second.on('content-change', payload => { changed = payload.markdown })
+    second.setHistory(token)
+    second.undo()
+    second.flush()
+    expect(second.getMarkdown()).toBe('original')
+    expect(changed).toBe('original')
+    second.destroy()
+  })
+
   it('exposes muya-shaped selections for serializeCursor', () => {
     const editor = new WysiwygEditor(document.createElement('div'), { markdown: 'abcdef' })
     editor.init()

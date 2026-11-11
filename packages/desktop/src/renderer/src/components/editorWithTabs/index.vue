@@ -5,14 +5,16 @@
   >
     <tabs v-show="showTabBar" />
     <div class="container">
+      <text-editor v-if="plainText" />
       <editor
+        v-else
         :markdown="markdown"
         :cursor="cursor"
         :text-direction="textDirection"
         :platform="platform"
       />
       <source-code
-        v-if="sourceCode"
+        v-if="sourceCode && !plainText"
         :markdown="markdown"
         :muya-index-cursor="muyaIndexCursor"
         :text-direction="textDirection"
@@ -43,6 +45,11 @@ import { resolveEditorEngine } from 'common/editorEngine'
 import { storeToRefs } from 'pinia'
 import { computed, defineAsyncComponent, onBeforeUnmount, onMounted } from 'vue'
 import Tabs from './tabs.vue'
+import { useEditorStore } from '@/store/editor'
+import { isTextDocument } from 'common/textDocument'
+const TextEditor = defineAsyncComponent(() => import('./textEditor.vue'))
+const documentStore = useEditorStore()
+const plainText = computed(() => !!documentStore.currentFile && isTextDocument(documentStore.currentFile))
 import TabNotifications from './notifications.vue'
 
 // Source mode carries CodeMirror and its language descriptions. Most sessions

@@ -12,15 +12,17 @@ const CED_ICONV_ENCODINGS: Record<string, string> = {
 
   // Map ASCII / subsets of UTF-8 to UTF-8.
   JIS: 'utf8',
-  SJS: 'utf8',
-  shiftjis: 'utf8',
+  SJS: 'shiftjis',
+  shiftjis: 'shiftjis',
   'ASCII-7-bit': 'utf8',
   ASCII: 'utf8',
-  MACINTOSH: 'utf8'
+  MACINTOSH: 'macintosh'
 }
 
 // Byte Order Marks to detect endianness and encoding.
 const BOM_ENCODINGS: Record<string, number[]> = {
+  utf32be: [0x00, 0x00, 0xfe, 0xff],
+  utf32le: [0xff, 0xfe, 0x00, 0x00],
   utf8: [0xef, 0xbb, 0xbf],
   utf16be: [0xfe, 0xff],
   utf16le: [0xff, 0xfe]
@@ -63,6 +65,20 @@ export const guessEncoding = (buffer: Buffer, autoGuessEncoding: boolean): Encod
     }
   }
 
+  // BOM-less UTF-16 containing mostly Latin text has a consistent zero-byte lane.
+  // Check both lanes before CED, which can report ASCII for these buffers.
+  if (autoGuessEncoding && buffer.length >= 4 && buffer.length % 2 === 0) {
+    const pairs = Math.min(buffer.length / 2, 4096)
+    let evenZero = 0
+    let oddZero = 0
+    for (let i = 0; i < pairs; i++) {
+      if (buffer[i * 2] === 0) evenZero++
+      if (buffer[i * 2 + 1] === 0) oddZero++
+    }
+    if (oddZero / pairs > 0.6 && evenZero / pairs < 0.1) return { encoding: 'utf16le', isBom }
+    if (evenZero / pairs > 0.6 && oddZero / pairs < 0.1) return { encoding: 'utf16be', isBom }
+  }
+
   // Auto guess encoding, otherwise use UTF-8.
   if (autoGuessEncoding) {
     // A file that is already valid UTF-8 must be decoded as UTF-8, regardless
@@ -74,7 +90,7 @@ export const guessEncoding = (buffer: Buffer, autoGuessEncoding: boolean): Encod
     if (CED_ICONV_ENCODINGS[encoding]) {
       encoding = CED_ICONV_ENCODINGS[encoding]
     } else {
-      encoding = encoding.toLowerCase().replace(/-_/g, '')
+      encoding = encoding.toLowerCase().replace(/[-_]/g, '')
     }
   }
   return { encoding, isBom }

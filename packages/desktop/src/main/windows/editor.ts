@@ -13,6 +13,7 @@ import { showEditorContextMenu } from '../contextMenu/editor'
 import { loadMarkdownFile } from '../filesystem/markdown'
 import { switchLanguage } from '../spellchecker'
 import fs from 'fs'
+import { LARGE_TEXT_FILE_BYTES, MAX_TEXT_FILE_BYTES } from 'common/textDocument'
 
 type RawMarkdownDocument = Awaited<ReturnType<typeof loadMarkdownFile>>
 
@@ -34,6 +35,7 @@ interface CandidateScore {
 }
 
 interface RestoredTab {
+  encoding?: { encoding: string; isBom?: boolean }
   pathname: string
   filename?: string
   markdown?: string
@@ -339,14 +341,17 @@ class EditorWindow extends BaseWindow {
         browserWindow!.webContents.send('mt::switch-tab-by-file_path', filePath)
         continue
       }
-      loadMarkdownFile(
-        filePath,
-        eol,
-        autoGuessEncoding,
-        trimTrailingNewline,
-        autoNormalizeLineEndings
-      )
+      this.confirmTextFileSize(filePath).then(allowed => allowed
+        ? loadMarkdownFile(
+          filePath,
+          eol,
+          autoGuessEncoding,
+          trimTrailingNewline,
+          autoNormalizeLineEndings
+        )
+        : null)
         .then((rawDocument) => {
+          if (!rawDocument) return
           if (this.lifecycle === WindowLifecycle.READY) {
             this._doOpenTab(rawDocument, options, selected)
           } else {
@@ -363,6 +368,23 @@ class EditorWindow extends BaseWindow {
           })
         })
     }
+  }
+
+  private async confirmTextFileSize(pathname: string): Promise<boolean> {
+    const stat = await fs.promises.stat(pathname)
+    if (!stat.isFile()) throw new Error('Only regular files can be opened as text.')
+    const { size } = stat
+    if (size > MAX_TEXT_FILE_BYTES) throw new Error('This file exceeds the 50 MiB text editor limit.')
+    if (size <= LARGE_TEXT_FILE_BYTES) return true
+    const { response } = await dialog.showMessageBox(this.browserWindow!, {
+      type: 'question',
+      buttons: ['Open', 'Cancel'],
+      defaultId: 1,
+      cancelId: 1,
+      message: `Open ${path.basename(pathname)} (${(size / 1024 / 1024).toFixed(1)} MiB)?`,
+      detail: 'Large text files may take longer to open and search. Syntax highlighting is disabled for large plain-text documents.'
+    })
+    return response === 0
   }
 
   /**
@@ -607,15 +629,13 @@ class EditorWindow extends BaseWindow {
             eol,
             autoGuessEncoding,
             trimTrailingNewline,
-            autoNormalizeLineEndings
+            autoNormalizeLineEndings,
+            tab.encoding?.encoding
           )
             .then((rawDocument) => {
-              if (rawDocument.markdown !== tab.markdown) {
-                // File has changed since it was last opened, if it is not saved, we should NOT override the buffer
-                if (tab.isSaved) {
-                  tab.markdown = rawDocument.markdown
-                }
-              }
+              // Refresh disk content and format metadata together for clean tabs.
+              // Unsaved buffers retain their content and original decoding.
+              if (tab.isSaved) Object.assign(tab, rawDocument)
 
               if (!this._openedFiles!.includes(tab.pathname)) {
                 this.addToOpenedFiles(tab.pathname)
